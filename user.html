@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fresh-Mart | User Panel</title>
+<style>
+:root{--green:#168447;--green2:#0f6b38;--mint:#eaf8ef;--pale:#f5fbf6;--text:#183126;--muted:#718078;--line:#e1eee5;--white:#fff;--orange:#f59e0b;--red:#dc4545;--shadow:0 8px 26px rgba(22,132,71,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6faf7;color:var(--text)}button,input{font:inherit}button{cursor:pointer}
+.topbar{height:66px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;font-weight:850;font-size:20px;color:var(--green)}.logo{width:39px;height:39px;border-radius:13px;background:var(--green);display:grid;place-items:center;color:#fff;font-size:22px}.topright{display:flex;align-items:center;gap:12px}.avatar{width:38px;height:38px;border-radius:50%;background:var(--mint);color:var(--green);display:grid;place-items:center;font-weight:800}.small{font-size:12px;color:var(--muted)}.layout{display:grid;grid-template-columns:235px minmax(0,1fr);min-height:calc(100vh - 66px)}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:5px}.navlabel{font-size:11px;color:#96a49b;font-weight:800;letter-spacing:1px;padding:16px 12px 7px}.navbtn{border:0;background:transparent;color:#52645a;text-align:left;padding:12px 13px;border-radius:11px;display:flex;gap:11px;align-items:center;font-weight:650}.navbtn .ico{width:22px;text-align:center;font-size:17px}.navbtn.active,.navbtn:hover{background:var(--mint);color:var(--green)}.sidebar-foot{margin-top:auto;background:var(--pale);padding:14px;border:1px solid var(--line);border-radius:13px;font-size:12px;line-height:1.6;color:var(--muted)}
+main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}.welcome h1{font-size:25px;margin:0 0 6px}.welcome p{margin:0;color:var(--muted);font-size:14px}.status{background:#fff4d8;color:#936300;border-radius:30px;padding:8px 13px;font-size:12px;font-weight:800;white-space:nowrap;border:1px solid #f7e6b6}
+.banner{background:linear-gradient(110deg,#167d43,#24a65b);color:#fff;border-radius:18px;padding:23px 25px;display:flex;justify-content:space-between;align-items:center;gap:16px;box-shadow:var(--shadow);margin-bottom:20px}.banner h2{margin:0 0 7px;font-size:20px}.banner p{margin:0;line-height:1.5;color:#e6ffed;font-size:13px}.banner .bannericon{font-size:48px;opacity:.95}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:800}.btn-white{background:#fff;color:var(--green);margin-top:13px}.btn-green{background:var(--green);color:#fff}.btn-outline{border:1px solid var(--line);background:#fff;color:var(--green)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:var(--shadow)}.stat-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;font-weight:700}.stat-icon{width:36px;height:36px;border-radius:11px;background:var(--mint);display:grid;place-items:center;font-size:18px}.stat-value{font-size:24px;font-weight:850;margin:14px 0 5px}.stat-note{font-size:11px;color:var(--muted)}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 13px}.section-head h2{font-size:17px;margin:0}.link{border:0;background:transparent;color:var(--green);font-weight:800;font-size:12px}.twocol{display:grid;grid-template-columns:1.15fr .85fr;gap:17px;margin-bottom:20px}.planbox{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--pale);border:1px solid var(--line);border-radius:13px;padding:15px}.planbox h3{margin:0 0 5px;font-size:16px}.planbox p{margin:0;color:var(--muted);font-size:12px}.planprice{font-size:20px;color:var(--green);font-weight:850;white-space:nowrap}.quicklinks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.quick{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff;text-align:left;color:var(--text)}.quick span{display:block;font-size:22px;margin-bottom:9px}.quick strong{font-size:12px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #edf3ee;font-size:12px}th{color:var(--muted);font-weight:750}td{font-weight:650}.badge{display:inline-block;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:850}.pending{background:#fff4d8;color:#956500}.approved{background:#e4f8eb;color:#177440}.rejected{background:#ffebeb;color:#b72e2e}
+.page{display:none}.page.active{display:block}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;font-size:12px;font-weight:750;margin-bottom:7px}.field input,.field select{width:100%;border:1px solid #dbe8de;border-radius:10px;padding:12px;background:#fff;outline:none}.field input:focus,.field select:focus{border-color:var(--green)}.hint{font-size:11px;color:var(--muted);line-height:1.5}.upload{border:2px dashed #b9d9c3;border-radius:13px;padding:20px;text-align:center;background:var(--pale);color:var(--muted)}.upload input{max-width:100%;margin-top:10px}.planchoices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.planchoice{border:1px solid var(--line);background:#fff;border-radius:14px;padding:16px}.planchoice.selected{border:2px solid var(--green);background:#f3fff6}.planchoice h3{margin:0 0 7px}.planchoice .amount{font-size:23px;font-weight:850;color:var(--green)}.planchoice p{font-size:12px;color:var(--muted);line-height:1.5}.footer-note{color:#829087;text-align:center;font-size:11px;padding:22px 0 4px}
+.mobile-nav{display:none}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.twocol{grid-template-columns:1fr}.layout{grid-template-columns:205px minmax(0,1fr)}main{padding:20px}}
+@media(max-width:680px){.topbar{height:60px;padding:0 14px}.brand{font-size:18px}.logo{width:34px;height:34px}.topright .userlabel{display:none}.layout{display:block;min-height:calc(100vh - 60px)}.sidebar{display:none}main{padding:17px 13px 85px}.welcome{align-items:flex-start}.welcome h1{font-size:21px}.welcome p{font-size:12px}.status{font-size:10px;padding:7px 9px}.banner{padding:18px;border-radius:15px}.banner h2{font-size:17px}.banner .bannericon{font-size:35px}.grid{gap:9px}.card{padding:13px;border-radius:13px}.stat-value{font-size:21px}.stat-head{font-size:11px}.quicklinks{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.quick{padding:10px 8px}.quick strong{font-size:10px}.quick small{font-size:9px}.planchoices{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:20;justify-content:space-around;padding:7px 3px calc(7px + env(safe-area-inset-bottom))}.mobile-nav button{border:0;background:transparent;color:#718078;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:50px}.mobile-nav button span{font-size:18px}.mobile-nav button.active{color:var(--green);font-weight:800}.tablewrap table{min-width:400px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div>
+  <div class="topright"><div class="userlabel"><strong>Welcome, Member</strong><div class="small">Your grocery & rewards hub</div></div><div class="avatar">FM</div></div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+  <div class="navlabel">MY SPACE</div>
+  <button class="navbtn active" data-page="dashboard"><span class="ico">⌂</span>Dashboard</button>
+  <button class="navbtn" data-page="groceries"><span class="ico">🛍️</span>Grocery Store</button>
+  <button class="navbtn" data-page="plans"><span class="ico">💳</span>My Plan & Payment</button>
+  <button class="navbtn" data-page="team"><span class="ico">👥</span>My Team</button>
+  <button class="navbtn" data-page="wallets"><span class="ico">👛</span>My Wallets</button>
+  <button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
+  <button class="navbtn" data-page="orders"><span class="ico">📦</span>My Orders</button>
+  <div class="navlabel">ACCOUNT</div>
+  <button class="navbtn" data-page="profile"><span class="ico">⚙</span>Profile & Support</button>
+  <div class="sidebar-foot"><strong>Fresh-Mart Support</strong><br>Need help with an order or payment?<br><span style="color:var(--green);font-weight:800">Contact support →</span></div>
+</aside>
+<main>
+<section class="page active" id="dashboard">
+  <div class="welcome"><div><h1>Good day! 🌿</h1><p>Welcome to your Fresh-Mart member dashboard.</p></div><span class="status">● INACTIVE</span></div>
+  <div class="banner"><div><h2>Your Fresh-Mart journey starts here</h2><p>Choose a membership plan and upload your payment proof.<br>Your plan activates after admin payment verification.</p><button class="btn btn-white" data-goto="plans">Choose a Plan →</button></div><div class="bannericon">🛒</div></div>
+  <div class="grid">
+    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Available shopping balance</div></div>
+    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Earnings balance</div></div>
+    <div class="card"><div class="stat-head">Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value">0</div><div class="stat-note">Earn points on eligible activity</div></div>
+    <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
+  </div>
+  <div class="twocol">
+    <div class="card"><div class="section-head"><h2>Membership plan</h2><button class="link" data-goto="plans">View plans →</button></div><div class="planbox"><div><h3>No active plan</h3><p>Choose a plan to submit payment for verification.</p></div><div class="planprice">—</div></div><p class="hint" style="margin:12px 0 0">Plan activation happens only after payment is verified by an administrator.</p></div>
+    <div class="card"><div class="section-head"><h2>Quick actions</h2></div><div class="quicklinks"><button class="quick" data-goto="plans"><span>💳</span><strong>Pay for plan</strong><small>Upload proof</small></button><button class="quick" data-goto="groceries"><span>🥬</span><strong>Shop groceries</strong><small>Browse items</small></button><button class="quick" data-goto="team"><span>🔗</span><strong>Invite friends</strong><small>Referral tools</small></button></div></div>
+  </div>
+  <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="orders">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>No activity yet</td><td>—</td><td>—</td><td><span class="badge pending">WAITING</span></td></tr></tbody></table></div></div>
+</section>
+<section class="page" id="groceries">
+  <div class="welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
+  <div class="banner"><div><h2>Good food, good living</h2><p>Browse categories and discover everyday essentials.</p></div><div class="bannericon">🥦</div></div>
+  <div class="grid">
+    <div class="card"><div class="stat-icon">🥦</div><h3>Fresh Vegetables</h3><p class="hint">Everyday greens and vegetables</p><button class="btn btn-outline">Explore</button></div>
+    <div class="card"><div class="stat-icon">🍎</div><h3>Fruits</h3><p class="hint">Seasonal fruit favourites</p><button class="btn btn-outline">Explore</button></div>
+    <div class="card"><div class="stat-icon">🌾</div><h3>Rice & Grains</h3><p class="hint">Staples for every kitchen</p><button class="btn btn-outline">Explore</button></div>
+    <div class="card"><div class="stat-icon">🥛</div><h3>Dairy & Essentials</h3><p class="hint">Daily household essentials</p><button class="btn btn-outline">Explore</button></div>
+  </div>
+  <div class="card"><div class="section-head"><h2>Popular products</h2><span class="small">Sample design items</span></div><p class="hint">Product catalogue, live prices, cart and checkout will be connected to the Fresh-Mart database in the next stage.</p></div>
+</section>
+<section class="page" id="plans">
+  <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
+  <div class="card" style="margin-bottom:17px"><div class="section-head"><h2>Choose your membership plan</h2><span class="badge pending">NOT ACTIVE</span></div><div class="planchoices">
+    <button class="planchoice" data-plan="500" onclick="selectPlan(this)"><h3>Starter</h3><div class="amount">₹500</div><p>Starter membership<br>Benefits as per current plan rules.</p></button>
+    <button class="planchoice selected" data-plan="2000" onclick="selectPlan(this)"><h3>Growth</h3><div class="amount">₹2,000</div><p>Growth membership<br>Benefits as per current plan rules.</p></button>
+    <button class="planchoice" data-plan="10000" onclick="selectPlan(this)"><h3>Premium</h3><div class="amount">₹10,000</div><p>Premium membership<br>Benefits as per current plan rules.</p></button>
+  </div><p class="hint" style="margin:12px 0 0">These are design preview values. Final plan names, amounts and benefits will be controlled by Super Admin.</p></div>
+  <div class="card"><div class="section-head"><h2>Submit payment proof</h2><span class="badge pending">ADMIN VERIFICATION REQUIRED</span></div>
+  <form id="paymentForm" onsubmit="demoSubmit(event)"><div class="formgrid">
+    <div class="field"><label for="payAmount">Payment amount (₹)</label><input id="payAmount" type="number" min="1" value="2000" required></div>
+    <div class="field"><label for="txnId">Transaction ID / UTR</label><input id="txnId" type="text" placeholder="Enter payment reference" required></div>
+    <div class="field"><label for="payDate">Payment date</label><input id="payDate" type="date" required></div>
+    <div class="field"><label for="payMethod">Payment method</label><select id="payMethod"><option>UPI</option><option>Bank Transfer</option><option>Other</option></select></div>
+  </div><div class="upload" style="margin:15px 0"><strong>📷 Upload payment screenshot</strong><p class="hint">JPG, PNG or WEBP · Maximum 5 MB</p><input type="file" id="proofFile" accept="image/jpeg,image/png,image/webp" required></div><button class="btn btn-green" type="submit">Submit for Verification</button><p class="hint" id="payMessage" style="margin-top:12px">Your account stays inactive until an administrator verifies the payment.</p></form>
+  <div class="section-head" style="margin-top:25px"><h2>Payment requests</h2></div><div class="tablewrap"><table><thead><tr><th>Plan</th><th>Amount</th><th>Transaction ID</th><th>Status</th></tr></thead><tbody id="paymentRows"><tr><td>No requests</td><td>—</td><td>—</td><td><span class="badge pending">—</span></td></tr></tbody></table></div>
+  </div>
+</section>
+<section class="page" id="team">
+  <div class="welcome"><div><h1>My Team 👥</h1><p>Manage your referral links and view your team summary.</p></div></div>
+  <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value">0</div><div class="stat-note">Members you invited</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value">0</div><div class="stat-note">Left-side members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value">0</div><div class="stat-note">Right-side members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value">0</div><div class="stat-note">Verified active accounts</div></div></div>
+  <div class="card"><h2 style="font-size:17px">Your referral link</h2><p class="hint">Your personal referral link will appear here after account registration and Supabase connection.</p><button class="btn btn-green" onclick="alert('Referral link will be enabled after Supabase connection.')">Copy referral link</button></div>
+</section>
+<section class="page" id="wallets">
+  <div class="welcome"><div><h1>My Wallets 👛</h1><p>View balances and transaction history.</p></div></div>
+  <div class="grid"><div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value">₹0.00</div><div class="stat-note">For eligible purchases</div></div><div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Subject to plan rules</div></div><div class="card"><div class="stat-head">Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value">0</div><div class="stat-note">Eligible reward points</div></div><div class="card"><div class="stat-head">Pending withdrawals <span class="stat-icon">⏳</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Awaiting review</div></div></div>
+  <div class="card"><div class="section-head"><h2>Wallet transactions</h2></div><p class="hint">Your verified wallet transactions will appear here after database connection.</p></div>
+</section>
+<section class="page" id="withdrawals">
+  <div class="welcome"><div><h1>Withdrawals</h1><p>Request a withdrawal from your eligible income balance.</p></div></div>
+  <div class="card"><h2 style="font-size:17px">New withdrawal request</h2><p class="hint">Withdrawal eligibility, 10% charge and monthly purchase requirements will be calculated using the final Super Admin settings.</p><div class="formgrid"><div class="field"><label>Amount (₹)</label><input type="number" placeholder="Enter amount" min="1"></div><div class="field"><label>Payment details</label><input type="text" placeholder="Bank / UPI details"></div></div><button class="btn btn-green" style="margin-top:14px" onclick="alert('Withdrawal requests will work after secure database connection.')">Request withdrawal</button></div>
+  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Withdrawal history</h2><p class="hint">No withdrawal requests yet.</p></div>
+</section>
+<section class="page" id="orders">
+  <div class="welcome"><div><h1>My Orders 📦</h1><p>Track your grocery orders and deliveries.</p></div></div>
+  <div class="card"><div class="section-head"><h2>Order history</h2><span class="badge pending">0 ORDERS</span></div><p class="hint">Your grocery orders and delivery tracking will appear here after the store and checkout flow is connected.</p></div>
+</section>
+<section class="page" id="profile">
+  <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account details and get help.</p></div></div>
+  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input placeholder="Will load from your account"></div><div class="field"><label>Username</label><input placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input placeholder="Generated after registration"></div></div><p class="hint">Profile editing and password change will be enabled through secure authentication.</p></div>
+  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
+</section>
+<div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping<br>Design preview — not yet connected to live account data.</div>
+</main>
+</div>
+<nav class="mobile-nav">
+<button class="active" data-page="dashboard"><span>⌂</span>Home</button>
+<button data-page="groceries"><span>🛍️</span>Shop</button>
+<button data-page="plans"><span>💳</span>Plan</button>
+<button data-page="team"><span>👥</span>Team</button>
+<button data-page="wallets"><span>👛</span>Wallet</button>
+</nav>
+<script>
+function showPage(id){
+ document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
+ document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.goto)));
+function selectPlan(el){
+ document.querySelectorAll('.planchoice').forEach(p=>p.classList.remove('selected'));
+ el.classList.add('selected');
+ document.getElementById('payAmount').value=el.dataset.plan;
+}
+function demoSubmit(e){
+ e.preventDefault();
+ const amount=document.getElementById('payAmount').value;
+ const txn=document.getElementById('txnId').value.trim();
+ const file=document.getElementById('proofFile').files[0];
+ if(!file){alert('Please select your payment screenshot.');return}
+ if(file.size>5*1024*1024){alert('Screenshot must be 5 MB or smaller.');return}
+ const allowed=['image/jpeg','image/png','image/webp'];
+ if(!allowed.includes(file.type)){alert('Please upload a JPG, PNG or WEBP image.');return}
+ const row=document.getElementById('paymentRows');
+ if(row.children.length===1 && row.innerText.includes('No requests'))row.innerHTML='';
+ const tr=document.createElement('tr');
+ tr.innerHTML='<td>₹'+document.querySelector('.planchoice.selected .amount').innerText.replace('₹','')+'</td><td>₹'+Number(amount).toLocaleString('en-IN')+'</td><td></td><td><span class="badge pending">PROCESSING (DEMO)</span></td>';
+ tr.children[2].textContent=txn;
+ row.prepend(tr);
+ document.getElementById('payMessage').textContent='Demo only: request shown on this page. It has NOT been sent to Supabase or the Admin Panel yet.';
+ alert('Design demo only. This request is not saved to the server yet.');
+}
+</script>
+</body>
+</html>
