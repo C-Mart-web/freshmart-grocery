@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FreshMart | Grocery Network Demo</title>
+<style>
+:root{--green:#138447;--deep:#075b35;--mint:#eaf7ef;--bg:#f4f7f5;--ink:#17231c;--muted:#68756d;--line:#e1e9e3;--white:#fff;--orange:#f4a62a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,var(--deep),var(--green));color:#fff;padding:18px 16px 22px}
+.head{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:22px;font-weight:800;letter-spacing:-.5px}.tag{font-size:12px;opacity:.88}.demo{font-size:11px;background:#ffffff24;border:1px solid #ffffff55;border-radius:30px;padding:7px 10px;white-space:nowrap}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}.tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 14px}.tabs button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 15px;font-weight:700;color:#405047;white-space:nowrap;cursor:pointer}.tabs button.active{background:var(--green);color:#fff;border-color:var(--green)}
+.hero{background:var(--mint);border:1px solid #d3eadb;border-radius:18px;padding:18px;margin-bottom:14px}.hero h1{font-size:23px;margin:0 0 6px}.hero p{margin:0;color:#466052;font-size:14px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 2px 7px #102b1710}.card h3{font-size:14px;margin:0 0 8px}.metric{font-size:24px;font-weight:800;letter-spacing:-.5px}.muted{color:var(--muted);font-size:12px}.section-title{font-size:18px;margin:20px 0 10px}.two{display:grid;grid-template-columns:1.25fr 1fr;gap:12px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #edf1ee}.row:last-child{border-bottom:0}.pill{display:inline-block;padding:5px 8px;border-radius:20px;background:#e8f7ee;color:#167343;font-size:11px;font-weight:700}.pill.orange{background:#fff3d9;color:#8a5a00}.pill.gray{background:#eef1ef;color:#59645d}.btn{border:0;background:var(--green);color:#fff;border-radius:10px;padding:10px 13px;font-weight:700;cursor:pointer}.btn.light{background:#edf7f0;color:var(--deep);border:1px solid #d5eadb}.btn.small{padding:7px 10px;font-size:12px}.products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.product{border:1px solid var(--line);border-radius:13px;padding:10px;background:#fff}.emoji{font-size:32px;background:#f1f8f3;border-radius:10px;text-align:center;padding:12px}.product b{display:block;font-size:13px;margin:7px 0 2px}.product .muted{font-size:11px}.product button{width:100%;margin-top:8px}.menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.menuitem{padding:13px;border:1px solid var(--line);border-radius:12px;background:#fff}.menuitem strong{display:block;font-size:13px;margin-bottom:4px}.menuitem span{font-size:12px;color:var(--muted);line-height:1.4}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #edf1ee}th{color:var(--muted);font-weight:700}.tablewrap{overflow:auto}.panel{display:none}.panel.active{display:block}.foot{text-align:center;padding:25px 10px;color:var(--muted);font-size:11px}.network{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.node{border:1px solid #cfe5d5;background:#f3fbf5;border-radius:12px;padding:10px 16px;text-align:center;font-size:12px}.note{font-size:12px;color:#72551a;background:#fff7df;border:1px solid #f1dfaa;padding:11px 13px;border-radius:12px;margin-top:12px;line-height:1.5}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.products{grid-template-columns:repeat(2,minmax(0,1fr))}.menu{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{font-size:21px}.hero h1{font-size:20px}.wrap{padding:12px}.card{padding:12px}}
+@media(max-width:380px){.menu{grid-template-columns:1fr}.brand{font-size:19px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><div class="brand">🛒 FreshMart</div><div class="tag">Good Food · Better Life</div></div><div class="demo">DEMO UI · SAMPLE DATA ONLY</div></div></header>
+<main class="wrap">
+<nav class="tabs" aria-label="Demo panels">
+<button class="active" data-panel="user">👤 User Portal</button><button data-panel="super">🛡️ Super Admin</button><button data-panel="sub">🧩 Sub Admin</button><button data-panel="store">🏪 Store Panel</button>
+</nav>
+<section id="user" class="panel active">
+<div class="hero"><h1>Good evening, Ramesh 👋</h1><p>Your grocery shop, membership benefits, orders and network — all in one place.</p></div>
+<div class="grid">
+<div class="card"><h3>Shopping Wallet</h3><div class="metric">₹1,250</div><div class="muted">Illustrative demo balance</div></div>
+<div class="card"><h3>Current Plan</h3><div class="metric">Plan 2</div><div class="muted">Sample plan: ₹2,000</div></div>
+<div class="card"><h3>Orders</h3><div class="metric">3</div><div class="muted">1 out for delivery</div></div>
+<div class="card"><h3>Reward Points</h3><div class="metric">250</div><div class="muted">Demo points only</div></div>
+</div>
+<h2 class="section-title">Shop by category</h2><div class="menu">
+<div class="menuitem"><strong>🥦 Vegetables</strong><span>Fresh daily vegetables</span></div><div class="menuitem"><strong>🍎 Fruits</strong><span>Seasonal fresh fruits</span></div><div class="menuitem"><strong>🥛 Dairy</strong><span>Milk, curd and more</span></div><div class="menuitem"><strong>🍚 Grocery</strong><span>Rice, pulses and staples</span></div><div class="menuitem"><strong>🧴 Home Care</strong><span>Daily household needs</span></div><div class="menuitem"><strong>🥨 Snacks</strong><span>Snacks and beverages</span></div>
+</div>
+<h2 class="section-title">Popular products</h2><div class="products">
+<div class="product"><div class="emoji">🍅</div><b>Fresh Tomatoes</b><div class="muted">₹30 / kg</div><button class="btn small" onclick="demoMsg()">Add to cart</button></div>
+<div class="product"><div class="emoji">🍌</div><b>Banana</b><div class="muted">₹40 / dozen</div><button class="btn small" onclick="demoMsg()">Add to cart</button></div>
+<div class="product"><div class="emoji">🥛</div><b>Milk 1L</b><div class="muted">₹60 / pack</div><button class="btn small" onclick="demoMsg()">Add to cart</button></div>
+<div class="product"><div class="emoji">🍚</div><b>Rice 1kg</b><div class="muted">₹70 / pack</div><button class="btn small" onclick="demoMsg()">Add to cart</button></div>
+</div>
+<h2 class="section-title">My account overview</h2><div class="two">
+<div class="card"><h3>Income summary</h3><div class="row"><span>Direct referral</span><b>₹150 <span class="pill gray">Demo</span></b></div><div class="row"><span>Binary sales reward</span><b>₹300 <span class="pill gray">Demo</span></b></div><div class="row"><span>Product commission</span><b>₹120 <span class="pill gray">Demo</span></b></div><div class="row"><span>Reward points</span><b>250 pts</b></div><p class="muted">Real income rules and eligibility must be reviewed before launch.</p></div>
+<div class="card"><h3>My network</h3><div class="network"><div class="node">You<br><b>FM123456</b></div></div><div class="network" style="margin-top:8px"><div class="node">Left team<br><b>12 members</b></div><div class="node">Right team<br><b>10 members</b></div></div><div class="row"><span>Monthly purchase tracker</span><b>60%</b></div><div style="background:#e7eee9;border-radius:20px;height:8px"><div style="background:var(--green);width:60%;height:8px;border-radius:20px"></div></div></div>
+</div>
+<div class="note">Demo only: balances, commissions, points and member counts are illustrative and are not real transactions or a promise of earnings.</div>
+</section>
+<section id="super" class="panel">
+<div class="hero"><h1>Super Admin Control Center</h1><p>Manage business settings, users, product catalog, orders, company ledgers, franchise stores and sub-admin permissions.</p></div>
+<div class="grid"><div class="card"><h3>Total Members</h3><div class="metric">1,284</div><div class="muted">Demo figure</div></div><div class="card"><h3>Orders Today</h3><div class="metric">246</div><div class="muted">Demo figure</div></div><div class="card"><h3>Pending Reviews</h3><div class="metric">18</div><div class="muted">Demo figure</div></div><div class="card"><h3>Store Applications</h3><div class="metric">12</div><div class="muted">Demo figure</div></div></div>
+<h2 class="section-title">Control modules</h2><div class="menu">
+<div class="menuitem"><strong>⚙️ Business settings</strong><span>Company name, logo, themes and general settings</span></div><div class="menuitem"><strong>📋 Plans & rules</strong><span>₹500, ₹2,000, ₹10,000 plans; reviewed eligibility and caps</span></div><div class="menuitem"><strong>🛍️ Products</strong><span>Central prices, categories, offers and catalog</span></div><div class="menuitem"><strong>👥 Members</strong><span>Account status, identity mapping and plan history</span></div><div class="menuitem"><strong>💳 Finance & ledgers</strong><span>Sales, commissions, refunds, fees and reconciliation</span></div><div class="menuitem"><strong>🏪 Stores</strong><span>Applications, approvals, service areas and settlements</span></div><div class="menuitem"><strong>🔐 Sub-admins</strong><span>Role permissions and audit history</span></div><div class="menuitem"><strong>🚚 Delivery</strong><span>Zones, delivery fees, assignments and tracking</span></div><div class="menuitem"><strong>📊 Reports</strong><span>Sales, stock, orders and compliance reports</span></div></div>
+<h2 class="section-title">Recent orders</h2><div class="card tablewrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>FM0001</td><td>Ramesh</td><td>₹1,250</td><td><span class="pill">Delivered</span></td></tr><tr><td>FM0002</td><td>Suresh</td><td>₹850</td><td><span class="pill orange">Packing</span></td></tr><tr><td>FM0003</td><td>Lakshmi</td><td>₹2,000</td><td><span class="pill gray">Processing</span></td></tr></tbody></table></div>
+<div class="note">Sensitive settings must be protected by server-side role checks. Editing a dashboard setting must not execute arbitrary code.</div>
+</section>
+<section id="sub" class="panel">
+<div class="hero"><h1>Sub Admin Workspace</h1><p>Only the sections granted by Super Admin should be accessible to this account.</p></div>
+<div class="grid"><div class="card"><h3>Orders to review</h3><div class="metric">520</div><div class="muted">Demo figure</div></div><div class="card"><h3>Sales today</h3><div class="metric">₹8,450</div><div class="muted">Demo figure</div></div><div class="card"><h3>Pending tasks</h3><div class="metric">36</div><div class="muted">Demo figure</div></div><div class="card"><h3>Access mode</h3><div class="metric">Limited</div><div class="muted">Assigned permissions</div></div></div>
+<h2 class="section-title">Example assigned permissions</h2><div class="card"><div class="row"><span>View products and stock</span><span class="pill">Allowed</span></div><div class="row"><span>Manage order status</span><span class="pill">Allowed</span></div><div class="row"><span>View operational reports</span><span class="pill">Allowed</span></div><div class="row"><span>Change plan/income rules</span><span class="pill orange">Restricted</span></div><div class="row"><span>Manage Super Admin accounts</span><span class="pill orange">Restricted</span></div></div>
+<h2 class="section-title">Sub Admin modules</h2><div class="menu"><div class="menuitem"><strong>📦 Products</strong><span>Only if assigned</span></div><div class="menuitem"><strong>🧾 Orders</strong><span>Update authorized order steps</span></div><div class="menuitem"><strong>🏪 Store support</strong><span>Review store tasks if allowed</span></div><div class="menuitem"><strong>📊 Reports</strong><span>View permitted reports</span></div></div>
+<div class="note">Demo permissions are examples only. Real permissions must be enforced by Supabase policies and server-side checks, not merely hidden buttons.</div>
+</section>
+<section id="store" class="panel">
+<div class="hero"><h1>Green Mart Store</h1><p>Franchise workspace for POS billing, inventory, order fulfilment, delivery and store reporting.</p></div>
+<div class="grid"><div class="card"><h3>Sales Today</h3><div class="metric">₹12,450</div><div class="muted">Demo figure</div></div><div class="card"><h3>Open Orders</h3><div class="metric">35</div><div class="muted">Demo figure</div></div><div class="card"><h3>Products</h3><div class="metric">210</div><div class="muted">Demo figure</div></div><div class="card"><h3>Low Stock Alerts</h3><div class="metric">5</div><div class="muted">Demo figure</div></div></div>
+<h2 class="section-title">Store operations</h2><div class="menu"><div class="menuitem"><strong>🧾 POS Billing</strong><span>Scan barcode, add items, discounts and invoice</span></div><div class="menuitem"><strong>📦 Inventory</strong><span>Stock in/out, expiry and reorder alerts</span></div><div class="menuitem"><strong>🛵 Delivery</strong><span>Assign delivery and update status</span></div><div class="menuitem"><strong>↩️ Returns</strong><span>Return reason and authorized refund workflow</span></div><div class="menuitem"><strong>💰 Store finance</strong><span>Sales totals and payment reconciliation</span></div><div class="menuitem"><strong>📈 Reports</strong><span>Sales, margins and stock movement</span></div></div>
+<h2 class="section-title">Today's orders</h2><div class="card tablewrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>ORD001</td><td>Ramesh</td><td>₹850</td><td><span class="pill">Packed</span></td></tr><tr><td>ORD002</td><td>Suresh</td><td>₹1,200</td><td><span class="pill">Ready</span></td></tr><tr><td>ORD003</td><td>Priya</td><td>₹650</td><td><span class="pill orange">Out for delivery</span></td></tr><tr><td>ORD004</td><td>Mahesh</td><td>₹900</td><td><span class="pill gray">Pending</span></td></tr></tbody></table></div>
+<div class="note">Central prices are controlled by Super Admin; stock is managed by the store. Special offers require permission and an audit record.</div>
+</section>
+<div class="foot">FreshMart demo prototype · Sample data only · Not connected to Supabase · No real payments or income credits</div>
+</main>
+<script>
+document.querySelectorAll('.tabs button').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('active')});document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});button.classList.add('active');document.getElementById(button.dataset.panel).classList.add('active');window.scrollTo({top:0,behavior:'smooth'})})});
+function demoMsg(){alert('This is a visual demo. Cart and checkout will be connected in a later development step.');}
+</script>
+</body>
+</html>
