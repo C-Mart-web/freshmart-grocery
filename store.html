@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fresh-Mart | Store Panel</title>
+<style>
+:root{--green:#16834a;--dark:#116638;--light:#eaf7ef;--bg:#f5f8f6;--text:#203128;--muted:#6b7a70;--border:#e1e9e3;--white:#fff;--orange:#f59e0b;--red:#dc4545}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--text)}button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 14px;font-weight:700}.primary{background:var(--green);color:white}.soft{background:var(--light);color:var(--dark)}.danger{background:#fff0f0;color:#b42323}.muted{color:var(--muted)}.shell{display:flex;min-height:100vh}.sidebar{width:245px;background:#fff;border-right:1px solid var(--border);padding:22px 15px;position:fixed;inset:0 auto 0 0;overflow:auto}.brand{display:flex;align-items:center;gap:10px;padding:3px 7px 22px;border-bottom:1px solid var(--border);margin-bottom:18px}.logo{width:43px;height:43px;border-radius:14px;background:var(--green);color:white;display:grid;place-items:center;font-size:22px}.brand strong{display:block;font-size:18px}.brand small{color:var(--muted)}.navlabel{font-size:11px;font-weight:800;letter-spacing:1px;color:#8b988f;padding:12px 10px 7px}.nav button{display:flex;width:100%;gap:12px;align-items:center;text-align:left;background:transparent;color:#53645a;margin:3px 0;padding:12px;border-radius:10px}.nav button.active,.nav button:hover{background:var(--light);color:var(--dark)}.nav .ico{width:21px;text-align:center}.sidefoot{margin-top:25px;padding:14px;background:#f5faf6;border-radius:13px;font-size:12px;line-height:1.5}.main{margin-left:245px;width:calc(100% - 245px);padding:24px 28px 90px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:23px}.eyebrow{font-size:12px;color:var(--green);font-weight:800;text-transform:uppercase;letter-spacing:1px}.top h1{font-size:25px;margin:5px 0}.userbadge{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:13px;padding:9px 12px}.avatar{width:37px;height:37px;border-radius:12px;background:var(--light);color:var(--dark);display:grid;place-items:center;font-weight:800}.page{display:none}.page.active{display:block}.welcome{background:linear-gradient(115deg,#116638,#21a45d);color:#fff;padding:23px;border-radius:18px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px}.welcome h2{font-size:23px;margin:0 0 8px}.welcome p{margin:0;color:#d8f4e3;line-height:1.5}.welcome .badge{background:#ffffff24;border:1px solid #ffffff50;padding:9px 12px;border-radius:11px;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:20px}.card{background:#fff;border:1px solid var(--border);border-radius:15px;padding:18px;min-width:0}.statlabel{font-size:13px;color:var(--muted);margin-bottom:12px}.statvalue{font-size:25px;font-weight:800;letter-spacing:-.5px}.statfoot{font-size:12px;color:var(--muted);margin-top:8px}.staticon{float:right;background:var(--light);width:37px;height:37px;display:grid;place-items:center;border-radius:11px;font-size:18px}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 13px}.sectionhead h2{font-size:18px;margin:0}.split{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}.quickgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.quick{padding:15px;border:1px solid var(--border);border-radius:13px;background:#fff;text-align:left;color:var(--text)}.quick b{display:block;margin:8px 0 4px}.quick span{font-size:12px;color:var(--muted)}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:13px;font-weight:700}.field input,.field select{width:100%;border:1px solid #d8e3db;border-radius:10px;padding:12px;background:white;outline:none}.field input:focus,.field select:focus{border-color:var(--green)}.hint{font-size:12px;color:var(--muted);line-height:1.5}.tablewrap{overflow:auto;border:1px solid var(--border);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:620px;background:#fff}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--border);font-size:13px}th{background:#f7faf8;color:#607067;font-size:11px;text-transform:uppercase;letter-spacing:.5px}tr:last-child td{border-bottom:0}.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:800}.approved,.delivered{background:#e7f7ed;color:#167343}.processing,.pending{background:#fff5d9;color:#8b6200}.rejected,.cancelled{background:#ffeded;color:#b42323}.empty{text-align:center;padding:25px;color:var(--muted)}.notice{background:#fff8e7;border:1px solid #f3dfad;border-radius:12px;padding:13px 15px;font-size:13px;line-height:1.5;color:#755513;margin-bottom:16px}.mobilebar{display:none}.pillrow{display:flex;gap:8px;flex-wrap:wrap}.pill{background:#f1f6f2;color:#516257;border-radius:20px;padding:8px 11px;font-size:12px}.pill.active{background:var(--green);color:white}.productrow{display:flex;gap:12px;align-items:center}.producticon{width:44px;height:44px;background:#f0f8f2;border-radius:12px;display:grid;place-items:center;font-size:22px}.stockbar{height:7px;background:#edf2ee;border-radius:10px;overflow:hidden;margin-top:8px}.stockbar span{display:block;height:100%;background:var(--green);border-radius:10px}.hidden{display:none!important}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar{width:215px}.main{margin-left:215px;width:calc(100% - 215px);padding:20px}.split{grid-template-columns:1fr}}
+@media(max-width:650px){.sidebar{display:none}.main{margin:0;width:100%;padding:16px 14px 95px}.top{align-items:flex-start}.top h1{font-size:22px}.userbadge .usertext{display:none}.welcome{align-items:flex-start;flex-direction:column;padding:19px}.welcome h2{font-size:20px}.grid{gap:10px}.card{padding:14px}.statvalue{font-size:21px}.statlabel{font-size:12px}.statfoot{font-size:11px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.mobilebar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:10;background:#fff;border-top:1px solid var(--border);padding:7px 4px calc(7px + env(safe-area-inset-bottom));justify-content:space-around}.mobilebar button{background:transparent;color:#64736a;font-size:10px;padding:7px 4px;display:flex;flex-direction:column;gap:4px;align-items:center;min-width:55px}.mobilebar button.active{color:var(--green)}.mobilebar .ico{font-size:18px}.quickgrid{gap:8px}.quick{padding:12px}.sectionhead{margin-top:20px}.userbadge{padding:6px}.avatar{width:34px;height:34px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><div class="logo">🛒</div><div><strong>Fresh-Mart</strong><small>Store Partner Portal</small></div></div>
+ <div class="navlabel">STORE WORKSPACE</div>
+ <nav class="nav" id="sideNav">
+  <button class="active" data-page="dashboard"><span class="ico">▦</span> Dashboard</button>
+  <button data-page="billing"><span class="ico">🧾</span> New Bill</button>
+  <button data-page="inventory"><span class="ico">📦</span> Inventory & Stock</button>
+  <button data-page="orders"><span class="ico">🛍️</span> Orders & Delivery</button>
+  <button data-page="reports"><span class="ico">📊</span> Sales Reports</button>
+  <button data-page="application"><span class="ico">🏪</span> Store Profile</button>
+  <button data-page="support"><span class="ico">💬</span> Help & Support</button>
+ </nav>
+ <div class="sidefoot"><b>Store access</b><br><span class="muted">Your store features will be enabled after Super Admin approval. This page is currently a design preview.</span></div>
+</aside>
+<main class="main">
+ <header class="top"><div><div class="eyebrow">Fresh-Mart Partner</div><h1 id="pageTitle">Store Dashboard</h1><div class="muted" style="font-size:13px">Manage billing, stock and customer orders.</div></div><div class="userbadge"><div class="avatar">S</div><div class="usertext"><b>Store Partner</b><div class="muted" style="font-size:12px">Demo Store · Pending setup</div></div><span>⌄</span></div></header>
+
+ <section class="page active" id="page-dashboard">
+  <div class="welcome"><div><h2>Welcome to your store workspace 👋</h2><p>Keep products stocked, create customer bills and manage Fresh-Mart orders from one place.</p></div><div class="badge">● Preview mode</div></div>
+  <div class="notice">Preview only: figures, bills and stock changes on this page are sample interface data. Supabase connection and approved store access will be added in the integration stage.</div>
+  <div class="grid">
+   <div class="card"><span class="staticon">₹</span><div class="statlabel">Today's Sales</div><div class="statvalue">₹ 8,450</div><div class="statfoot">Sample figure · 12 bills</div></div>
+   <div class="card"><span class="staticon">🛍️</span><div class="statlabel">Open Orders</div><div class="statvalue">08</div><div class="statfoot">Needs processing</div></div>
+   <div class="card"><span class="staticon">📦</span><div class="statlabel">Products in Stock</div><div class="statvalue">126</div><div class="statfoot">Sample inventory count</div></div>
+   <div class="card"><span class="staticon">⚠️</span><div class="statlabel">Low Stock Items</div><div class="statvalue">07</div><div class="statfoot">Review stock levels</div></div>
+  </div>
+  <div class="split">
+   <div class="card"><div class="sectionhead" style="margin-top:0"><h2>Quick actions</h2></div><div class="quickgrid">
+    <button class="quick" onclick="showPage('billing')">🧾<b>Create new bill</b><span>Search products and total a sale</span></button>
+    <button class="quick" onclick="showPage('inventory')">📦<b>Update inventory</b><span>Review stock and low-stock items</span></button>
+    <button class="quick" onclick="showPage('orders')">🛵<b>Process orders</b><span>View orders and delivery status</span></button>
+    <button class="quick" onclick="showPage('reports')">📈<b>View sales report</b><span>Daily and monthly summaries</span></button>
+   </div></div>
+   <div class="card"><div class="sectionhead" style="margin-top:0"><h2>Store checklist</h2><span class="status pending">Setup pending</span></div>
+    <p class="muted" style="font-size:13px;line-height:1.7">✓ Store application started<br>○ Super Admin approval<br>○ Add store address and hours<br>○ Confirm product catalogue<br>○ Start billing and order fulfilment</p>
+    <button class="primary" onclick="showPage('application')">Complete store profile →</button>
+   </div>
+  </div>
+  <div class="sectionhead"><h2>Recent orders</h2><button class="soft" onclick="showPage('orders')">View all</button></div>
+  <div class="tablewrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Order date</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+   <tr><td>FM-1048</td><td>Demo Customer</td><td>Today, 10:30 AM</td><td>₹1,240</td><td><span class="status processing">Processing</span></td></tr>
+   <tr><td>FM-1047</td><td>Demo Customer</td><td>Today, 09:15 AM</td><td>₹685</td><td><span class="status delivered">Delivered</span></td></tr>
+   <tr><td>FM-1046</td><td>Demo Customer</td><td>Yesterday</td><td>₹2,050</td><td><span class="status pending">Ready to pack</span></td></tr>
+  </tbody></table></div>
+ </section>
+
+ <section class="page" id="page-billing">
+  <div class="notice">Demo billing screen. Bills created here are not saved or charged. Real customer lookup, price validation and bill storage will be connected securely later.</div>
+  <div class="split">
+   <div class="card"><div class="sectionhead" style="margin-top:0"><h2>Create customer bill</h2></div>
+    <div class="field" style="margin-bottom:14px"><label>Customer mobile number</label><input id="customerMobile" inputmode="numeric" maxlength="10" placeholder="Enter 10-digit mobile"></div>
+    <div class="field" style="margin-bottom:14px"><label>Search product</label><input id="productSearch" placeholder="Type product name or barcode"></div>
+    <div class="pillrow" style="margin-bottom:15px"><button class="pill active" onclick="chooseCategory(this)">All</button><button class="pill" onclick="chooseCategory(this)">Groceries</button><button class="pill" onclick="chooseCategory(this)">Dairy</button><button class="pill" onclick="chooseCategory(this)">Household</button></div>
+    <div id="billProducts">
+     <div class="productrow" style="padding:12px 0;border-bottom:1px solid var(--border)"><div class="producticon">🌾</div><div style="flex:1"><b>Rice · 5 kg</b><div class="muted" style="font-size:12px">Barcode: FM1001</div></div><b>₹320</b><button class="soft" onclick="addItem('Rice · 5 kg',320)">Add</button></div>
+     <div class="productrow" style="padding:12px 0;border-bottom:1px solid var(--border)"><div class="producticon">🥛</div><div style="flex:1"><b>Milk · 1 litre</b><div class="muted" style="font-size:12px">Barcode: FM1002</div></div><b>₹68</b><button class="soft" onclick="addItem('Milk · 1 litre',68)">Add</button></div>
+     <div class="productrow" style="padding:12px 0"><div class="producticon">🧼</div><div style="flex:1"><b>Bath soap</b><div class="muted" style="font-size:12px">Barcode: FM1003</div></div><b>₹45</b><button class="soft" onclick="addItem('Bath soap',45)">Add</button></div>
+    </div>
+   </div>
+   <div class="card"><div class="sectionhead" style="margin-top:0"><h2>Bill summary</h2><span class="pill">Demo</span></div><div id="billItems" class="empty">No products added yet.</div><hr style="border:0;border-top:1px solid var(--border);margin:15px 0"><div style="display:flex;justify-content:space-between;margin:10px 0"><span class="muted">Subtotal</span><b id="billSubtotal">₹0.00</b></div><div style="display:flex;justify-content:space-between;margin:10px 0"><span class="muted">Discount</span><b id="billDiscount">₹0.00</b></div><div style="display:flex;justify-content:space-between;font-size:19px;margin:15px 0"><b>Total</b><b id="billTotal">₹0.00</b></div><button class="primary" style="width:100%" onclick="finishBill()">Preview bill</button><p class="hint">This preview will not charge a customer or create a real order.</p></div>
+  </div>
+ </section>
+
+ <section class="page" id="page-inventory">
+  <div class="sectionhead" style="margin-top:0"><h2>Inventory & Stock</h2><button class="primary" onclick="alert('Product and stock editing will be enabled after Supabase integration.')">＋ Add stock</button></div>
+  <div class="notice">Stock values below are sample data. Final stock adjustments will be permission-controlled and recorded in the stock movement history.</div>
+  <div class="grid"><div class="card"><div class="statlabel">Total SKUs</div><div class="statvalue">126</div></div><div class="card"><div class="statlabel">In stock</div><div class="statvalue">119</div></div><div class="card"><div class="statlabel">Low stock</div><div class="statvalue">7</div></div><div class="card"><div class="statlabel">Out of stock</div><div class="statvalue">2</div></div></div>
+  <div class="field" style="max-width:400px;margin-bottom:14px"><label>Search inventory</label><input id="inventorySearch" placeholder="Search product or barcode"></div>
+  <div class="tablewrap"><table id="inventoryTable"><thead><tr><th>Product</th><th>Barcode</th><th>Sale price</th><th>Available stock</th><th>Stock level</th><th>Status</th></tr></thead><tbody>
+   <tr><td>Rice · 5 kg</td><td>FM1001</td><td>₹320</td><td>42</td><td><div class="stockbar"><span style="width:75%"></span></div></td><td><span class="status approved">In stock</span></td></tr>
+   <tr><td>Milk · 1 litre</td><td>FM1002</td><td>₹68</td><td>8</td><td><div class="stockbar"><span style="width:20%"></span></div></td><td><span class="status pending">Low stock</span></td></tr>
+   <tr><td>Bath soap</td><td>FM1003</td><td>₹45</td><td>0</td><td><div class="stockbar"><span style="width:0%"></span></div></td><td><span class="status rejected">Out of stock</span></td></tr>
+   <tr><td>Cooking oil · 1 litre</td><td>FM1004</td><td>₹155</td><td>31</td><td><div class="stockbar"><span style="width:60%"></span></div></td><td><span class="status approved">In stock</span></td></tr>
+  </tbody></table></div>
+ </section>
+
+ <section class="page" id="page-orders">
+  <div class="sectionhead" style="margin-top:0"><h2>Orders & Delivery</h2><button class="soft" onclick="alert('The order list will load from Supabase after integration.')">↻ Refresh</button></div>
+  <div class="pillrow" style="margin-bottom:15px"><button class="pill active" onclick="filterOrders(this,'all')">All orders</button><button class="pill" onclick="filterOrders(this,'Processing')">Processing</button><button class="pill" onclick="filterOrders(this,'Ready to pack')">Ready to pack</button><button class="pill" onclick="filterOrders(this,'Delivered')">Delivered</button></div>
+  <div class="tablewrap"><table id="ordersTable"><thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Order status</th><th>Action</th></tr></thead><tbody>
+   <tr data-status="Processing"><td>FM-1048</td><td>Demo Customer</td><td>4 items</td><td>₹1,240</td><td><span class="status approved">Paid</span></td><td><span class="status processing">Processing</span></td><td><button class="soft" onclick="advanceOrder(this)">Mark packed</button></td></tr>
+   <tr data-status="Ready to pack"><td>FM-1046</td><td>Demo Customer</td><td>6 items</td><td>₹2,050</td><td><span class="status pending">COD</span></td><td><span class="status pending">Ready to pack</span></td><td><button class="soft" onclick="advanceOrder(this)">Mark delivered</button></td></tr>
+   <tr data-status="Delivered"><td>FM-1047</td><td>Demo Customer</td><td>2 items</td><td>₹685</td><td><span class="status approved">Paid</span></td><td><span class="status delivered">Delivered</span></td><td>—</td></tr>
+  </tbody></table></div>
+  <p class="hint">Actions are a local preview only; no customer notifications or delivery records are sent.</p>
+ </section>
+
+ <section class="page" id="page-reports">
+  <div class="sectionhead" style="margin-top:0"><h2>Sales reports</h2><select style="border:1px solid var(--border);padding:10px;border-radius:10px;background:white" id="reportPeriod"><option>Today</option><option>This week</option><option>This month</option></select></div>
+  <div class="grid"><div class="card"><div class="statlabel">Gross sales</div><div class="statvalue">₹42,860</div><div class="statfoot">Sample report</div></div><div class="card"><div class="statlabel">Bills completed</div><div class="statvalue">64</div><div class="statfoot">Sample report</div></div><div class="card"><div class="statlabel">Average bill value</div><div class="statvalue">₹669.69</div><div class="statfoot">Sample report</div></div><div class="card"><div class="statlabel">Returns / refunds</div><div class="statvalue">₹0</div><div class="statfoot">Sample report</div></div></div>
+  <div class="card"><h2 style="font-size:17px;margin-top:0">Sales overview</h2><div style="height:190px;display:flex;align-items:end;gap:12px;border-bottom:1px solid var(--border);padding:10px 8px 0"><div style="flex:1;text-align:center"><div style="height:35%;background:#bde8cc;border-radius:7px 7px 0 0"></div><small class="muted">Mon</small></div><div style="flex:1;text-align:center"><div style="height:55%;background:#a2dcb8;border-radius:7px 7px 0 0"></div><small class="muted">Tue</small></div><div style="flex:1;text-align:center"><div style="height:45%;background:#bde8cc;border-radius:7px 7px 0 0"></div><small class="muted">Wed</small></div><div style="flex:1;text-align:center"><div style="height:80%;background:#4fb879;border-radius:7px 7px 0 0"></div><small class="muted">Thu</small></div><div style="flex:1;text-align:center"><div style="height:62%;background:#8dd3a5;border-radius:7px 7px 0 0"></div><small class="muted">Fri</small></div><div style="flex:1;text-align:center"><div style="height:95%;background:var(--green);border-radius:7px 7px 0 0"></div><small class="muted">Sat</small></div><div style="flex:1;text-align:center"><div style="height:52%;background:#a2dcb8;border-radius:7px 7px 0 0"></div><small class="muted">Sun</small></div></div><p class="hint">Illustrative chart only; actual sales totals will be computed from completed store bills and orders.</p></div>
+ </section>
+
+ <section class="page" id="page-application">
+  <div class="notice">Store application and profile changes require Super Admin review. This form is a front-end preview and does not submit your details yet.</div>
+  <div class="card"><div class="sectionhead" style="margin-top:0"><h2>Store profile & application</h2><span class="status pending">Pending approval</span></div>
+   <div class="formgrid">
+    <div class="field"><label>Store / business name</label><input placeholder="Enter store name"></div><div class="field"><label>Store type</label><select><option>Choose store type</option><option>Home Store</option><option>Mini Store</option><option>District Store</option><option>Mega Store</option></select></div>
+    <div class="field"><label>Owner name</label><input placeholder="Full name"></div><div class="field"><label>Mobile number</label><input inputmode="numeric" maxlength="10" placeholder="10-digit mobile"></div>
+    <div class="field full"><label>Store address</label><input placeholder="House / street / area"></div>
+    <div class="field"><label>City / town</label><input placeholder="City or town"></div><div class="field"><label>PIN code</label><input inputmode="numeric" maxlength="6" placeholder="6-digit PIN"></div>
+    <div class="field"><label>Opening time</label><input type="time"></div><div class="field"><label>Closing time</label><input type="time"></div>
+    <div class="field full"><label>Store photo / supporting document</label><input type="file" accept="image/*,.pdf"><span class="hint">File upload will be connected to private storage during integration.</span></div>
+    <div class="field full"><button class="primary" onclick="alert('Store application submission will be enabled after Supabase integration.')">Save store profile</button></div>
+   </div>
+  </div>
+ </section>
+
+ <section class="page" id="page-support">
+  <div class="card"><div class="sectionhead" style="margin-top:0"><h2>Help & Support</h2></div><p class="muted" style="line-height:1.7">Need help with store approval, billing, stock, customer orders or delivery? Send a support request to the Fresh-Mart admin team.</p>
+   <div class="formgrid"><div class="field"><label>Issue category</label><select><option>Choose a category</option><option>Store approval</option><option>Product / stock</option><option>Billing issue</option><option>Order / delivery</option><option>Payment / settlement</option><option>Other</option></select></div><div class="field"><label>Order ID (if applicable)</label><input placeholder="e.g. FM-1048"></div><div class="field full"><label>Describe your issue</label><input placeholder="Enter details"></div><div class="field full"><button class="primary" onclick="alert('Support ticket creation will be enabled after integration.')">Submit support request</button></div></div>
+  </div>
+ </section>
+</main>
+</div>
+<nav class="mobilebar" id="mobileNav">
+ <button class="active" data-page="dashboard"><span class="ico">▦</span>Home</button><button data-page="billing"><span class="ico">🧾</span>Billing</button><button data-page="inventory"><span class="ico">📦</span>Stock</button><button data-page="orders"><span class="ico">🛍️</span>Orders</button><button data-page="application"><span class="ico">🏪</span>Store</button>
+</nav>
+<script>
+const titles={dashboard:'Store Dashboard',billing:'New Customer Bill',inventory:'Inventory & Stock',orders:'Orders & Delivery',reports:'Sales Reports',application:'Store Profile',support:'Help & Support'};
+function showPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+name));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===name));document.getElementById('pageTitle').textContent=titles[name]||'Store Panel';window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+let bill=[];function addItem(name,price){let item=bill.find(x=>x.name===name);if(item)item.qty++;else bill.push({name,price,qty:1});renderBill()}
+function renderBill(){let box=document.getElementById('billItems');if(!bill.length){box.className='empty';box.textContent='No products added yet.'}else{box.className='';box.innerHTML=bill.map((x,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="flex:1"><b>${x.name}</b><div class="muted" style="font-size:12px">₹${x.price} × ${x.qty}</div></div><b>₹${x.price*x.qty}</b><button class="danger" onclick="removeItem(${i})">×</button></div>`).join('')}let total=bill.reduce((s,x)=>s+x.price*x.qty,0);document.getElementById('billSubtotal').textContent='₹'+total.toFixed(2);document.getElementById('billDiscount').textContent='₹0.00';document.getElementById('billTotal').textContent='₹'+total.toFixed(2)}
+function removeItem(i){bill.splice(i,1);renderBill()}function finishBill(){if(!bill.length){alert('Please add at least one product.');return}let mobile=document.getElementById('customerMobile').value;if(mobile && !/^\d{10}$/.test(mobile)){alert('Please enter a valid 10-digit mobile number or leave it blank.');return}alert('Bill preview ready. Demo total: '+document.getElementById('billTotal').textContent+'. Nothing has been saved or charged.')}
+function chooseCategory(btn){btn.parentElement.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}
+document.getElementById('productSearch').addEventListener('input',e=>{let q=e.target.value.toLowerCase();document.querySelectorAll('#billProducts .productrow').forEach(row=>row.style.display=row.innerText.toLowerCase().includes(q)?'flex':'none')});
+document.getElementById('inventorySearch').addEventListener('input',e=>{let q=e.target.value.toLowerCase();document.querySelectorAll('#inventoryTable tbody tr').forEach(row=>row.style.display=row.innerText.toLowerCase().includes(q)?'':'none')});
+function filterOrders(btn,status){btn.parentElement.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('#ordersTable tbody tr').forEach(row=>row.style.display=(status==='all'||row.dataset.status===status)?'':'none')}
+function advanceOrder(btn){let row=btn.closest('tr');if(row.dataset.status==='Processing'){row.dataset.status='Ready to pack';row.cells[5].innerHTML='<span class="status pending">Ready to pack</span>';btn.textContent='Mark delivered'}else if(row.dataset.status==='Ready to pack'){row.dataset.status='Delivered';row.cells[5].innerHTML='<span class="status delivered">Delivered</span>';btn.parentElement.textContent='—'}else{return}alert('Demo status updated on this page only; it was not saved to the database.')}
+</script>
+</body>
+</html>
