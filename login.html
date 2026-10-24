@@ -15,21 +15,42 @@
  <div class="card">
   <div class="eyebrow">Member access</div><h1>Welcome back</h1><p class="sub">Sign in to manage your groceries, membership and rewards.</p>
   <form id="loginForm">
-   <div class="field"><label for="identity">Username or mobile number</label><input id="identity" name="identity" autocomplete="username" placeholder="Enter username or mobile" required></div>
+   <div class="field"><label for="identity">Username or mobile number</label><input id="identity" name="identity" autocomplete="username" placeholder="Username or mobile number" required></div>
    <div class="field"><label for="password">Password</label><div class="passwordbox"><input id="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button class="show" type="button" id="toggle">Show</button></div></div>
    <div class="row"><label><input type="checkbox" id="remember"> Remember me on this device</label><a href="#" id="forgot">Forgot password?</a></div>
    <div id="message" class="message" role="status"></div>
    <button class="primary" type="submit" id="submit">Login securely</button>
   </form>
-  <div class="preview"><b>Setup stage:</b> This page is a design preview. Real login will be enabled after Supabase Authentication and username/mobile lookup are connected. Do not enter a real password until that connection is complete.</div>
+  <div class="preview"><b>Setup stage:</b> Secure sign-in uses Fresh-Mart Supabase Authentication. Inactive members can sign in to submit a plan payment; only authorized active Super Admins can open the Admin Panel.</div>
  </div>
  <div class="foot">New to Fresh-Mart? <a href="register.html">Create an account</a><br><br>© Fresh-Mart</div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const FM_SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
+const FM_PUBLISHABLE_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
+const FM_AUTH_ENDPOINT=FM_SUPABASE_URL+'/functions/v1/fm-auth';
 const pw=document.getElementById('password'),msg=document.getElementById('message');
+const identityInput=document.getElementById('identity');
+const queryIdentity=new URLSearchParams(location.search).get('identity');if(queryIdentity)identityInput.value=queryIdentity;
 document.getElementById('toggle').addEventListener('click',()=>{pw.type=pw.type==='password'?'text':'password';document.getElementById('toggle').textContent=pw.type==='password'?'Show':'Hide'});
-document.getElementById('loginForm').addEventListener('submit',e=>{e.preventDefault();msg.className='message error';msg.textContent='Login is not connected yet. Please wait until Supabase Authentication is configured.'});
-document.getElementById('forgot').addEventListener('click',e=>{e.preventDefault();msg.className='message error';msg.textContent='Password recovery will be enabled after Supabase Authentication is connected.'});
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault();const button=document.getElementById('submit');button.disabled=true;button.textContent='Signing in…';msg.className='message';msg.textContent='';
+ try{
+  const response=await fetch(FM_AUTH_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_PUBLISHABLE_KEY},body:JSON.stringify({action:'login',identity:identityInput.value.trim(),password:pw.value})});
+  const result=await response.json().catch(()=>({error:'The server returned an unreadable response.'}));
+  if(!response.ok||!result.success)throw new Error(result.error||'Login failed.');
+  if(!window.supabase)throw new Error('Supabase client failed to load. Refresh the page and retry.');
+  const client=window.supabase.createClient(FM_SUPABASE_URL,FM_PUBLISHABLE_KEY);
+  const {error:setSessionError}=await client.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
+  if(setSessionError)throw setSessionError;
+  msg.className='message ok';msg.textContent='Login successful. Opening your panel…';
+  const role=String(result.profile.role||'').toLowerCase();
+  setTimeout(()=>location.href=['super_admin','super admin','admin'].includes(role)?'admin.html':'user.html',500);
+ }catch(err){msg.className='message error';msg.textContent=err.message||'Unable to sign in. Please retry.';}
+ finally{button.disabled=false;button.textContent='Login securely';}
+});
+document.getElementById('forgot').addEventListener('click',e=>{e.preventDefault();msg.className='message error';msg.textContent='Password recovery is not yet configured. Please contact Fresh-Mart support.'});
 </script>
 </body>
 </html>

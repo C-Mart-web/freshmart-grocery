@@ -22,24 +22,57 @@
     <div class="field"><label for="mobile">Mobile number</label><input id="mobile" autocomplete="tel" inputmode="numeric" placeholder="10-digit mobile" required pattern="[6-9][0-9]{9}" maxlength="10"></div>
     <div class="field"><label for="password">Create password</label><input id="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8"><div class="passwordnote">Use at least 8 characters.</div></div>
     <div class="field"><label for="confirm">Confirm password</label><input id="confirm" type="password" autocomplete="new-password" placeholder="Re-enter password" required minlength="8"></div>
-    <div class="field"><label for="placement">Placement side</label><select id="placement"><option value="">Admin auto-placement</option><option value="left">LEFT</option><option value="right">RIGHT</option></select><div class="passwordnote" id="placementNote">Direct registration placement is controlled by Super Admin settings.</div></div>
+    <div class="field"><label for="placement">Placement side</label><select id="placement" disabled><option value="">Admin-controlled auto-placement</option><option value="left">LEFT</option><option value="right">RIGHT</option></select><div class="passwordnote" id="placementNote">Direct registration placement is controlled by Super Admin settings.</div></div>
     <div class="field"><label for="referral">Referrer username / ID</label><input id="referral" placeholder="Optional for direct join" maxlength="60"></div>
    </div>
    <div id="message" class="message" role="status"></div>
    <button class="primary" type="submit">Create account</button>
   </form>
-  <div class="preview"><b>Setup stage:</b> This is a registration design preview. It does not create an account or save your personal details yet. Supabase Auth, referral validation, left/right placement and spillover must be connected before real registration is enabled.</div>
+  <div class="preview"><b>Setup stage:</b> Registration is processed by the Fresh-Mart secure function. Your account stays INACTIVE until the plan payment is verified by Super Admin.</div>
  </div>
  <div class="foot">Already have an account? <a href="login.html">Login</a><br><br>© Fresh-Mart</div>
 </div>
 <script>
+const FM_SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
+const FM_PUBLISHABLE_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
+const FM_AUTH_ENDPOINT=FM_SUPABASE_URL+'/functions/v1/fm-auth';
 const params=new URLSearchParams(location.search);
 const ref=params.get('ref')||params.get('referrer')||'';
 const side=(params.get('side')||'').toLowerCase();
 const refInput=document.getElementById('referral'),placement=document.getElementById('placement'),refBox=document.getElementById('refBox'),placementNote=document.getElementById('placementNote');
-if(ref){refInput.value=ref;refInput.readOnly=true;refBox.innerHTML='<b>Referral registration</b><br>Referrer: <b>'+escapeHtml(ref)+'</b><br>Placement side: <b>'+(side==='left'?'LEFT':side==='right'?'RIGHT':'To be validated')+'</b><br>Spillover will be decided by server-side placement rules.';if(side==='left'||side==='right'){placement.value=side;placement.disabled=true;placementNote.textContent='Placement came from the referral link and cannot be changed here.'}}
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-document.getElementById('registerForm').addEventListener('submit',e=>{e.preventDefault();const msg=document.getElementById('message');if(document.getElementById('password').value!==document.getElementById('confirm').value){msg.className='message error';msg.textContent='Passwords do not match. Please check both fields.';return}if(ref && side!=='left' && side!=='right'){msg.className='message error';msg.textContent='This referral link is missing a valid placement side. Please ask the referrer for the correct LEFT or RIGHT link.';return}msg.className='message error';msg.textContent='Registration is not connected yet. No account was created and no details were saved. We will enable it after Supabase Auth and placement rules are configured.'});
+if(ref){
+  refInput.value=ref;refInput.readOnly=true;
+  refBox.innerHTML='<b>Referral registration</b><br>Referrer: <b>'+escapeHtml(ref)+'</b><br>Requested placement: <b>'+(side==='left'?'LEFT':side==='right'?'RIGHT':'Invalid link')+'</b><br>If this branch is full, the secure server places you in the first available slot within that side’s subtree.';
+  if(side==='left'||side==='right'){placement.value=side;placementNote.textContent='Placement comes from this referral link and cannot be changed here.';}
+}else{
+  placement.value=''; placement.disabled=true;
+  placementNote.textContent='Direct registrations use the placement rule set by Super Admin.';
+}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const registerForm=document.getElementById('registerForm');
+registerForm.addEventListener('submit',async e=>{
+ e.preventDefault();
+ const msg=document.getElementById('message'),button=registerForm.querySelector('button[type="submit"]');
+ const name=document.getElementById('name').value.trim();
+ const username=document.getElementById('username').value.trim().toLowerCase();
+ const mobile=document.getElementById('mobile').value.trim();
+ const password=document.getElementById('password').value;
+ const confirm=document.getElementById('confirm').value;
+ const referrer=refInput.value.trim();
+ if(password!==confirm){msg.className='message error';msg.textContent='Passwords do not match.';return;}
+ if(password.length<8){msg.className='message error';msg.textContent='Password must be at least 8 characters.';return;}
+ if(referrer && !['left','right'].includes(side)){msg.className='message error';msg.textContent='Please open the correct LEFT or RIGHT referral link. A referral must include ?ref=USERNAME&side=left or right.';return;}
+ button.disabled=true;button.textContent='Creating account…';msg.className='message';msg.textContent='';
+ try{
+  const response=await fetch(FM_AUTH_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_PUBLISHABLE_KEY},body:JSON.stringify({action:'register',name,username,mobile,password,referrer:referrer||null,side:referrer?side:null})});
+  const result=await response.json().catch(()=>({error:'The server returned an unreadable response.'}));
+  if(!response.ok||!result.success)throw new Error(result.error||'Registration failed.');
+  msg.className='message ok';msg.textContent='Account created successfully. User ID: '+result.profile.user_code+'. Account status: INACTIVE. Redirecting to login…';
+  registerForm.reset();
+  setTimeout(()=>location.href='login.html?identity='+encodeURIComponent(username),1700);
+ }catch(err){msg.className='message error';msg.textContent=err.message||'Could not connect to Fresh-Mart. Please retry.';}
+ finally{button.disabled=false;button.textContent='Create account';}
+});
 </script>
 </body>
 </html>
