@@ -85,8 +85,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="team">
   <div class="welcome"><div><h1>My Team 👥</h1><p>Manage your referral links and view your team summary.</p></div></div>
-  <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value" id="directReferralCount">—</div><div class="stat-note">Members you invited (active / registered)</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value" id="leftTeamCount">—</div><div class="stat-note" id="leftTeamNote">Active / registered members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value" id="rightTeamCount">—</div><div class="stat-note" id="rightTeamNote">Active / registered members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value" id="activeTeamCount">—</div><div class="stat-note">Active accounts in your team</div></div></div>
-  <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Joined Members</h2><p class="hint" id="teamLoadMessage">Loading your referral team…</p><div class="tablewrap"><table><thead><tr><th>Member</th><th>Fresh-Mart ID</th><th>Placement</th><th>Status</th></tr></thead><tbody id="teamMemberRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
+  <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value" id="teamDirectCount">—</div><div class="stat-note">Members you invited</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value" id="teamLeftCount">—</div><div class="stat-note">Active / registered members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value" id="teamRightCount">—</div><div class="stat-note">Active / registered members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value" id="teamActiveCount">—</div><div class="stat-note">Active accounts in your team</div></div></div>
+  <div class="card" style="margin-bottom:16px"><h2 style="font-size:19px">Joined Members</h2><p id="teamLoadMessage" class="hint" role="status">Loading your team…</p><div class="tablewrap"><table><thead><tr><th>Member</th><th>Fresh-Mart ID</th><th>Placement</th><th>Status</th></tr></thead><tbody id="joinedMembersRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
   <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Your referral links will use the username of the account currently logged in.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="Loading account..." maxlength="60" autocomplete="off" readonly></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Checking your signed-in account…</div></div>
   <div class="twocol"><div class="card"><h2 style="font-size:17px;color:#168447">⬅️ Left Referral Link</h2><p class="hint">Members using this link request LEFT placement. Spillover stays inside this left branch.</p><input id="leftReferralLink" readonly aria-label="Left referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('left')">Copy Left Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('left')">WhatsApp Share</button></div></div><div class="card"><h2 style="font-size:17px;color:#168447">➡️ Right Referral Link</h2><p class="hint">Members using this link request RIGHT placement. Spillover stays inside this right branch.</p><input id="rightReferralLink" readonly aria-label="Right referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('right')">Copy Right Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('right')">WhatsApp Share</button></div></div></div>
 </section>
@@ -124,8 +124,25 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 const SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
 const refIdentityInput=document.getElementById('refIdentity');
-let currentMemberId=null;
-let currentMemberProfile=null;
+async function loadTeamData(accessToken){
+ const msg=document.getElementById('teamLoadMessage'); const body=document.getElementById('joinedMembersRows');
+ try{
+  const res=await fetch(SUPABASE_URL+'/functions/v1/fm-auth',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+accessToken},body:JSON.stringify({action:'team'})});
+  const data=await res.json();
+  if(!res.ok||!data.success) throw new Error(data.error||'Team data could not be loaded ('+res.status+').');
+  const c=data.counts||{};
+  document.getElementById('teamDirectCount').textContent=Number(c.direct||0);
+  document.getElementById('teamLeftCount').textContent=String(Number(c.leftActive||0))+' / '+String(Number(c.leftRegistered||0));
+  document.getElementById('teamRightCount').textContent=String(Number(c.rightActive||0))+' / '+String(Number(c.rightRegistered||0));
+  document.getElementById('teamActiveCount').textContent=Number(c.activeTotal||0);
+  const members=Array.isArray(data.members)?data.members:[];
+  if(!members.length){body.innerHTML='<tr><td colspan="4">No team members have joined yet.</td></tr>';}
+  else body.innerHTML=members.map(m=>'<tr><td>'+escapeTeamText(m.display_name||m.username||'Member')+'</td><td>'+escapeTeamText(m.user_code||'—')+'</td><td>'+escapeTeamText(m.placement||'—')+'</td><td>'+escapeTeamText(String(m.account_status||'unknown').toUpperCase())+'</td></tr>').join('');
+  msg.textContent='Team data updated successfully.';
+ }catch(e){console.error('Team load error',e);msg.textContent='Team data could not be loaded: '+(e.message||'Unknown error')+'. Deploy the updated fm-auth Edge Function and check its logs.';body.innerHTML='<tr><td colspan="4">Team data unavailable.</td></tr>';}
+}
+function escapeTeamText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
 async function loadSignedInMember(){
  try{
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -133,11 +150,11 @@ async function loadSignedInMember(){
   const session=JSON.parse(localStorage.getItem(authKey)||'{}');
   if(!session.access_token||!session.user?.id){document.getElementById('refLinkMessage').textContent='Login session is incomplete. Please sign in again.';return;}
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
+  loadTeamData(session.access_token);
   const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status',{headers});
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
   const profiles=await profileRes.json(); const profile=profiles[0];
   if(!profile){document.getElementById('refLinkMessage').textContent='No Fresh-Mart profile was found for this login.';return;}
-  currentMemberId=profile.id; currentMemberProfile=profile;
   const identity=profile.username||profile.user_code;
   if(!identity){document.getElementById('refLinkMessage').textContent='Your profile has no username/User ID yet. Ask admin to check your profile.';return;}
   refIdentityInput.value=identity;refIdentityInput.readOnly=true;buildReferralLinks();
@@ -151,48 +168,7 @@ async function loadSignedInMember(){
    const netRes=await fetch(SUPABASE_URL+'/rest/v1/fm_network_members?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=sponsor_id,placement_parent_id,placement_side',{headers});
    if(netRes.ok){const nets=await netRes.json();if(nets[0]?.sponsor_id){const sr=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(nets[0].sponsor_id)+'&select=username,user_code,display_name',{headers});if(sr.ok){const sp=(await sr.json())[0];if(sp)document.getElementById('sponsorInfo').textContent='Referred by: '+(sp.display_name||sp.username||sp.user_code||'Member')+(sp.user_code?' ('+sp.user_code+')':'');}}}
   }catch(e){console.warn('Sponsor details could not be loaded',e);}
-  await loadTeamMembers(headers, profile.id);
- }catch(e){console.error(e);document.getElementById('refLinkMessage').textContent='Could not load your account details. Check Supabase profile permissions/login setup.';document.getElementById('teamLoadMessage').textContent='Could not load team data. Check Supabase table permissions/RLS.';}
-}
-
-async function loadTeamMembers(headers, memberId){
- const message=document.getElementById('teamLoadMessage');
- const rowsEl=document.getElementById('teamMemberRows');
- try{
-  const netRes=await fetch(SUPABASE_URL+'/rest/v1/fm_network_members?select=user_id,sponsor_id,placement_parent_id,placement_side',{headers});
-  if(!netRes.ok) throw new Error('Network members query failed ('+netRes.status+').');
-  const networks=await netRes.json();
-  const profRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?select=id,username,user_code,display_name,account_status',{headers});
-  if(!profRes.ok) throw new Error('Profiles query failed ('+profRes.status+').');
-  const profiles=await profRes.json();
-  const byId=new Map(profiles.map(p=>[p.id,p]));
-  const children=new Map();
-  networks.forEach(n=>{if(n.placement_parent_id&&n.placement_side){const k=n.placement_parent_id+':'+String(n.placement_side).toLowerCase();if(!children.has(k))children.set(k,[]);children.get(k).push(n);}});
-  function branch(side){
-   const first=children.get(memberId+':'+side)||[];const queue=first.map(n=>({n,side}));const seen=new Set();const out=[];
-   while(queue.length){const item=queue.shift(),id=item.n.user_id;if(seen.has(id))continue;seen.add(id);out.push({...item.n,branch:side});for(const n of (children.get(id+':left')||[]))queue.push({n,side});for(const n of (children.get(id+':right')||[]))queue.push({n,side});}
-   return out;
-  }
-  const left=branch('left'),right=branch('right');
-  const direct=networks.filter(n=>n.sponsor_id===memberId);
-  const statusOf=n=>String(byId.get(n.user_id)?.account_status||'inactive').toLowerCase()==='active';
-  const leftActive=left.filter(statusOf).length,rightActive=right.filter(statusOf).length,directActive=direct.filter(statusOf).length;
-  document.getElementById('leftTeamCount').textContent=leftActive+' / '+left.length;
-  document.getElementById('rightTeamCount').textContent=rightActive+' / '+right.length;
-  document.getElementById('leftTeamNote').textContent='Active / registered members';
-  document.getElementById('rightTeamNote').textContent='Active / registered members';
-  document.getElementById('directReferralCount').textContent=directActive+' / '+direct.length;
-  document.getElementById('activeTeamCount').textContent=networks.filter(n=>n.user_id!==memberId&&statusOf(n)).filter(n=>{
-    let id=n.user_id,seen=new Set();while(id&&!seen.has(id)){if(id===memberId)return true;seen.add(id);const row=networks.find(x=>x.user_id===id);id=row?.placement_parent_id;}return false;
-  }).length;
-  const all=[...direct.map(n=>({...n,branch:'Direct'})),...left,...right];
-  const unique=[...new Map(all.map(n=>[n.user_id,n])).values()];
-  rowsEl.innerHTML='';
-  if(!unique.length){rowsEl.innerHTML='<tr><td colspan="4">No registered team members found yet.</td></tr>';}
-  unique.sort((a,b)=>String(byId.get(a.user_id)?.display_name||byId.get(a.user_id)?.username||'').localeCompare(String(byId.get(b.user_id)?.display_name||byId.get(b.user_id)?.username||'')));
-  unique.forEach(n=>{const p=byId.get(n.user_id)||{};const tr=document.createElement('tr');[p.display_name||p.username||'Member',p.user_code||'—',String(n.branch).toUpperCase()+(n.placement_side?' ('+String(n.placement_side).toUpperCase()+')':''),String(p.account_status||'inactive').toUpperCase()].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});rowsEl.appendChild(tr);});
-  message.textContent='Showing registered members visible to your account. Counts are Active / Registered.';
- }catch(e){console.error('Team data load failed',e);message.textContent='Team data could not be loaded: '+e.message+' Check Supabase RLS/table permissions.';rowsEl.innerHTML='<tr><td colspan="4">Team data unavailable. Database access must be configured securely.</td></tr>';}
+ }catch(e){console.error(e);document.getElementById('refLinkMessage').textContent='Could not load your account details. Check Supabase profile permissions/login setup.';}
 }
 
 function buildReferralLinks(){
