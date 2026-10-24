@@ -42,7 +42,7 @@ const side=(params.get('side')||'').toLowerCase();
 const refInput=document.getElementById('referral'),placement=document.getElementById('placement'),refBox=document.getElementById('refBox'),placementNote=document.getElementById('placementNote');
 if(ref){
   refInput.value=ref;refInput.readOnly=true;
-  refBox.innerHTML='<b>Referral registration</b><br>Referrer: <b>'+escapeHtml(ref)+'</b><br>Requested placement: <b>'+(side==='left'?'LEFT':side==='right'?'RIGHT':'Invalid link')+'</b><br>If this branch is full, the secure server places you in the first available slot within that side’s subtree.';
+  refBox.innerHTML='<b>Referral registration</b><br>Referrer: <b>'+escapeHtml(ref)+'</b><br>Requested placement: <b>'+(side==='left'?'LEFT':side==='right'?'RIGHT':'Invalid link')+'</b><br>Referrers may be active or inactive. If this branch is full, the secure server places you in the first available slot within that side’s subtree.';
   if(side==='left'||side==='right'){placement.value=side;placementNote.textContent='Placement comes from this referral link and cannot be changed here.';}
 }else{
   placement.value=''; placement.disabled=true;
