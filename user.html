@@ -23,7 +23,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <body>
 <header class="topbar">
   <div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div>
-  <div class="topright"><div class="userlabel"><strong>Welcome, Member</strong><div class="small">Your grocery & rewards hub</div></div><div class="avatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
+  <div class="topright"><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
 </header>
 <div class="layout">
 <aside class="sidebar">
@@ -41,7 +41,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </aside>
 <main>
 <section class="page active" id="dashboard">
-  <div class="welcome"><div><h1>Good day! 🌿</h1><p>Welcome to your Fresh-Mart member dashboard.</p></div><span class="status">● INACTIVE</span></div>
+  <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● INACTIVE</span></div>
   <div class="banner"><div><h2>Your Fresh-Mart journey starts here</h2><p>Choose a membership plan and upload your payment proof.<br>Your plan activates after admin payment verification.</p><button class="btn btn-white" data-goto="plans">Choose a Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Available shopping balance</div></div>
@@ -86,7 +86,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="team">
   <div class="welcome"><div><h1>My Team 👥</h1><p>Manage your referral links and view your team summary.</p></div></div>
   <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value">0</div><div class="stat-note">Members you invited</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value">0</div><div class="stat-note">Left-side members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value">0</div><div class="stat-note">Right-side members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value">0</div><div class="stat-note">Verified active accounts</div></div></div>
-  <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Enter your Fresh-Mart username or User ID. Share the LEFT link for left-side placement or the RIGHT link for right-side placement. Registration and database placement must be connected to the live account before production use.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="e.g. freshmart or FM123456" maxlength="60" autocomplete="off"></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Enter your own username or User ID to create your links.</div></div>
+  <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Your referral links will use the username of the account currently logged in.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="Loading account..." maxlength="60" autocomplete="off" readonly></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Checking your signed-in account…</div></div>
   <div class="twocol"><div class="card"><h2 style="font-size:17px;color:#168447">⬅️ Left Referral Link</h2><p class="hint">Members using this link request LEFT placement. Spillover stays inside this left branch.</p><input id="leftReferralLink" readonly aria-label="Left referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('left')">Copy Left Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('left')">WhatsApp Share</button></div></div><div class="card"><h2 style="font-size:17px;color:#168447">➡️ Right Referral Link</h2><p class="hint">Members using this link request RIGHT placement. Spillover stays inside this right branch.</p><input id="rightReferralLink" readonly aria-label="Right referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('right')">Copy Right Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('right')">WhatsApp Share</button></div></div></div>
 </section>
 <section class="page" id="wallets">
@@ -119,8 +119,37 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <button data-page="wallets"><span>👛</span>Wallet</button>
 </nav>
 <script>
-// Referral links: the identifier must be the member's real username or Fresh-Mart User ID.
+// Load the currently signed-in Supabase member and auto-generate referral links.
+const SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
 const refIdentityInput=document.getElementById('refIdentity');
+async function loadSignedInMember(){
+ try{
+  const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
+  if(!authKey){document.getElementById('refLinkMessage').textContent='No active login session found. Please sign in first.';refIdentityInput.placeholder='Login required';return;}
+  const session=JSON.parse(localStorage.getItem(authKey)||'{}');
+  if(!session.access_token||!session.user?.id){document.getElementById('refLinkMessage').textContent='Login session is incomplete. Please sign in again.';return;}
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
+  const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status',{headers});
+  if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
+  const profiles=await profileRes.json(); const profile=profiles[0];
+  if(!profile){document.getElementById('refLinkMessage').textContent='No Fresh-Mart profile was found for this login.';return;}
+  const identity=profile.username||profile.user_code;
+  if(!identity){document.getElementById('refLinkMessage').textContent='Your profile has no username/User ID yet. Ask admin to check your profile.';return;}
+  refIdentityInput.value=identity;refIdentityInput.readOnly=true;buildReferralLinks();
+  const display=profile.display_name||profile.username||'Member';
+  document.getElementById('topWelcome').textContent='Welcome, '+display;
+  document.getElementById('topUserCode').textContent=profile.user_code||profile.username||'Fresh-Mart member';
+  document.getElementById('userAvatar').textContent=(display.trim().charAt(0)||'F').toUpperCase();
+  document.getElementById('dashboardGreeting').textContent='Good day, '+display+'! 🌿';
+  document.getElementById('accountStatus').textContent='● '+String(profile.account_status||'inactive').toUpperCase();
+  try{
+   const netRes=await fetch(SUPABASE_URL+'/rest/v1/fm_network_members?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=sponsor_id,placement_parent_id,placement_side',{headers});
+   if(netRes.ok){const nets=await netRes.json();if(nets[0]?.sponsor_id){const sr=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(nets[0].sponsor_id)+'&select=username,user_code,display_name',{headers});if(sr.ok){const sp=(await sr.json())[0];if(sp)document.getElementById('sponsorInfo').textContent='Referred by: '+(sp.display_name||sp.username||sp.user_code||'Member')+(sp.user_code?' ('+sp.user_code+')':'');}}}
+  }catch(e){console.warn('Sponsor details could not be loaded',e);}
+ }catch(e){console.error(e);document.getElementById('refLinkMessage').textContent='Could not load your account details. Check Supabase profile permissions/login setup.';}
+}
+
 function buildReferralLinks(){
  const identity=(refIdentityInput?.value||'').trim();
  const left=document.getElementById('leftReferralLink');
@@ -134,6 +163,7 @@ function buildReferralLinks(){
  message.textContent='Links created for '+identity+'. Share only the side you want the new member to request.';
 }
 refIdentityInput?.addEventListener('input',buildReferralLinks);
+loadSignedInMember();
 async function copyReferralLink(side){
  buildReferralLinks();
  const value=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink').value;
