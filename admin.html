@@ -40,7 +40,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="welcome"><div><h1>Admin Dashboard 🌿</h1><p>Manage Fresh-Mart members, payments and grocery operations.</p></div><span class="status">SUPER ADMIN</span></div>
 <div class="banner"><div><h2>Welcome to Fresh-Mart Admin</h2><p>Review payment proofs, manage plans and keep store operations organized.</p></div><div class="bannericon">📊</div></div>
 <div class="grid">
-<div class="card"><div class="stat-head">Total Members <span class="stat-icon">👥</span></div><div class="stat-value">—</div><div class="stat-note">Connect database to load live count</div></div>
+<div class="card"><div class="stat-head">Total Members <span class="stat-icon">👥</span></div><div class="stat-value" id="totalMembers">—</div><div class="stat-note" id="membersStatus">Connecting to Supabase…</div></div>
 <div class="card"><div class="stat-head">Pending Payments <span class="stat-icon">🧾</span></div><div class="stat-value" id="pendingCount">0</div><div class="stat-note">Demo requests in this browser</div></div>
 <div class="card"><div class="stat-head">Active Plans <span class="stat-icon">✅</span></div><div class="stat-value">—</div><div class="stat-note">Live data not connected</div></div>
 <div class="card"><div class="stat-head">Orders Today <span class="stat-icon">📦</span></div><div class="stat-value">—</div><div class="stat-note">Live data not connected</div></div>
@@ -90,7 +90,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="welcome"><div><h1>Portal Settings</h1><p>Manage branding, support and portal preferences.</p></div></div>
 <div class="card"><div class="formgrid"><div class="field"><label>Portal name</label><input value="Fresh-Mart"></div><div class="field"><label>Primary theme</label><select><option>Green & White</option><option>Blue & White</option></select></div><div class="field"><label>Support email</label><input type="email" placeholder="Support email"></div><div class="field"><label>Support mobile</label><input type="tel" placeholder="Support mobile"></div><div class="field"><label>Payment instructions</label><textarea placeholder="Enter company-approved payment instructions"></textarea></div><div class="field"><label>Maintenance notice</label><textarea placeholder="Optional site notice"></textarea></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Portal settings are preview-only and not saved yet.')">Save settings</button></div>
 </section>
-<div class="small" style="text-align:center;padding:24px 0 5px">Fresh-Mart Admin · Design preview only · Secure Supabase connection not yet configured</div>
+<div class="small" id="dbStatus" style="text-align:center;padding:12px 0 5px">Connecting securely to Fresh-Mart database…</div><div class="small" style="text-align:center;padding:0 0 5px">Fresh-Mart Admin</div>
 </main>
 </div>
 <nav class="mobile-nav"><button class="active" data-page="dashboard"><span>⌂</span>Home</button><button data-page="payments"><span>🧾</span>Payments</button><button data-page="members"><span>👥</span>Members</button><button data-page="products"><span>🛍️</span>Products</button><button data-page="settings"><span>⚙</span>Settings</button></nav>
@@ -99,7 +99,29 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="modal" id="productModal"><div class="modalbox"><div class="modalhead"><h2>Add Product (Preview)</h2><button class="close" onclick="closeModal('productModal')">✕</button></div><div class="formgrid"><div class="field"><label>Product name</label><input placeholder="Product name"></div><div class="field"><label>Category</label><input placeholder="Category"></div><div class="field"><label>SKU / Barcode</label><input placeholder="Scan or enter barcode"></div><div class="field"><label>Price (₹)</label><input type="number" placeholder="0.00"></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Product creation will be enabled after database connection.')">Save product</button></div></div>
 <div class="modal" id="planModal"><div class="modalbox"><div class="modalhead"><h2>Add / Edit Plan (Preview)</h2><button class="close" onclick="closeModal('planModal')">✕</button></div><div class="formgrid"><div class="field"><label>Plan name</label><input placeholder="Plan name"></div><div class="field"><label>Plan amount (₹)</label><input type="number" placeholder="0"></div><div class="field"><label>Purchase benefit (%)</label><input type="number" placeholder="50"></div><div class="field"><label>Daily shopping credit (%)</label><input type="number" placeholder="50"></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Plan changes will be enabled after database connection.')">Save plan</button></div></div>
 <div class="modal" id="adminModal"><div class="modalbox"><div class="modalhead"><h2>Add Sub Admin (Preview)</h2><button class="close" onclick="closeModal('adminModal')">✕</button></div><div class="formgrid"><div class="field"><label>Full name</label><input placeholder="Full name"></div><div class="field"><label>Username</label><input placeholder="Username"></div><div class="field"><label>Mobile</label><input placeholder="Mobile number"></div><div class="field"><label>Permission group</label><select><option>Payment review only</option><option>Orders and delivery</option><option>Products and inventory</option><option>Member support</option></select></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Sub Admin creation will require secure authentication and server-side permissions.')">Save Sub Admin</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const FM_SUPABASE_URL = 'https://wmquhgmrvdlcxmgarxqp.supabase.co';
+const FM_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
+const fmSupabase = window.supabase.createClient(FM_SUPABASE_URL, FM_SUPABASE_PUBLISHABLE_KEY);
+async function loadFreshMartDashboard(){
+ const status=document.getElementById('dbStatus');
+ try {
+   const { count, error } = await fmSupabase.from('fm_profiles').select('id', {count:'exact', head:true});
+   if(error) throw error;
+   document.getElementById('totalMembers').textContent = Number(count||0).toLocaleString('en-IN');
+   document.getElementById('membersStatus').textContent = 'Live database count';
+   status.textContent = 'Supabase connected · Member count loaded';
+   status.style.color = '#168447';
+ } catch(e) {
+   document.getElementById('totalMembers').textContent='—';
+   document.getElementById('membersStatus').textContent='Database permission required';
+   status.textContent = 'Supabase reached, but member count is blocked by database permissions. Sign-in and safe RLS access are required.';
+   status.style.color = '#b72e2e';
+   console.error('Fresh-Mart dashboard load:',e);
+ }
+}
+loadFreshMartDashboard();
 let demoPayments=[];
 let currentReview=null;
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});}
