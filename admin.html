@@ -95,6 +95,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 </div>
 <nav class="mobile-nav"><button class="active" data-page="dashboard"><span>⌂</span>Home</button><button data-page="payments"><span>🧾</span>Payments</button><button data-page="members"><span>👥</span>Members</button><button data-page="products"><span>🛍️</span>Products</button><button data-page="settings"><span>⚙</span>Settings</button></nav>
 
+<div class="modal" id="adminSignInModal"><div class="modalbox"><div class="modalhead"><h2>Super Admin Sign In</h2><button class="close" onclick="closeModal('adminSignInModal')">✕</button></div><p class="hint">Sign in with the email and password for the Supabase Auth user assigned the <b>super_admin</b> role. This page never creates or stores passwords.</p><div class="field" style="margin:14px 0"><label>Email address</label><input id="adminEmail" type="email" autocomplete="username" placeholder="Admin email" required></div><div class="field"><label>Password</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Supabase Auth password" required></div><p id="adminSignInMsg" class="hint" aria-live="polite"></p><button class="btn btn-green" style="margin-top:12px" onclick="submitAdminSignIn()">Sign In</button></div></div>
 <div class="modal" id="reviewModal"><div class="modalbox"><div class="modalhead"><h2>Review Payment Request</h2><button class="close" onclick="closeModal('reviewModal')">✕</button></div><div id="reviewDetails" class="hint">Demo request details</div><div class="previewbox">Payment screenshot preview will load here after Supabase Storage is connected.</div><div class="field"><label>Admin note / rejection reason</label><textarea id="adminNote" placeholder="Optional for approval; explain reason if rejecting"></textarea></div><div style="display:flex;gap:9px;margin-top:16px;flex-wrap:wrap"><button class="btn btn-green" onclick="demoDecision('Approved')">Approve (Demo)</button><button class="btn btn-red" onclick="demoDecision('Rejected')">Reject (Demo)</button></div><p class="hint" style="margin-top:12px">Demo actions change only the local preview. They do not activate a real plan or update Supabase.</p></div></div>
 <div class="modal" id="productModal"><div class="modalbox"><div class="modalhead"><h2>Add Product (Preview)</h2><button class="close" onclick="closeModal('productModal')">✕</button></div><div class="formgrid"><div class="field"><label>Product name</label><input placeholder="Product name"></div><div class="field"><label>Category</label><input placeholder="Category"></div><div class="field"><label>SKU / Barcode</label><input placeholder="Scan or enter barcode"></div><div class="field"><label>Price (₹)</label><input type="number" placeholder="0.00"></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Product creation will be enabled after database connection.')">Save product</button></div></div>
 <div class="modal" id="planModal"><div class="modalbox"><div class="modalhead"><h2>Add / Edit Plan (Preview)</h2><button class="close" onclick="closeModal('planModal')">✕</button></div><div class="formgrid"><div class="field"><label>Plan name</label><input placeholder="Plan name"></div><div class="field"><label>Plan amount (₹)</label><input type="number" placeholder="0"></div><div class="field"><label>Purchase benefit (%)</label><input type="number" placeholder="50"></div><div class="field"><label>Daily shopping credit (%)</label><input type="number" placeholder="50"></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Plan changes will be enabled after database connection.')">Save plan</button></div></div>
@@ -107,20 +108,48 @@ const fmSupabase = window.supabase.createClient(FM_SUPABASE_URL, FM_SUPABASE_PUB
 async function loadFreshMartDashboard(){
  const status=document.getElementById('dbStatus');
  try {
-   const { count, error } = await fmSupabase.from('fm_profiles').select('id', {count:'exact', head:true});
+   const { data:{session}, error:sessionError } = await fmSupabase.auth.getSession();
+   if(sessionError) throw sessionError;
+   if(!session){
+     status.innerHTML='Not signed in. <button class="btn btn-outline btn-sm" onclick="openAdminSignIn()">Sign in to Admin</button>';
+     status.style.color='#956500';
+     document.getElementById('membersStatus').textContent='Sign in required';
+     return;
+   }
+   const { data:profile, error:profileError } = await fmSupabase.from('fm_profiles')
+     .select('id,username,display_name,role,account_status').eq('id',session.user.id).maybeSingle();
+   if(profileError) throw profileError;
+   if(!profile || !['super_admin','super admin','admin'].includes(String(profile.role||'').toLowerCase())){
+     await fmSupabase.auth.signOut();
+     throw new Error('This login is not assigned the Super Admin role in fm_profiles.');
+   }
+   const { count, error } = await fmSupabase.from('fm_profiles').select('id',{count:'exact',head:true});
    if(error) throw error;
-   document.getElementById('totalMembers').textContent = Number(count||0).toLocaleString('en-IN');
-   document.getElementById('membersStatus').textContent = 'Live database count';
-   status.textContent = 'Supabase connected · Member count loaded';
-   status.style.color = '#168447';
+   document.getElementById('totalMembers').textContent=Number(count||0).toLocaleString('en-IN');
+   document.getElementById('membersStatus').textContent='Live database count';
+   document.querySelector('.userlabel strong').textContent=profile.display_name||profile.username||'Super Admin';
+   status.textContent='Supabase connected · Signed in as '+(profile.username||'Super Admin');
+   status.style.color='#168447';
  } catch(e) {
    document.getElementById('totalMembers').textContent='—';
-   document.getElementById('membersStatus').textContent='Database permission required';
-   status.textContent = 'Supabase reached, but member count is blocked by database permissions. Sign-in and safe RLS access are required.';
-   status.style.color = '#b72e2e';
+   document.getElementById('membersStatus').textContent='Sign-in / database permission needed';
+   status.textContent='Admin data could not load: '+(e.message||'Check sign-in and Supabase RLS policies.');
+   status.style.color='#b72e2e';
    console.error('Fresh-Mart dashboard load:',e);
  }
 }
+function openAdminSignIn(){document.getElementById('adminSignInModal').classList.add('open');}
+async function submitAdminSignIn(){
+ const email=document.getElementById('adminEmail').value.trim();
+ const password=document.getElementById('adminPassword').value;
+ const msg=document.getElementById('adminSignInMsg');
+ msg.textContent='Signing in…';
+ const {error}=await fmSupabase.auth.signInWithPassword({email,password});
+ if(error){msg.textContent=error.message;return;}
+ closeModal('adminSignInModal');
+ await loadFreshMartDashboard();
+}
+fmSupabase.auth.onAuthStateChange(()=>{setTimeout(loadFreshMartDashboard,0);});
 loadFreshMartDashboard();
 let demoPayments=[];
 let currentReview=null;
