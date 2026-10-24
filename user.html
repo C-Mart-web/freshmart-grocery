@@ -86,7 +86,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="team">
   <div class="welcome"><div><h1>My Team 👥</h1><p>Manage your referral links and view your team summary.</p></div></div>
   <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value">0</div><div class="stat-note">Members you invited</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value">0</div><div class="stat-note">Left-side members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value">0</div><div class="stat-note">Right-side members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value">0</div><div class="stat-note">Verified active accounts</div></div></div>
-  <div class="card"><h2 style="font-size:17px">Your referral link</h2><p class="hint">Your personal referral link will appear here after account registration and Supabase connection.</p><button class="btn btn-green" onclick="alert('Referral link will be enabled after Supabase connection.')">Copy referral link</button></div>
+  <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Enter your Fresh-Mart username or User ID. Share the LEFT link for left-side placement or the RIGHT link for right-side placement. Registration and database placement must be connected to the live account before production use.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="e.g. freshmart or FM123456" maxlength="60" autocomplete="off"></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Enter your own username or User ID to create your links.</div></div>
+  <div class="twocol"><div class="card"><h2 style="font-size:17px;color:#168447">⬅️ Left Referral Link</h2><p class="hint">Members using this link request LEFT placement. Spillover stays inside this left branch.</p><input id="leftReferralLink" readonly aria-label="Left referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('left')">Copy Left Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('left')">WhatsApp Share</button></div></div><div class="card"><h2 style="font-size:17px;color:#168447">➡️ Right Referral Link</h2><p class="hint">Members using this link request RIGHT placement. Spillover stays inside this right branch.</p><input id="rightReferralLink" readonly aria-label="Right referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('right')">Copy Right Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('right')">WhatsApp Share</button></div></div></div>
 </section>
 <section class="page" id="wallets">
   <div class="welcome"><div><h1>My Wallets 👛</h1><p>View balances and transaction history.</p></div></div>
@@ -118,6 +119,35 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <button data-page="wallets"><span>👛</span>Wallet</button>
 </nav>
 <script>
+// Referral links: the identifier must be the member's real username or Fresh-Mart User ID.
+const refIdentityInput=document.getElementById('refIdentity');
+function buildReferralLinks(){
+ const identity=(refIdentityInput?.value||'').trim();
+ const left=document.getElementById('leftReferralLink');
+ const right=document.getElementById('rightReferralLink');
+ const message=document.getElementById('refLinkMessage');
+ if(!identity){left.value='';right.value='';message.textContent='Enter your own username or User ID to create your links.';return;}
+ const registerUrl=new URL('register.html',window.location.href);
+ registerUrl.searchParams.set('ref',identity);
+ registerUrl.searchParams.set('side','left');left.value=registerUrl.toString();
+ registerUrl.searchParams.set('side','right');right.value=registerUrl.toString();
+ message.textContent='Links created for '+identity+'. Share only the side you want the new member to request.';
+}
+refIdentityInput?.addEventListener('input',buildReferralLinks);
+async function copyReferralLink(side){
+ buildReferralLinks();
+ const value=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink').value;
+ if(!value){alert('First enter your username or Fresh-Mart User ID.');return;}
+ try{await navigator.clipboard.writeText(value);alert('Copied '+side.toUpperCase()+' referral link.');}
+ catch(e){const input=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink');input.focus();input.select();const ok=document.execCommand('copy');alert(ok?'Copied '+side.toUpperCase()+' referral link.':'Please copy the selected link manually.');}
+}
+function shareReferralLink(side){
+ buildReferralLinks();
+ const value=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink').value;
+ if(!value){alert('First enter your username or Fresh-Mart User ID.');return;}
+ const text='Join Fresh-Mart using my '+side.toUpperCase()+' referral link: '+value;
+ window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
+}
 function showPage(id){
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
  document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
