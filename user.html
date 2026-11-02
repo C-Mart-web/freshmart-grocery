@@ -127,7 +127,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="profile">
   <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account details and get help.</p></div></div>
-  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input placeholder="Will load from your account"></div><div class="field"><label>Username</label><input placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input placeholder="Generated after registration"></div></div><p class="hint">Profile editing and password change will be enabled through secure authentication.</p></div>
+  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input placeholder="Will load from your account"></div><div class="field"><label>Username</label><input placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input placeholder="Generated after registration"></div></div><p class="hint">Your account details are shown here. Use the secure form below to change your password.</p></div>
+  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Change Password 🔐</h2><p class="hint">Choose a new password with at least 8 characters. Do not share it with anyone.</p><div class="formgrid"><div class="field"><label for="memberNewPassword">New password</label><input id="memberNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Enter new password"></div><div class="field"><label for="memberConfirmPassword">Confirm new password</label><input id="memberConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Re-enter new password"></div></div><p id="memberPasswordMsg" class="hint" aria-live="polite"></p><button class="btn btn-green" type="button" id="memberChangePasswordBtn" onclick="changeOwnPassword()">Update Password</button></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
 <div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping<br>Design preview — not yet connected to live account data.</div>
@@ -190,6 +191,29 @@ async function loadSignedInMember(){
    if(netRes.ok){const nets=await netRes.json();if(nets[0]?.sponsor_id){const sr=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(nets[0].sponsor_id)+'&select=username,user_code,display_name',{headers});if(sr.ok){const sp=(await sr.json())[0];if(sp)document.getElementById('sponsorInfo').textContent='Referred by: '+(sp.display_name||sp.username||sp.user_code||'Member')+(sp.user_code?' ('+sp.user_code+')':'');}}}
   }catch(e){console.warn('Sponsor details could not be loaded',e);}
  }catch(e){console.error(e);document.getElementById('refLinkMessage').textContent='Could not load your account details. Check Supabase profile permissions/login setup.';}
+}
+
+async function changeOwnPassword(){
+ const password=document.getElementById('memberNewPassword').value;
+ const confirmPassword=document.getElementById('memberConfirmPassword').value;
+ const msg=document.getElementById('memberPasswordMsg');
+ const btn=document.getElementById('memberChangePasswordBtn');
+ msg.textContent='';msg.style.color='#b72e2e';
+ if(password.length<8||password.length>128){msg.textContent='Password must be 8–128 characters.';return;}
+ if(password!==confirmPassword){msg.textContent='Passwords do not match.';return;}
+ try{
+  const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
+  if(!authKey)throw new Error('Login session not found. Please sign in again.');
+  const session=JSON.parse(localStorage.getItem(authKey)||'{}');
+  if(!session.access_token)throw new Error('Login session expired. Please sign in again.');
+  btn.disabled=true;btn.textContent='Updating…';
+  const response=await fetch(SUPABASE_URL+'/functions/v1/fm-auth',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'change_password',new_password:password})});
+  const result=await response.json().catch(()=>({success:false,error:'Unreadable server response.'}));
+  if(!response.ok||!result.success)throw new Error(result.error||'Password change failed.');
+  msg.style.color='#168447';msg.textContent='Password changed successfully. Use your new password next time you log in.';
+  document.getElementById('memberNewPassword').value='';document.getElementById('memberConfirmPassword').value='';
+ }catch(e){msg.textContent=e.message||'Could not change password.';}
+ finally{btn.disabled=false;btn.textContent='Update Password';}
 }
 
 function buildReferralLinks(){

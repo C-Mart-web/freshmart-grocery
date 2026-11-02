@@ -58,7 +58,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="welcome"><div><h1>Members</h1><p>Search member accounts and review activation status.</p></div></div>
 <div class="searchrow"><input id="memberSearchInput" placeholder="Search name, username, mobile or user ID" onkeydown="if(event.key==='Enter')loadMembers()"><select id="memberStatusFilter"><option value="all">All account statuses</option><option value="inactive">Inactive</option><option value="active">Active</option><option value="blocked">Blocked</option></select><button class="btn btn-green" onclick="loadMembers()">Search</button></div>
 <p id="memberLoadStatus" class="hint" aria-live="polite">Members will load from Supabase after admin sign-in.</p>
-<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Account Type</th><th>Account Status</th></tr></thead><tbody id="membersTable"><tr><td colspan="6" class="empty">Loading member records…</td></tr></tbody></table></div></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Account Type</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="7" class="empty">Loading member records…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="products">
 <div class="welcome"><div><h1>Products & Categories</h1><p>Manage grocery catalogue, prices and offers.</p></div><button class="btn btn-green" onclick="openModal('productModal')">+ Add Product</button></div>
@@ -162,7 +162,7 @@ async function loadMembers(){
  const tbody=document.getElementById('membersTable');
  const status=document.getElementById('memberLoadStatus');
  if(!tbody||!status)return;
- tbody.innerHTML='<tr><td colspan="6" class="empty">Loading members…</td></tr>';
+ tbody.innerHTML='<tr><td colspan="7" class="empty">Loading members…</td></tr>';
  status.textContent='Connecting to member records…';status.style.color='#718078';
  try{
   const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
@@ -179,15 +179,33 @@ async function loadMembers(){
   const {data,error}=await query;
   if(error)throw error;
   const rows=data||[];
-  tbody.innerHTML=rows.map(m=>`<tr><td>${escapeHtml(m.user_code||m.id||'—')}</td><td>${escapeHtml(m.display_name||'—')}</td><td>${escapeHtml(m.username||'—')}</td><td>${escapeHtml(m.mobile_number||'—')}</td><td>${escapeHtml(m.account_type||'Not set')}</td><td><span class="badge ${String(m.account_status).toLowerCase()==='active'?'approved':String(m.account_status).toLowerCase()==='blocked'?'rejected':'pending'}">${escapeHtml(m.account_status||'unknown')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No member records match this search.</td></tr>';
+  tbody.innerHTML=rows.map(m=>`<tr><td>${escapeHtml(m.user_code||m.id||'—')}</td><td>${escapeHtml(m.display_name||'—')}</td><td>${escapeHtml(m.username||'—')}</td><td>${escapeHtml(m.mobile_number||'—')}</td><td>${escapeHtml(m.account_type||'Not set')}</td><td><span class="badge ${String(m.account_status).toLowerCase()==='active'?'approved':String(m.account_status).toLowerCase()==='blocked'?'rejected':'pending'}">${escapeHtml(m.account_status||'unknown')}</span></td><td><button class="btn btn-outline btn-sm" onclick="resetMemberPassword('${m.id}')">Reset Password</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No member records match this search.</td></tr>';
   status.textContent=`Showing ${rows.length} member record(s).`;
   status.style.color='#168447';
  }catch(e){
-  tbody.innerHTML=`<tr><td colspan="6" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
+  tbody.innerHTML=`<tr><td colspan="7" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
   status.textContent='Member list could not be loaded. Check the message in the table and Supabase SELECT permissions.';
   status.style.color='#b72e2e';
   console.error('Fresh-Mart members load:',e);
  }
+}
+async function resetMemberPassword(memberId){
+ const first=prompt('Enter a temporary password for this member (minimum 8 characters):');
+ if(first===null)return;
+ if(first.length<8||first.length>128){alert('Temporary password must be 8–128 characters.');return;}
+ const second=prompt('Re-enter the temporary password to confirm:');
+ if(second===null)return;
+ if(first!==second){alert('Passwords do not match. Nothing was changed.');return;}
+ if(!confirm('Reset this member password now? The member should change it after login.'))return;
+ try{
+  const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!session)throw new Error('Please sign in again as Super Admin.');
+  const response=await fetch(FM_SUPABASE_URL+'/functions/v1/fm-auth',{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'admin_reset_password',target_user_id:memberId,new_password:first})});
+  const result=await response.json().catch(()=>({success:false,error:'Unreadable server response.'}));
+  if(!response.ok||!result.success)throw new Error(result.error||'Password reset failed.');
+  alert(result.message||'Password reset successfully.');
+ }catch(e){alert('Could not reset password: '+(e.message||'Unknown error'));}
 }
 function openAdminSignIn(){document.getElementById('adminSignInModal').classList.add('open');}
 async function sendAdminPasswordReset(){
