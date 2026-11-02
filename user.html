@@ -126,8 +126,44 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card"><div class="section-head"><h2>Order history</h2><span class="badge pending">0 ORDERS</span></div><p class="hint">Your grocery orders and delivery tracking will appear here after the store and checkout flow is connected.</p></div>
 </section>
 <section class="page" id="profile">
-  <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account details and get help.</p></div></div>
-  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input placeholder="Will load from your account"></div><div class="field"><label>Username</label><input placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input placeholder="Generated after registration"></div></div><p class="hint">Your account details are shown here. Use the secure form below to change your password.</p></div>
+  <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account, delivery addresses and password.</p></div></div>
+  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Fresh-Mart support.</p></div>
+
+  <div class="card" style="margin-top:17px">
+    <div class="section-head"><h2>My Delivery Addresses 📍</h2><span class="badge approved" id="addressCount">0 / 3</span></div>
+    <p class="hint">Save up to 3 addresses. Choose your preferred address during grocery checkout.</p>
+    <div id="savedAddressList"><p class="hint">Loading your saved addresses…</p></div>
+    <div class="section-head" style="margin-top:16px"><h3 id="addressFormTitle" style="font-size:15px;margin:0">Add New Address</h3></div>
+    <input type="hidden" id="addressEditId">
+    <div class="formgrid">
+      <div class="field"><label for="addressLabel">Address type *</label><select id="addressLabel"><option value="Home">Home</option><option value="Work">Work</option><option value="Other">Other</option></select></div>
+      <div class="field"><label for="addressRecipient">Recipient name *</label><input id="addressRecipient" maxlength="100" placeholder="Name receiving the order"></div>
+      <div class="field"><label for="addressMobile">Mobile number *</label><input id="addressMobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"></div>
+      <div class="field"><label for="addressPincode">PIN code *</label><input id="addressPincode" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit PIN code" oninput="clearPostalLookup()" onblur="lookupPostalCode()"></div>
+      <div class="field" style="grid-column:1/-1"><label for="addressPostOffice">Post Office / Area *</label><input id="addressPostOffice" maxlength="120" placeholder="Select or enter your post office / area"></div>
+      <div class="field"><label for="addressLine1">House / Flat / Door No. *</label><input id="addressLine1" maxlength="180" placeholder="House number, apartment"></div>
+      <div class="field"><label for="addressLine2">Street / Road</label><input id="addressLine2" maxlength="180" placeholder="Street, road"></div>
+      <div class="field"><label for="addressLandmark">Landmark</label><input id="addressLandmark" maxlength="120" placeholder="Near landmark (optional)"></div>
+      <div class="field"><label for="addressDistrict">District *</label><input id="addressDistrict" maxlength="100" placeholder="District"></div>
+      <div class="field"><label for="addressCity">City / Town / Village *</label><input id="addressCity" maxlength="100" placeholder="City / Town / Village"></div>
+      <div class="field"><label for="addressState">State *</label><input id="addressState" maxlength="100" placeholder="State"></div>
+    </div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">
+      <button class="btn btn-outline" type="button" onclick="detectDeliveryLocation()">📍 Use Current Location</button>
+      <button class="btn btn-outline" type="button" onclick="openAddressMap()">🗺️ Open Map</button>
+    </div>
+    <p id="addressLocationMsg" class="hint" aria-live="polite">Enter PIN code to find its postal area, or use your current location to fill the address.</p>
+    <div id="addressMapPreview" style="display:none;margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden">
+      <iframe id="addressMapFrame" title="Selected delivery location map" style="width:100%;height:220px;border:0" loading="lazy"></iframe>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;font-weight:700"><input type="checkbox" id="addressIsDefault"> Set as my default delivery address</label>
+    <p id="addressSaveMessage" class="hint" aria-live="polite"></p>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn btn-green" type="button" id="saveAddressBtn" onclick="saveDeliveryAddress()">Save Address</button>
+      <button class="btn btn-outline" type="button" onclick="resetAddressForm()">Clear</button>
+    </div>
+  </div>
+
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Change Password 🔐</h2><p class="hint">Choose a new password with at least 8 characters. Do not share it with anyone.</p><div class="formgrid"><div class="field"><label for="memberNewPassword">New password</label><input id="memberNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Enter new password"></div><div class="field"><label for="memberConfirmPassword">Confirm new password</label><input id="memberConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Re-enter new password"></div></div><p id="memberPasswordMsg" class="hint" aria-live="polite"></p><button class="btn btn-green" type="button" id="memberChangePasswordBtn" onclick="changeOwnPassword()">Update Password</button></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
@@ -149,7 +185,7 @@ const refIdentityInput=document.getElementById('refIdentity');
 async function loadTeamData(accessToken){
  const msg=document.getElementById('teamLoadMessage'); const body=document.getElementById('joinedMembersRows');
  try{
-  const res=await fetch(SUPABASE_URL+'/functions/v1/fm-auth',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+accessToken},body:JSON.stringify({action:'team'})});
+  const res=await fetch(SUPABASE_URL+'/functions/v1/clever-service',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+accessToken},body:JSON.stringify({action:'team'})});
   const data=await res.json();
   if(!res.ok||!data.success) throw new Error(data.error||'Team data could not be loaded ('+res.status+').');
   const c=data.counts||{};
@@ -181,7 +217,12 @@ async function loadSignedInMember(){
   if(!identity){document.getElementById('refLinkMessage').textContent='Your profile has no username/User ID yet. Ask admin to check your profile.';return;}
   refIdentityInput.value=identity;refIdentityInput.readOnly=true;buildReferralLinks();
   const display=profile.display_name||profile.username||'Member';
-  document.getElementById('topWelcome').textContent='Welcome, '+display;
+  document.getElementById('memberProfileName').value=profile.display_name||'';
+   document.getElementById('memberProfileUsername').value=profile.username||'';
+   document.getElementById('memberProfileMobile').value=profile.mobile_number||'';
+   document.getElementById('memberProfileCode').value=profile.user_code||'';
+   loadDeliveryAddresses();
+   document.getElementById('topWelcome').textContent='Welcome, '+display;
   document.getElementById('topUserCode').textContent=profile.user_code||profile.username||'Fresh-Mart member';
   document.getElementById('userAvatar').textContent=(display.trim().charAt(0)||'F').toUpperCase();
   document.getElementById('dashboardGreeting').textContent='Good day, '+display+'! 🌿';
@@ -191,6 +232,146 @@ async function loadSignedInMember(){
    if(netRes.ok){const nets=await netRes.json();if(nets[0]?.sponsor_id){const sr=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(nets[0].sponsor_id)+'&select=username,user_code,display_name',{headers});if(sr.ok){const sp=(await sr.json())[0];if(sp)document.getElementById('sponsorInfo').textContent='Referred by: '+(sp.display_name||sp.username||sp.user_code||'Member')+(sp.user_code?' ('+sp.user_code+')':'');}}}
   }catch(e){console.warn('Sponsor details could not be loaded',e);}
  }catch(e){console.error(e);document.getElementById('refLinkMessage').textContent='Could not load your account details. Check Supabase profile permissions/login setup.';}
+}
+
+
+// Delivery address management. Requires the fm_member_addresses table and its RLS policies.
+let fmAddressSession=null, fmAddresses=[], fmAddressCoords=null, fmPostalLookupTimer=null;
+async function getMemberSession(){
+ const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
+ if(!authKey)throw new Error('Login session not found. Please sign in again.');
+ const session=JSON.parse(localStorage.getItem(authKey)||'{}');
+ if(!session.access_token||!session.user?.id)throw new Error('Login session expired. Please sign in again.');
+ fmAddressSession=session;return session;
+}
+function addressHeaders(token){
+ return {'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+token,'Prefer':'return=representation'};
+}
+async function loadDeliveryAddresses(){
+ const list=document.getElementById('savedAddressList');if(!list)return;
+ try{
+  const session=await getMemberSession();
+  const r=await fetch(SUPABASE_URL+'/rest/v1/fm_member_addresses?user_id=eq.'+encodeURIComponent(session.user.id)+'&select=*&order=is_default.desc,created_at.desc',{headers:addressHeaders(session.access_token)});
+  const data=await r.json().catch(()=>[]);
+  if(!r.ok)throw new Error(data.message||data.error||'Address list could not load. Run the address table SQL first.');
+  fmAddresses=Array.isArray(data)?data:[];
+  renderDeliveryAddresses();
+ }catch(e){list.innerHTML='<p class="hint" style="color:#b72e2e">Could not load addresses: '+escapeTeamText(e.message||'Database error')+'</p>';document.getElementById('addressCount').textContent=fmAddresses.length+' / 3';}
+}
+function renderDeliveryAddresses(){
+ const list=document.getElementById('savedAddressList');
+ document.getElementById('addressCount').textContent=fmAddresses.length+' / 3';
+ if(!fmAddresses.length){list.innerHTML='<p class="hint">No saved delivery addresses yet. Add your first address below.</p>';return;}
+ list.innerHTML=fmAddresses.map(a=>{
+  const full=[a.address_line1,a.address_line2,a.landmark,a.post_office,a.city,a.district,a.state,a.pincode].filter(Boolean).join(', ');
+  return '<div class="card" style="padding:13px;margin:9px 0;background:'+(a.is_default?'#f3fff6':'#fff')+';box-shadow:none"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong>'+escapeTeamText(a.label||'Address')+' · '+escapeTeamText(a.recipient_name||'')+'</strong>'+(a.is_default?'<span class="badge approved">DEFAULT</span>':'')+'</div><p class="hint" style="margin:7px 0">'+escapeTeamText(full)+'<br>Mobile: '+escapeTeamText(a.mobile_number||'')+'</p><div style="display:flex;gap:8px;flex-wrap:wrap">'+(a.is_default?'':'<button class="btn btn-outline" type="button" onclick="setDefaultAddress('+JSON.stringify(String(a.id))+')">Set Default</button>')+'<button class="btn btn-outline" type="button" onclick="editDeliveryAddress('+JSON.stringify(String(a.id))+')">Edit</button><button class="btn btn-outline" type="button" onclick="deleteDeliveryAddress('+JSON.stringify(String(a.id))+')">Delete</button></div></div>';
+ }).join('');
+}
+function clearPostalLookup(){clearTimeout(fmPostalLookupTimer);fmPostalLookupTimer=setTimeout(()=>{const pin=document.getElementById('addressPincode').value.trim();if(pin.length===6)lookupPostalCode();},500);}
+async function lookupPostalCode(){
+ const pin=document.getElementById('addressPincode').value.trim(),msg=document.getElementById('addressLocationMsg');
+ if(!/^[1-9][0-9]{5}$/.test(pin))return;
+ msg.textContent='Looking up India Post PIN code…';msg.style.color='#718078';
+ try{
+  const r=await fetch('https://api.postalpincode.in/pincode/'+encodeURIComponent(pin));
+  const d=await r.json();
+  if(!Array.isArray(d)||d[0]?.Status!=='Success'||!d[0]?.PostOffice?.length)throw new Error('No postal area found for this PIN code.');
+  const offices=d[0].PostOffice;
+  const first=offices[0];
+  document.getElementById('addressDistrict').value=first.District||'';
+  document.getElementById('addressState').value=first.State||'';
+  const area=document.getElementById('addressPostOffice');
+  if(offices.length>1){
+   const names=offices.map(x=>x.Name).filter(Boolean);
+   area.setAttribute('list','fmPostOfficeOptions');
+   let dl=document.getElementById('fmPostOfficeOptions');if(!dl){dl=document.createElement('datalist');dl.id='fmPostOfficeOptions';area.after(dl);}
+   dl.innerHTML=names.map(n=>'<option value="'+escapeTeamText(n)+'"></option>').join('');
+   area.value=first.Name||'';
+   msg.textContent='PIN code found. Choose your Post Office / area from the suggestions.';
+  }else{area.value=first.Name||'';msg.textContent='PIN code verified: '+first.Name+', '+first.District+', '+first.State;}
+  msg.style.color='#168447';
+ }catch(e){msg.textContent=e.message||'Could not look up PIN code. Enter the area and district manually.';msg.style.color='#b72e2e';}
+}
+function addressPayload(){
+ const v=id=>document.getElementById(id).value.trim();
+ return {label:v('addressLabel'),recipient_name:v('addressRecipient'),mobile_number:v('addressMobile'),pincode:v('addressPincode'),post_office:v('addressPostOffice'),address_line1:v('addressLine1'),address_line2:v('addressLine2'),landmark:v('addressLandmark'),district:v('addressDistrict'),city:v('addressCity'),state:v('addressState'),latitude:fmAddressCoords?.lat??null,longitude:fmAddressCoords?.lng??null,is_default:document.getElementById('addressIsDefault').checked};
+}
+async function saveDeliveryAddress(){
+ const msg=document.getElementById('addressSaveMessage'),btn=document.getElementById('saveAddressBtn');
+ try{
+  const session=await getMemberSession(),p=addressPayload(),editId=document.getElementById('addressEditId').value;
+  if(!p.recipient_name||!/^[6-9][0-9]{9}$/.test(p.mobile_number))throw new Error('Enter recipient name and a valid 10-digit mobile number.');
+  if(!/^[1-9][0-9]{5}$/.test(p.pincode))throw new Error('Enter a valid 6-digit PIN code.');
+  if(!p.post_office||!p.address_line1||!p.city||!p.district||!p.state)throw new Error('Fill Post Office / Area, House number, City, District and State.');
+  if(!editId&&fmAddresses.length>=3)throw new Error('You can save a maximum of 3 addresses. Edit or delete an existing address.');
+  btn.disabled=true;msg.textContent='Saving address…';msg.style.color='#718078';
+  if(p.is_default){const clear=await fetch(SUPABASE_URL+'/rest/v1/fm_member_addresses?user_id=eq.'+encodeURIComponent(session.user.id),{method:'PATCH',headers:addressHeaders(session.access_token),body:JSON.stringify({is_default:false})});if(!clear.ok)throw new Error('Could not update default address setting.');}
+  let url=SUPABASE_URL+'/rest/v1/fm_member_addresses',method='POST';
+  if(editId){url+='?id=eq.'+encodeURIComponent(editId)+'&user_id=eq.'+encodeURIComponent(session.user.id);method='PATCH';}
+  const r=await fetch(url,{method,headers:addressHeaders(session.access_token),body:JSON.stringify(p)});
+  const result=await r.json().catch(()=>[]);
+  if(!r.ok)throw new Error(result.message||result.error||'Address save failed. Check the address table SQL and RLS policies.');
+  msg.textContent='Address saved successfully.';msg.style.color='#168447';resetAddressForm(false);await loadDeliveryAddresses();
+ }catch(e){msg.textContent=e.message||'Could not save address.';msg.style.color='#b72e2e';}
+ finally{btn.disabled=false;}
+}
+function editDeliveryAddress(id){
+ const a=fmAddresses.find(x=>String(x.id)===String(id));if(!a)return;
+ document.getElementById('addressEditId').value=a.id;
+ const map={addressLabel:'label',addressRecipient:'recipient_name',addressMobile:'mobile_number',addressPincode:'pincode',addressPostOffice:'post_office',addressLine1:'address_line1',addressLine2:'address_line2',addressLandmark:'landmark',addressDistrict:'district',addressCity:'city',addressState:'state'};
+ Object.entries(map).forEach(([id,k])=>document.getElementById(id).value=a[k]||'');
+ document.getElementById('addressIsDefault').checked=!!a.is_default;
+ fmAddressCoords=a.latitude!=null&&a.longitude!=null?{lat:Number(a.latitude),lng:Number(a.longitude)}:null;
+ document.getElementById('addressFormTitle').textContent='Edit Saved Address';
+ document.getElementById('saveAddressBtn').textContent='Update Address';
+ document.getElementById('addressSaveMessage').textContent='Editing '+(a.label||'address')+'.';
+ if(fmAddressCoords)showAddressMap(fmAddressCoords.lat,fmAddressCoords.lng);
+ document.getElementById('addressFormTitle').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function resetAddressForm(clearMessage=true){
+ ['addressEditId','addressRecipient','addressMobile','addressPincode','addressPostOffice','addressLine1','addressLine2','addressLandmark','addressDistrict','addressCity','addressState'].forEach(id=>document.getElementById(id).value='');
+ document.getElementById('addressLabel').value='Home';document.getElementById('addressIsDefault').checked=fmAddresses.length===0;
+ document.getElementById('addressFormTitle').textContent='Add New Address';document.getElementById('saveAddressBtn').textContent='Save Address';fmAddressCoords=null;
+ document.getElementById('addressMapPreview').style.display='none';if(clearMessage)document.getElementById('addressSaveMessage').textContent='';
+ document.getElementById('addressLocationMsg').textContent='Enter PIN code to find its postal area, or use your current location to fill the address.';
+}
+async function deleteDeliveryAddress(id){
+ if(!confirm('Delete this saved address?'))return;
+ try{const session=await getMemberSession();const r=await fetch(SUPABASE_URL+'/rest/v1/fm_member_addresses?id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(session.user.id),{method:'DELETE',headers:addressHeaders(session.access_token)});if(!r.ok)throw new Error('Could not delete address.');await loadDeliveryAddresses();}catch(e){alert(e.message||'Delete failed.');}
+}
+async function setDefaultAddress(id){
+ try{const session=await getMemberSession();let r=await fetch(SUPABASE_URL+'/rest/v1/fm_member_addresses?user_id=eq.'+encodeURIComponent(session.user.id),{method:'PATCH',headers:addressHeaders(session.access_token),body:JSON.stringify({is_default:false})});if(!r.ok)throw new Error('Could not clear previous default.');r=await fetch(SUPABASE_URL+'/rest/v1/fm_member_addresses?id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(session.user.id),{method:'PATCH',headers:addressHeaders(session.access_token),body:JSON.stringify({is_default:true})});if(!r.ok)throw new Error('Could not set default address.');await loadDeliveryAddresses();}catch(e){alert(e.message||'Could not update default address.');}
+}
+function showAddressMap(lat,lng){
+ document.getElementById('addressMapPreview').style.display='block';
+ const delta=0.008,bbox=[lng-delta,lat-delta,lng+delta,lat+delta].join('%2C');
+ document.getElementById('addressMapFrame').src='https://www.openstreetmap.org/export/embed.html?bbox='+bbox+'&layer=mapnik&marker='+lat+'%2C'+lng;
+}
+function openAddressMap(){
+ if(fmAddressCoords){window.open('https://www.openstreetmap.org/?mlat='+fmAddressCoords.lat+'&mlon='+fmAddressCoords.lng+'#map=17/'+fmAddressCoords.lat+'/'+fmAddressCoords.lng,'_blank','noopener');return;}
+ const q=[document.getElementById('addressLine1').value,document.getElementById('addressPostOffice').value,document.getElementById('addressPincode').value].filter(Boolean).join(' ');
+ if(!q){alert('Enter your address or use Current Location first.');return;}
+ window.open('https://www.openstreetmap.org/search?query='+encodeURIComponent(q),'_blank','noopener');
+}
+async function detectDeliveryLocation(){
+ const msg=document.getElementById('addressLocationMsg');
+ if(!navigator.geolocation){msg.textContent='Location detection is not supported by this browser. Enter address manually.';return;}
+ msg.textContent='Requesting location permission…';
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  const lat=pos.coords.latitude,lng=pos.coords.longitude;fmAddressCoords={lat,lng};showAddressMap(lat,lng);
+  msg.textContent='Location found. Looking up nearby address…';
+  try{
+   const r=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+lat+'&lon='+lng+'&addressdetails=1');
+   const d=await r.json(),a=d.address||{};
+   document.getElementById('addressLine1').value=[a.house_number,a.road].filter(Boolean).join(', ')||d.name||'';
+   document.getElementById('addressPostOffice').value=a.suburb||a.neighbourhood||a.village||a.town||a.city||'';
+   document.getElementById('addressCity').value=a.city||a.town||a.village||a.municipality||'';
+   document.getElementById('addressDistrict').value=a.state_district||a.county||'';
+   document.getElementById('addressState').value=a.state||'';
+   document.getElementById('addressPincode').value=a.postcode||'';
+   msg.textContent='Current location detected. Please verify all address fields before saving.';msg.style.color='#168447';
+  }catch(e){msg.textContent='Map location found. Please enter the address and PIN code manually.';msg.style.color='#956500';}
+ },err=>{msg.textContent='Could not detect location: '+err.message+'. Please allow location access or enter manually.';msg.style.color='#b72e2e';},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
 }
 
 async function changeOwnPassword(){
@@ -207,7 +388,7 @@ async function changeOwnPassword(){
   const session=JSON.parse(localStorage.getItem(authKey)||'{}');
   if(!session.access_token)throw new Error('Login session expired. Please sign in again.');
   btn.disabled=true;btn.textContent='Updating…';
-  const response=await fetch(SUPABASE_URL+'/functions/v1/fm-auth',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'change_password',new_password:password})});
+  const response=await fetch(SUPABASE_URL+'/functions/v1/clever-service',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'change_password',new_password:password})});
   const result=await response.json().catch(()=>({success:false,error:'Unreadable server response.'}));
   if(!response.ok||!result.success)throw new Error(result.error||'Password change failed.');
   msg.style.color='#168447';msg.textContent='Password changed successfully. Use your new password next time you log in.';
