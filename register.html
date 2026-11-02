@@ -20,6 +20,7 @@
     <div class="field full"><label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Enter your full name" required maxlength="100"></div>
     <div class="field"><label for="username">Choose username</label><input id="username" autocomplete="username" placeholder="e.g. ravi123" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._]+" title="Use letters, numbers, dots or underscores"></div>
     <div class="field"><label for="mobile">Mobile number</label><input id="mobile" autocomplete="tel" inputmode="numeric" placeholder="10-digit mobile" required pattern="[6-9][0-9]{9}" maxlength="10"></div>
+    <div class="field full"><label for="accountType">Account Type *</label><select id="accountType" required><option value="">Choose account type</option><option value="retail">Retail Customer</option><option value="wholesale">Wholesale Customer</option></select><div class="passwordnote">Retail and Wholesale accounts have separate product prices and order minimums.</div></div>
     <div class="field"><label for="password">Create password</label><input id="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8"><div class="passwordnote">Use at least 8 characters.</div></div>
     <div class="field"><label for="confirm">Confirm password</label><input id="confirm" type="password" autocomplete="new-password" placeholder="Re-enter password" required minlength="8"></div>
     <div class="field"><label for="placement">Placement side</label><select id="placement" disabled><option value="">Admin-controlled auto-placement</option><option value="left">LEFT</option><option value="right">RIGHT</option></select><div class="passwordnote" id="placementNote">Direct registration placement is controlled by Super Admin settings.</div></div>
@@ -57,17 +58,19 @@ registerForm.addEventListener('submit',async e=>{
  const username=document.getElementById('username').value.trim().toLowerCase();
  const mobile=document.getElementById('mobile').value.trim();
  const password=document.getElementById('password').value;
+ const accountType=document.getElementById('accountType').value;
  const confirm=document.getElementById('confirm').value;
  const referrer=refInput.value.trim();
+ if(!['retail','wholesale'].includes(accountType)){msg.className='message error';msg.textContent='Please choose Retail or Wholesale account type.';return;}
  if(password!==confirm){msg.className='message error';msg.textContent='Passwords do not match.';return;}
  if(password.length<8){msg.className='message error';msg.textContent='Password must be at least 8 characters.';return;}
  if(referrer && !['left','right'].includes(side)){msg.className='message error';msg.textContent='Please open the correct LEFT or RIGHT referral link. A referral must include ?ref=USERNAME&side=left or right.';return;}
  button.disabled=true;button.textContent='Creating account…';msg.className='message';msg.textContent='';
  try{
-  const response=await fetch(FM_AUTH_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_PUBLISHABLE_KEY},body:JSON.stringify({action:'register',name,username,mobile,password,referrer:referrer||null,side:referrer?side:null})});
+  const response=await fetch(FM_AUTH_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_PUBLISHABLE_KEY},body:JSON.stringify({action:'register',name,username,mobile,password,account_type:accountType,referrer:referrer||null,side:referrer?side:null})});
   const result=await response.json().catch(()=>({error:'The server returned an unreadable response.'}));
   if(!response.ok||!result.success)throw new Error(result.error||'Registration failed.');
-  msg.className='message ok';msg.textContent='Account created successfully. User ID: '+result.profile.user_code+'. Account status: INACTIVE. Redirecting to login…';
+  msg.className='message ok';msg.textContent='Account created successfully. User ID: '+result.profile.user_code+'. Account type: '+(result.profile.account_type||accountType).toUpperCase()+'. Account status: INACTIVE. Redirecting to login…';
   registerForm.reset();
   setTimeout(()=>location.href='login.html?identity='+encodeURIComponent(username),1700);
  }catch(err){msg.className='message error';msg.textContent=err.message||'Could not connect to Fresh-Mart. Please retry.';}
