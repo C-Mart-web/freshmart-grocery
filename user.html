@@ -14,6 +14,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .banner{background:linear-gradient(110deg,#167d43,#24a65b);color:#fff;border-radius:18px;padding:23px 25px;display:flex;justify-content:space-between;align-items:center;gap:16px;box-shadow:var(--shadow);margin-bottom:20px}.banner h2{margin:0 0 7px;font-size:20px}.banner p{margin:0;line-height:1.5;color:#e6ffed;font-size:13px}.banner .bannericon{font-size:48px;opacity:.95}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:800}.btn-white{background:#fff;color:var(--green);margin-top:13px}.btn-green{background:var(--green);color:#fff}.btn-outline{border:1px solid var(--line);background:#fff;color:var(--green)}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:var(--shadow)}.stat-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;font-weight:700}.stat-icon{width:36px;height:36px;border-radius:11px;background:var(--mint);display:grid;place-items:center;font-size:18px}.stat-value{font-size:24px;font-weight:850;margin:14px 0 5px}.stat-note{font-size:11px;color:var(--muted)}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 13px}.section-head h2{font-size:17px;margin:0}.link{border:0;background:transparent;color:var(--green);font-weight:800;font-size:12px}.twocol{display:grid;grid-template-columns:1.15fr .85fr;gap:17px;margin-bottom:20px}.planbox{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--pale);border:1px solid var(--line);border-radius:13px;padding:15px}.planbox h3{margin:0 0 5px;font-size:16px}.planbox p{margin:0;color:var(--muted);font-size:12px}.planprice{font-size:20px;color:var(--green);font-weight:850;white-space:nowrap}.quicklinks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.quick{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff;text-align:left;color:var(--text)}.quick span{display:block;font-size:22px;margin-bottom:9px}.quick strong{font-size:12px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
 .tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:420px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #edf3ee;font-size:12px}th{color:var(--muted);font-weight:750}td{font-weight:650}.badge{display:inline-block;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:850}.pending{background:#fff4d8;color:#956500}.approved{background:#e4f8eb;color:#177440}.rejected{background:#ffebeb;color:#b72e2e}
+.matching-card{margin:0 0 20px}.matching-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}.matching-table{min-width:680px}.matching-table td,.matching-table th{white-space:nowrap}.match-progress{display:block;font-size:11px;color:var(--muted);margin-top:4px}.match-status{display:inline-block;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:850;background:#fff4d8;color:#956500}.match-status.credited{background:#e4f8eb;color:#177440}.match-status.processing{background:#eaf1ff;color:#315caa}.match-status.locked{background:#eef1ef;color:#718078}.match-bar{height:5px;background:#edf3ee;border-radius:8px;overflow:hidden;margin-top:5px;min-width:75px}.match-bar>span{display:block;height:100%;background:var(--green);border-radius:8px}
 .page{display:none}.page.active{display:block}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;font-size:12px;font-weight:750;margin-bottom:7px}.field input,.field select{width:100%;border:1px solid #dbe8de;border-radius:10px;padding:12px;background:#fff;outline:none}.field input:focus,.field select:focus{border-color:var(--green)}.hint{font-size:11px;color:var(--muted);line-height:1.5}.upload{border:2px dashed #b9d9c3;border-radius:13px;padding:20px;text-align:center;background:var(--pale);color:var(--muted)}.upload input{max-width:100%;margin-top:10px}.planchoices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.planchoice{border:1px solid var(--line);background:#fff;border-radius:14px;padding:16px}.planchoice.selected{border:2px solid var(--green);background:#f3fff6}.planchoice h3{margin:0 0 7px}.planchoice .amount{font-size:23px;font-weight:850;color:var(--green)}.planchoice p{font-size:12px;color:var(--muted);line-height:1.5}.footer-note{color:#829087;text-align:center;font-size:11px;padding:22px 0 4px}
 .mobile-nav{display:none}
 @media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.twocol{grid-template-columns:1fr}.layout{grid-template-columns:205px minmax(0,1fr)}main{padding:20px}}
@@ -52,6 +53,12 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="twocol">
     <div class="card"><div class="section-head"><h2>Membership plan</h2><button class="link" data-goto="plans">View plans →</button></div><div class="planbox"><div><h3>No active plan</h3><p>Choose a plan to submit payment for verification.</p></div><div class="planprice">—</div></div><p class="hint" style="margin:12px 0 0">Plan activation happens only after payment is verified by an administrator.</p></div>
     <div class="card"><div class="section-head"><h2>Quick actions</h2></div><div class="quicklinks"><button class="quick" data-goto="plans"><span>💳</span><strong>Pay for plan</strong><small>Upload proof</small></button><button class="quick" data-goto="groceries"><span>🥬</span><strong>Shop groceries</strong><small>Browse items</small></button><button class="quick" data-goto="team"><span>🔗</span><strong>Invite friends</strong><small>Referral tools</small></button></div></div>
+  </div>
+  <div class="card matching-card" id="myMatchingCard">
+    <div class="section-head"><h2>My Matching Reward Slabs ⚖️</h2><span class="badge approved" id="myMatchingPlanBadge">PLAN</span></div>
+    <p class="hint" id="myMatchingMessage">Loading matching rewards for your active plan…</p>
+    <div class="tablewrap"><table class="matching-table"><thead><tr><th>Slab</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Status</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+    <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Rewards are credited to your Shopping Wallet after eligible orders are processed.</p>
   </div>
   <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="orders">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>No activity yet</td><td>—</td><td>—</td><td><span class="badge pending">WAITING</span></td></tr></tbody></table></div></div>
 </section>
@@ -201,6 +208,75 @@ async function loadTeamData(accessToken){
 }
 function escapeTeamText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+function fmMatchMoney(value){
+ return '₹'+Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+}
+function fmMatchSafe(value){
+ return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+async function loadMyMatchingSlabs(userId,accessToken){
+ const msg=document.getElementById('myMatchingMessage'),rows=document.getElementById('myMatchingRows'),badge=document.getElementById('myMatchingPlanBadge');
+ if(!msg||!rows)return;
+ const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+accessToken};
+ const getRows=async(path)=>{
+  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{headers});
+  const data=await r.json().catch(()=>[]);
+  if(!r.ok)throw new Error(data.message||data.error||'Database request failed ('+r.status+').');
+  return Array.isArray(data)?data:[];
+ };
+ try{
+  const activations=await getRows('fm_plan_roi_activations?user_id=eq.'+encodeURIComponent(userId)+'&status=eq.active&select=plan_id,status,start_date,end_date&order=start_date.desc&limit=1');
+  if(!activations.length){
+   badge.textContent='NO ACTIVE PLAN';
+   msg.textContent='Matching slabs will appear here after your membership plan is activated by Admin.';
+   rows.innerHTML='<tr><td colspan="5">No active membership plan found.</td></tr>';return;
+  }
+  const planRows=await getRows('fm_membership_plans?id=eq.'+encodeURIComponent(activations[0].plan_id)+'&select=plan_code,plan_name,plan_amount,matching_business_levels&limit=1');
+  const plan=planRows[0];
+  if(!plan||!plan.plan_code)throw new Error('Your active plan details could not be found.');
+  badge.textContent=plan.plan_code;
+  const encodedCode=encodeURIComponent(plan.plan_code);
+  const [slabs,progressRows,claimRows]=await Promise.all([
+   getRows('fm_matching_reward_slabs?plan_code=eq.'+encodedCode+'&is_active=eq.true&select=id,slab_order,left_business_required,right_business_required,reward_amount&order=slab_order.asc'),
+   getRows('fm_matching_reward_progress?member_id=eq.'+encodeURIComponent(userId)+'&plan_code=eq.'+encodedCode+'&select=left_business_total,right_business_total,left_business_consumed,right_business_consumed&limit=1'),
+   getRows('fm_matching_reward_claims?member_id=eq.'+encodeURIComponent(userId)+'&plan_code=eq.'+encodedCode+'&select=slab_id,reward_status,credited_at')
+  ]);
+  if(!slabs.length){
+   msg.textContent=(plan.plan_name||plan.plan_code)+' · No active matching slabs configured yet.';
+   rows.innerHTML='<tr><td colspan="5">No active slabs for your plan.</td></tr>';return;
+  }
+  const p=progressRows[0]||{};
+  const leftAvailable=Math.max(0,Number(p.left_business_total||0)-Number(p.left_business_consumed||0));
+  const rightAvailable=Math.max(0,Number(p.right_business_total||0)-Number(p.right_business_consumed||0));
+  const claims=new Map(claimRows.map(c=>[String(c.slab_id),c]));
+  msg.textContent=(plan.plan_name||plan.plan_code)+' · Maximum eligible matching levels: '+Number(plan.matching_business_levels||0)+'.';
+  let priorSlabsComplete=true;
+  rows.innerHTML=slabs.map(slab=>{
+   const claim=claims.get(String(slab.id));
+   const credited=claim?.reward_status==='credited';
+   const locked=!priorSlabsComplete&&!claim;
+   const status=credited?'CREDITED':claim?.reward_status==='pending'?'PROCESSING':locked?'LOCKED':'IN PROGRESS';
+   const statusClass=status==='CREDITED'?'credited':status==='PROCESSING'?'processing':status==='LOCKED'?'locked':'';
+   const leftNeed=Number(slab.left_business_required||0),rightNeed=Number(slab.right_business_required||0);
+   const leftPct=credited?100:locked?0:Math.min(100,leftNeed>0?leftAvailable/leftNeed*100:0);
+   const rightPct=credited?100:locked?0:Math.min(100,rightNeed>0?rightAvailable/rightNeed*100:0);
+   const leftText=credited?'Completed':locked?'Complete previous slab first':fmMatchMoney(Math.min(leftAvailable,leftNeed))+' / '+fmMatchMoney(leftNeed);
+   const rightText=credited?'Completed':locked?'Complete previous slab first':fmMatchMoney(Math.min(rightAvailable,rightNeed))+' / '+fmMatchMoney(rightNeed);
+   if(!credited)priorSlabsComplete=false;
+   return '<tr><td>'+Number(slab.slab_order)+'</td>'+
+    '<td>'+fmMatchMoney(leftNeed)+'<span class="match-progress">'+leftText+'</span><span class="match-bar"><span style="width:'+leftPct+'%"></span></span></td>'+
+    '<td>'+fmMatchMoney(rightNeed)+'<span class="match-progress">'+rightText+'</span><span class="match-bar"><span style="width:'+rightPct+'%"></span></span></td>'+
+    '<td>'+fmMatchMoney(slab.reward_amount)+'</td>'+
+    '<td><span class="match-status '+statusClass+'">'+status+'</span></td></tr>';
+  }).join('');
+ }catch(e){
+  console.error('Matching slabs load error',e);
+  badge.textContent='NOT AVAILABLE';
+  msg.textContent='Matching rewards could not be loaded: '+(e.message||'Database/RLS permission issue')+'.';
+  rows.innerHTML='<tr><td colspan="5">Please contact Fresh-Mart support or ask Admin to check matching table permissions.</td></tr>';
+ }
+}
+
 async function loadSignedInMember(){
  try{
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -222,6 +298,7 @@ async function loadSignedInMember(){
    document.getElementById('memberProfileMobile').value=profile.mobile_number||'';
    document.getElementById('memberProfileCode').value=profile.user_code||'';
    loadDeliveryAddresses();
+   loadMyMatchingSlabs(session.user.id,session.access_token);
    document.getElementById('topWelcome').textContent='Welcome, '+display;
   document.getElementById('topUserCode').textContent=profile.user_code||profile.username||'Fresh-Mart member';
   document.getElementById('userAvatar').textContent=(display.trim().charAt(0)||'F').toUpperCase();
