@@ -50,7 +50,22 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
  }catch(err){msg.className='message error';msg.textContent=err.message||'Unable to sign in. Please retry.';}
  finally{button.disabled=false;button.textContent='Login securely';}
 });
-document.getElementById('forgot').addEventListener('click',e=>{e.preventDefault();msg.className='message error';msg.textContent='Password recovery is not yet configured. Please contact Fresh-Mart support.'});
+document.getElementById('forgot').addEventListener('click',async e=>{
+ e.preventDefault();
+ const email=prompt('Enter your registered email address to receive a password reset link:');
+ if(!email) return;
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())){msg.className='message error';msg.textContent='Please enter a valid registered email address.';return;}
+ const link=document.getElementById('forgot');link.style.pointerEvents='none';link.textContent='Sending…';msg.className='message';msg.textContent='';
+ try{
+  if(!window.supabase) throw new Error('Supabase client failed to load. Refresh and retry.');
+  const client=window.supabase.createClient(FM_SUPABASE_URL,FM_PUBLISHABLE_KEY);
+  const redirectTo=new URL('reset-password.html',location.href).href;
+  const {error}=await client.auth.resetPasswordForEmail(email.trim(),{redirectTo});
+  if(error) throw error;
+  msg.className='message ok';msg.textContent='If this email is registered, a password reset link has been sent. Check your inbox and spam folder.';
+ }catch(err){msg.className='message error';msg.textContent=err.message||'Unable to send the reset email.';}
+ finally{link.style.pointerEvents='';link.textContent='Forgot password?';}
+});
 </script>
 </body>
 </html>
