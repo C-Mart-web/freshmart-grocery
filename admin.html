@@ -56,8 +56,9 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="members">
 <div class="welcome"><div><h1>Members</h1><p>Search member accounts and review activation status.</p></div></div>
-<div class="searchrow"><input placeholder="Search name, username, mobile or user ID"><select><option>All account statuses</option><option>Inactive</option><option>Active</option><option>Blocked</option></select><button class="btn btn-green" onclick="alert('Member management will be enabled after database connection.')">Search</button></div>
-<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Plan</th><th>Account Status</th><th>Joined</th></tr></thead><tbody><tr><td colspan="6" class="empty">Member records will appear after Supabase connection.</td></tr></tbody></table></div></div>
+<div class="searchrow"><input id="memberSearchInput" placeholder="Search name, username, mobile or user ID" onkeydown="if(event.key==='Enter')loadMembers()"><select id="memberStatusFilter"><option value="all">All account statuses</option><option value="inactive">Inactive</option><option value="active">Active</option><option value="blocked">Blocked</option></select><button class="btn btn-green" onclick="loadMembers()">Search</button></div>
+<p id="memberLoadStatus" class="hint" aria-live="polite">Members will load from Supabase after admin sign-in.</p>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Account Type</th><th>Account Status</th></tr></thead><tbody id="membersTable"><tr><td colspan="6" class="empty">Loading member records…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="products">
 <div class="welcome"><div><h1>Products & Categories</h1><p>Manage grocery catalogue, prices and offers.</p></div><button class="btn btn-green" onclick="openModal('productModal')">+ Add Product</button></div>
@@ -145,6 +146,7 @@ async function loadFreshMartDashboard(){
    if(error) throw error;
    document.getElementById('totalMembers').textContent=Number(count||0).toLocaleString('en-IN');
    document.getElementById('membersStatus').textContent='Live database count';
+   await loadMembers();
    document.querySelector('.userlabel strong').textContent=profile.display_name||profile.username||'Super Admin';
    status.textContent='Supabase connected · Signed in as '+(profile.username||'Super Admin');
    status.style.color='#168447';
@@ -154,6 +156,37 @@ async function loadFreshMartDashboard(){
    status.textContent='Admin data could not load: '+(e.message||'Check sign-in and Supabase RLS policies.');
    status.style.color='#b72e2e';
    console.error('Fresh-Mart dashboard load:',e);
+ }
+}
+async function loadMembers(){
+ const tbody=document.getElementById('membersTable');
+ const status=document.getElementById('memberLoadStatus');
+ if(!tbody||!status)return;
+ tbody.innerHTML='<tr><td colspan="6" class="empty">Loading members…</td></tr>';
+ status.textContent='Connecting to member records…';status.style.color='#718078';
+ try{
+  const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!session)throw new Error('Please sign in as Super Admin.');
+  const q=(document.getElementById('memberSearchInput')?.value||'').trim();
+  const filter=document.getElementById('memberStatusFilter')?.value||'all';
+  let query=fmSupabase.from('fm_profiles').select('id,user_code,display_name,username,mobile_number,account_type,account_status').order('updated_at',{ascending:false}).limit(200);
+  if(filter!=='all')query=query.eq('account_status',filter);
+  if(q){
+   const safe=q.replace(/[(),]/g,' ').trim();
+   query=query.or(`display_name.ilike.%${safe}%,username.ilike.%${safe}%,mobile_number.ilike.%${safe}%,user_code.ilike.%${safe}%`);
+  }
+  const {data,error}=await query;
+  if(error)throw error;
+  const rows=data||[];
+  tbody.innerHTML=rows.map(m=>`<tr><td>${escapeHtml(m.user_code||m.id||'—')}</td><td>${escapeHtml(m.display_name||'—')}</td><td>${escapeHtml(m.username||'—')}</td><td>${escapeHtml(m.mobile_number||'—')}</td><td>${escapeHtml(m.account_type||'Not set')}</td><td><span class="badge ${String(m.account_status).toLowerCase()==='active'?'approved':String(m.account_status).toLowerCase()==='blocked'?'rejected':'pending'}">${escapeHtml(m.account_status||'unknown')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No member records match this search.</td></tr>';
+  status.textContent=`Showing ${rows.length} member record(s).`;
+  status.style.color='#168447';
+ }catch(e){
+  tbody.innerHTML=`<tr><td colspan="6" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
+  status.textContent='Member list could not be loaded. Check the message in the table and Supabase SELECT permissions.';
+  status.style.color='#b72e2e';
+  console.error('Fresh-Mart members load:',e);
  }
 }
 function openAdminSignIn(){document.getElementById('adminSignInModal').classList.add('open');}
@@ -191,7 +224,7 @@ loadPlanSettings();
 let demoPayments=[];
 let currentReview=null;
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});}
-document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='members')loadMembers();}));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.goto)));
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('paymentFilter').value=b.dataset.filter==='all'?'all':b.dataset.filter;renderPayments();}));
 document.getElementById('paymentFilter').addEventListener('change',renderPayments);
@@ -232,7 +265,7 @@ async function saveProductRewardPoints(){
   if(categoryResult.error)throw categoryResult.error;let categoryId=categoryResult.data?.id;
   if(!categoryId){const inserted=await fmSupabase.from('fm_product_categories').insert({category_name:cat,is_active:true}).select('id').single();if(inserted.error)throw inserted.error;categoryId=inserted.data.id;}
   const code=barcode||('FM-'+Date.now().toString(36).toUpperCase());
-  const payload={product_code:code,product_name:name,category_id:categoryId,barcode:barcode||null,unit:'piece',central_price:offer,mrp:mrp,offer_price:offer,retail_price:retail,wholesale_price:wholesale,product_visibility:visibility,min_wholesale_qty:minWholesale,retail_reward_points:retailPoints,wholesale_reward_points:wholesalePoints,discount_percent:Number(((mrp-offer)/mrp*100).toFixed(2)),reward_points:points,reward_points_condition:condition,is_active:true};
+  const payload={product_code:code,product_name:name,category_id:categoryId,barcode:barcode||null,unit:'piece',central_price:offer,mrp:mrp,offer_price:offer,retail_price:retail,wholesale_price:wholesale,product_visibility:visibility,min_wholesale_qty:minWholesale,retail_reward_points:retailPoints,wholesale_reward_points:wholesalePoints,discount_percent:Number(((mrp-offer)/mrp*100).toFixed(2)),reward_points:Math.max(retailPoints,wholesalePoints),reward_points_condition:condition,is_active:true};
   const result=await fmSupabase.from('fm_products').insert(payload).select('id,product_name').single();if(result.error)throw result.error;
   msg.textContent='Product saved successfully: '+result.data.product_name+'. Reward points settings saved; automatic credit still depends on the order backend.';msg.style.color='#168447';
   ['productName','productCategory','productBarcode','productMrp','productOfferPrice','productRetailPrice','productWholesalePrice'].forEach(id=>document.getElementById(id).value='');document.getElementById('productRetailRewardPoints').value='0';document.getElementById('productWholesaleRewardPoints').value='0';document.getElementById('productMinWholesaleQty').value='1';document.getElementById('productVisibility').value='both';document.getElementById('productDiscountPercent').value='0';stopBarcodeScan();
