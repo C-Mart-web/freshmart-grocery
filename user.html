@@ -217,42 +217,33 @@ function fmMatchSafe(value){
 async function loadMyMatchingSlabs(userId,accessToken){
  const msg=document.getElementById('myMatchingMessage'),rows=document.getElementById('myMatchingRows'),badge=document.getElementById('myMatchingPlanBadge');
  if(!msg||!rows)return;
- const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+accessToken};
- const getRows=async(path)=>{
-  const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{headers});
-  const data=await r.json().catch(()=>[]);
-  if(!r.ok)throw new Error(data.message||data.error||'Database request failed ('+r.status+').');
-  return Array.isArray(data)?data:[];
- };
  try{
-  const activations=await getRows('fm_plan_roi_activations?user_id=eq.'+encodeURIComponent(userId)+'&status=eq.active&select=plan_id,status,start_date,end_date&order=start_date.desc&limit=1');
-  if(!activations.length){
+  const response=await fetch(SUPABASE_URL+'/functions/v1/clever-service',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+accessToken},
+   body:JSON.stringify({action:'matching_rewards'})
+  });
+  const data=await response.json().catch(()=>({success:false,error:'Unreadable server response.'}));
+  if(!response.ok||!data.success)throw new Error(data.error||'Matching rewards could not be loaded ('+response.status+').');
+  if(!data.has_active_plan){
    badge.textContent='NO ACTIVE PLAN';
-   msg.textContent='Matching slabs will appear here after your membership plan is activated by Admin.';
+   msg.textContent=data.message||'Matching slabs will appear after your membership plan is activated by Admin.';
    rows.innerHTML='<tr><td colspan="5">No active membership plan found.</td></tr>';return;
   }
-  const planRows=await getRows('fm_membership_plans?id=eq.'+encodeURIComponent(activations[0].plan_id)+'&select=plan_code,plan_name,plan_amount,matching_business_levels&limit=1');
-  const plan=planRows[0];
-  if(!plan||!plan.plan_code)throw new Error('Your active plan details could not be found.');
-  badge.textContent=plan.plan_code;
-  const encodedCode=encodeURIComponent(plan.plan_code);
-  const [slabs,progressRows,claimRows]=await Promise.all([
-   getRows('fm_matching_reward_slabs?plan_code=eq.'+encodedCode+'&is_active=eq.true&select=id,slab_order,left_business_required,right_business_required,reward_amount&order=slab_order.asc'),
-   getRows('fm_matching_reward_progress?member_id=eq.'+encodeURIComponent(userId)+'&plan_code=eq.'+encodedCode+'&select=left_business_total,right_business_total,left_business_consumed,right_business_consumed&limit=1'),
-   getRows('fm_matching_reward_claims?member_id=eq.'+encodeURIComponent(userId)+'&plan_code=eq.'+encodedCode+'&select=slab_id,reward_status,credited_at')
-  ]);
+  const plan=data.plan||{},slabs=Array.isArray(data.slabs)?data.slabs:[],claims=Array.isArray(data.claims)?data.claims:[];
+  badge.textContent=plan.plan_code||'ACTIVE PLAN';
   if(!slabs.length){
-   msg.textContent=(plan.plan_name||plan.plan_code)+' · No active matching slabs configured yet.';
+   msg.textContent=(plan.plan_name||plan.plan_code||'Your plan')+' · No active matching slabs configured yet.';
    rows.innerHTML='<tr><td colspan="5">No active slabs for your plan.</td></tr>';return;
   }
-  const p=progressRows[0]||{};
+  const p=data.progress||{};
   const leftAvailable=Math.max(0,Number(p.left_business_total||0)-Number(p.left_business_consumed||0));
   const rightAvailable=Math.max(0,Number(p.right_business_total||0)-Number(p.right_business_consumed||0));
-  const claims=new Map(claimRows.map(c=>[String(c.slab_id),c]));
+  const claimMap=new Map(claims.map(c=>[String(c.slab_id),c]));
   msg.textContent=(plan.plan_name||plan.plan_code)+' · Maximum eligible matching levels: '+Number(plan.matching_business_levels||0)+'.';
   let priorSlabsComplete=true;
   rows.innerHTML=slabs.map(slab=>{
-   const claim=claims.get(String(slab.id));
+   const claim=claimMap.get(String(slab.id));
    const credited=claim?.reward_status==='credited';
    const locked=!priorSlabsComplete&&!claim;
    const status=credited?'CREDITED':claim?.reward_status==='pending'?'PROCESSING':locked?'LOCKED':'IN PROGRESS';
@@ -272,8 +263,8 @@ async function loadMyMatchingSlabs(userId,accessToken){
  }catch(e){
   console.error('Matching slabs load error',e);
   badge.textContent='NOT AVAILABLE';
-  msg.textContent='Matching rewards could not be loaded: '+(e.message||'Database/RLS permission issue')+'.';
-  rows.innerHTML='<tr><td colspan="5">Please contact Fresh-Mart support or ask Admin to check matching table permissions.</td></tr>';
+  msg.textContent='Matching rewards could not be loaded: '+(e.message||'Please try again.')+'.';
+  rows.innerHTML='<tr><td colspan="5">Matching data is temporarily unavailable. Please contact Fresh-Mart support.</td></tr>';
  }
 }
 
