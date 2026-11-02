@@ -157,7 +157,7 @@ async function sendAdminPasswordReset(){
  const msg=document.getElementById('adminSignInMsg');
  const btn=document.getElementById('adminForgotPasswordBtn');
  if(!email){msg.textContent='Please enter your registered Super Admin email address first.';msg.style.color='#b72e2e';document.getElementById('adminEmail').focus();return;}
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){msg.textContent='Please enter a valid email address.';msg.style.color='#b72e2e';return;}
+ if(!document.getElementById('adminEmail').checkValidity()){msg.textContent='Please enter a valid email address.';msg.style.color='#b72e2e';return;}
  btn.disabled=true;msg.textContent='Sending password reset email…';msg.style.color='#718078';
  try{
   const redirectTo=new URL('reset-password.html',window.location.href).href;
