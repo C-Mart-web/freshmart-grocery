@@ -201,7 +201,7 @@ async function resetMemberPassword(memberId){
   const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
   if(sessionError)throw sessionError;
   if(!session)throw new Error('Please sign in again as Super Admin.');
-  const response=await fetch(FM_SUPABASE_URL+'/functions/v1/fm-auth',{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'admin_reset_password',target_user_id:memberId,new_password:first})});
+  const response=await fetch(FM_SUPABASE_URL+'/functions/v1/clever-service',{method:'POST',headers:{'Content-Type':'application/json','apikey':FM_SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({action:'admin_reset_password',target_user_id:memberId,new_password:first})});
   const result=await response.json().catch(()=>({success:false,error:'Unreadable server response.'}));
   if(!response.ok||!result.success)throw new Error(result.error||'Password reset failed.');
   alert(result.message||'Password reset successfully.');
