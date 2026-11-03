@@ -59,6 +59,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
+ if(location.hash){history.replaceState(null,'',location.pathname+location.search);}
  const SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
  const SUPABASE_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
  const db=window.supabase?.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -67,27 +68,21 @@
  const status=document.getElementById('liveProductStatus'),toast=document.getElementById('toast');
  const main=document.getElementById('home'),hero=main.querySelector('.hero');
  const popular=document.getElementById('popular'),benefits=main.querySelector('.benefits');
- const categoryHead=main.querySelector('.section-head:not(#popular)');
  const originalPopularParent=popular.parentNode, originalPopularNext=popular.nextSibling;
  const originalGridParent=grid.parentNode, originalGridNext=grid.nextSibling;
  const originalEmptyParent=empty.parentNode, originalEmptyNext=empty.nextSibling;
  const originalStatusParent=status.parentNode, originalStatusNext=status.nextSibling;
- const originalCategoryHeadParent=categoryHead.parentNode, originalCategoryHeadNext=categoryHead.nextSibling;
- const originalCategoriesParent=categories.parentNode, originalCategoriesNext=categories.nextSibling;
  const searchHide=[hero,main.querySelector('.offer-strip'),benefits].filter(Boolean);
- let cartItems={},toastTimer,allProducts=[];
-  const CART_STORAGE_KEY='freshmart_cart_v1';
-  try{const saved=JSON.parse(localStorage.getItem(CART_STORAGE_KEY)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))cartItems=saved;}catch(e){cartItems={};}
-  function cartTotal(){return Object.values(cartItems).reduce((sum,item)=>sum+Math.max(0,Number(item?.quantity)||0),0)}
-  function saveCart(){try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(cartItems));}catch(e){showToast('Cart could not be saved on this device.')}}
+ let cart=0,toastTimer,allProducts=[];try{cart=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]').reduce((n,x)=>n+Number(x.quantity||0),0)}catch(e){}
  function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
- function updateCart(){const total=cartTotal();document.getElementById('cartCount').textContent=total;document.getElementById('mobileCartCount').textContent=total}
+ function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart}
+ updateCart();
  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
  function iconFor(name){const n=String(name||'').toLowerCase();if(n.includes('fruit'))return '🍎';if(n.includes('veget'))return '🥦';if(n.includes('dairy')||n.includes('milk'))return '🥛';if(n.includes('rice')||n.includes('staple'))return '🍚';if(n.includes('snack'))return '🍪';if(n.includes('beverage')||n.includes('drink'))return '🧃';if(n.includes('home'))return '🧴';if(n.includes('personal'))return '🧼';return '🛒'}
  function priceOf(p){return Number(p.offer_price??p.retail_price??p.central_price??0)}
  function renderCategories(cats){
    if(!cats.length){categories.innerHTML='<div class="empty" style="display:block;grid-column:1/-1">Categories will appear here.</div>';return}
-   categories.innerHTML=cats.map(c=>'<a class="category" href="#popular" data-category="'+esc(c.category_name)+'"><div class="cat-icon">'+esc(c.icon||iconFor(c.category_name))+'</div><b>'+esc(c.category_name)+'</b></a>').join('');
+   categories.innerHTML=cats.map(c=>'<a class="category" href="#popular" data-category="'+esc(c.category_name)+'"><div class="cat-icon">'+iconFor(c.category_name)+'</div><b>'+esc(c.category_name)+'</b></a>').join('');
    categories.querySelectorAll('[data-category]').forEach(a=>a.addEventListener('click',()=>{search.value=a.dataset.category;filterProducts()}));
  }
  function renderProducts(list){
@@ -100,7 +95,7 @@
      const discount=mrp>price&&mrp>0?'<span class="discount">'+Math.round((mrp-price)*100/mrp)+'% OFF</span>':'';
      return '<article class="product" data-name="'+name+'" data-category="'+cat+'"><div class="product-art">'+discount+image+'</div><h3>'+name+'</h3><div class="quantity">'+qty+'</div><div class="price-row"><div><span class="price">₹'+price.toFixed(2).replace(/\.00$/,'')+'</span>'+(mrp>price?'<span class="old">₹'+mrp.toFixed(2).replace(/\.00$/,'')+'</span>':'')+'</div><button class="add" type="button" data-product="'+esc(p.id)+'">ADD +</button></div></article>';
    }).join('');
-   grid.querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{const p=allProducts.find(x=>String(x.id)===btn.dataset.product);if(!p)return;const id=String(p.id);const old=cartItems[id]||{};cartItems[id]={product_id:id,product_name:p.product_name,unit_price:priceOf(p),image_url:p.image_url||'',unit:p.unit||'',quantity:(Number(old.quantity)||0)+1};saveCart();updateCart();showToast((p.product_name||'Product')+' added to your cart')}));
+   grid.querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{const p=allProducts.find(x=>String(x.id)===btn.dataset.product);(()=>{let c=[];try{c=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]')}catch(e){}const row=c.find(x=>String(x.product_id)===String(btn.dataset.product));if(row)row.quantity++;else c.push({product_id:String(btn.dataset.product),quantity:1});localStorage.setItem('fm_grocery_cart',JSON.stringify(c));cart=c.reduce((n,x)=>n+Number(x.quantity||0),0);updateCart();showToast((p?.product_name||'Product')+' added to your cart. Sign in to checkout.')})()}));
  }
  function searchNormalize(v){return String(v??'').normalize('NFC').toLocaleLowerCase().replace(/[\u200c\u200d]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
  function filterProducts(){
@@ -110,30 +105,19 @@
    const searching=!!q;
    searchHide.forEach(el=>el.style.display=searching?'none':'');
    if(searching){
-     // Keep matching products at the top, then always show category browsing below.
      main.insertBefore(popular,hero||main.firstChild);
      main.insertBefore(grid,popular.nextSibling);
      main.insertBefore(empty,grid.nextSibling);
      main.insertBefore(status,empty.nextSibling);
-     main.insertBefore(categoryHead,status.nextSibling);
-     main.insertBefore(categories,categoryHead.nextSibling);
      popular.querySelector('h2').textContent='Search results';
      popular.querySelector('p').textContent='Matching products';
-     categoryHead.querySelector('h2').textContent='Browse categories';
-     categoryHead.querySelector('p').textContent='Explore products by category';
-     categoryHead.querySelector('.seeall').textContent='View all';
    }else{
      originalPopularParent.insertBefore(popular,originalPopularNext);
      originalGridParent.insertBefore(grid,originalGridNext);
      originalEmptyParent.insertBefore(empty,originalEmptyNext);
      originalStatusParent.insertBefore(status,originalStatusNext);
-     originalCategoriesParent.insertBefore(categories,originalCategoriesNext);
-     originalCategoryHeadParent.insertBefore(categoryHead,categories);
      popular.querySelector('h2').textContent='Popular picks';
      popular.querySelector('p').textContent='Customer favourites at Fresh-Mart';
-     categoryHead.querySelector('h2').textContent='Shop by category';
-     categoryHead.querySelector('p').textContent='Everything you need for your home';
-     categoryHead.querySelector('.seeall').textContent='View all';
    }
    renderProducts(list);
    if(searching){ requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'})); }

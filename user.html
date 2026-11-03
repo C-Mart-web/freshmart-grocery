@@ -548,8 +548,9 @@ function showPage(id,fromHistory=false){
  window.scrollTo({top:0,behavior:'smooth'});
 }
 (function initUserBackNavigation(){
- const initial=document.querySelector('.page.active')?.id||'dashboard';
- history.replaceState({fmUserPage:initial,fmRoot:true},'',location.href);
+ const initial='dashboard';
+ const cleanUrl=location.pathname+location.search;
+ history.replaceState({fmUserPage:initial,fmRoot:true},'',cleanUrl);
  history.pushState({fmUserPage:initial,fmRoot:true},'',location.href);
  window.addEventListener('popstate',e=>{
    if(e.state?.fmRoot){
