@@ -75,15 +75,19 @@
  const originalCategoryHeadParent=categoryHead.parentNode, originalCategoryHeadNext=categoryHead.nextSibling;
  const originalCategoriesParent=categories.parentNode, originalCategoriesNext=categories.nextSibling;
  const searchHide=[hero,main.querySelector('.offer-strip'),benefits].filter(Boolean);
- let cart=0,toastTimer,allProducts=[];
+ let cartItems={},toastTimer,allProducts=[];
+  const CART_STORAGE_KEY='freshmart_cart_v1';
+  try{const saved=JSON.parse(localStorage.getItem(CART_STORAGE_KEY)||'{}');if(saved&&typeof saved==='object'&&!Array.isArray(saved))cartItems=saved;}catch(e){cartItems={};}
+  function cartTotal(){return Object.values(cartItems).reduce((sum,item)=>sum+Math.max(0,Number(item?.quantity)||0),0)}
+  function saveCart(){try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(cartItems));}catch(e){showToast('Cart could not be saved on this device.')}}
  function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
- function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart}
+ function updateCart(){const total=cartTotal();document.getElementById('cartCount').textContent=total;document.getElementById('mobileCartCount').textContent=total}
  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
  function iconFor(name){const n=String(name||'').toLowerCase();if(n.includes('fruit'))return '🍎';if(n.includes('veget'))return '🥦';if(n.includes('dairy')||n.includes('milk'))return '🥛';if(n.includes('rice')||n.includes('staple'))return '🍚';if(n.includes('snack'))return '🍪';if(n.includes('beverage')||n.includes('drink'))return '🧃';if(n.includes('home'))return '🧴';if(n.includes('personal'))return '🧼';return '🛒'}
  function priceOf(p){return Number(p.offer_price??p.retail_price??p.central_price??0)}
  function renderCategories(cats){
    if(!cats.length){categories.innerHTML='<div class="empty" style="display:block;grid-column:1/-1">Categories will appear here.</div>';return}
-   categories.innerHTML=cats.map(c=>'<a class="category" href="#popular" data-category="'+esc(c.category_name)+'"><div class="cat-icon">'+iconFor(c.category_name)+'</div><b>'+esc(c.category_name)+'</b></a>').join('');
+   categories.innerHTML=cats.map(c=>'<a class="category" href="#popular" data-category="'+esc(c.category_name)+'"><div class="cat-icon">'+esc(c.icon||iconFor(c.category_name))+'</div><b>'+esc(c.category_name)+'</b></a>').join('');
    categories.querySelectorAll('[data-category]').forEach(a=>a.addEventListener('click',()=>{search.value=a.dataset.category;filterProducts()}));
  }
  function renderProducts(list){
@@ -96,7 +100,7 @@
      const discount=mrp>price&&mrp>0?'<span class="discount">'+Math.round((mrp-price)*100/mrp)+'% OFF</span>':'';
      return '<article class="product" data-name="'+name+'" data-category="'+cat+'"><div class="product-art">'+discount+image+'</div><h3>'+name+'</h3><div class="quantity">'+qty+'</div><div class="price-row"><div><span class="price">₹'+price.toFixed(2).replace(/\.00$/,'')+'</span>'+(mrp>price?'<span class="old">₹'+mrp.toFixed(2).replace(/\.00$/,'')+'</span>':'')+'</div><button class="add" type="button" data-product="'+esc(p.id)+'">ADD +</button></div></article>';
    }).join('');
-   grid.querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{const p=allProducts.find(x=>String(x.id)===btn.dataset.product);cart++;updateCart();showToast((p?.product_name||'Product')+' added to your cart')}));
+   grid.querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{const p=allProducts.find(x=>String(x.id)===btn.dataset.product);if(!p)return;const id=String(p.id);const old=cartItems[id]||{};cartItems[id]={product_id:id,product_name:p.product_name,unit_price:priceOf(p),image_url:p.image_url||'',unit:p.unit||'',quantity:(Number(old.quantity)||0)+1};saveCart();updateCart();showToast((p.product_name||'Product')+' added to your cart')}));
  }
  function searchNormalize(v){return String(v??'').normalize('NFC').toLocaleLowerCase().replace(/[\u200c\u200d]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
  function filterProducts(){
@@ -139,7 +143,7 @@
    status.textContent='Loading latest products…';
    try{
      const [catRes,prodRes]=await Promise.all([
-       db.from('fm_product_categories').select('id,category_name').eq('is_active',true).order('category_name'),
+       db.from('fm_product_categories').select('id,category_name,icon').eq('is_active',true).order('category_name'),
        db.from('fm_products').select('id,product_code,product_name,category_id,barcode,unit,image_url,description,subcategory,search_aliases,is_active,mrp,offer_price,retail_price,central_price,stock_quantity,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('created_at',{ascending:false}).limit(100)
      ]);
      if(catRes.error)throw catRes.error;
