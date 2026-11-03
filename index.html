@@ -88,9 +88,11 @@
    }).join('');
    grid.querySelectorAll('.add').forEach(btn=>btn.addEventListener('click',()=>{const p=allProducts.find(x=>String(x.id)===btn.dataset.product);cart++;updateCart();showToast((p?.product_name||'Product')+' added to your cart')}));
  }
+ function searchNormalize(v){return String(v??'').normalize('NFC').toLocaleLowerCase().replace(/[\u200c\u200d]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
  function filterProducts(){
    const q=search.value.trim().toLowerCase();
-   const list=allProducts.filter(p=>(String(p.product_name||'')+' '+String(p.product_code||'')+' '+String(p.barcode||'')+' '+String(p.fm_product_categories?.category_name||'')).toLowerCase().includes(q));
+   const terms=searchNormalize(q).split(/\s+/).filter(Boolean);
+    const list=allProducts.filter(p=>{const hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));return !q||terms.every(t=>hay.includes(t));});
    renderProducts(list);
  }
  async function loadLiveStore(){
@@ -99,7 +101,7 @@
    try{
      const [catRes,prodRes]=await Promise.all([
        db.from('fm_product_categories').select('id,category_name').eq('is_active',true).order('category_name'),
-       db.from('fm_products').select('id,product_code,product_name,category_id,barcode,unit,image_url,is_active,mrp,offer_price,retail_price,central_price,stock_quantity,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('created_at',{ascending:false}).limit(100)
+       db.from('fm_products').select('id,product_code,product_name,category_id,barcode,unit,image_url,description,subcategory,search_aliases,is_active,mrp,offer_price,retail_price,central_price,stock_quantity,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('created_at',{ascending:false}).limit(100)
      ]);
      if(catRes.error)throw catRes.error;
      if(prodRes.error)throw prodRes.error;
