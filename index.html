@@ -65,6 +65,13 @@
  const search=document.getElementById('searchInput'),grid=document.getElementById('productGrid');
  const categories=document.getElementById('categories'),empty=document.getElementById('emptyState');
  const status=document.getElementById('liveProductStatus'),toast=document.getElementById('toast');
+ const main=document.getElementById('home'),hero=main.querySelector('.hero');
+ const popular=document.getElementById('popular'),benefits=main.querySelector('.benefits');
+ const originalPopularParent=popular.parentNode, originalPopularNext=popular.nextSibling;
+ const originalGridParent=grid.parentNode, originalGridNext=grid.nextSibling;
+ const originalEmptyParent=empty.parentNode, originalEmptyNext=empty.nextSibling;
+ const originalStatusParent=status.parentNode, originalStatusNext=status.nextSibling;
+ const searchHide=[hero,main.querySelector('.section-head:not(#popular)'),categories,main.querySelector('.offer-strip'),benefits].filter(Boolean);
  let cart=0,toastTimer,allProducts=[];
  function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
  function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart}
@@ -90,10 +97,28 @@
  }
  function searchNormalize(v){return String(v??'').normalize('NFC').toLocaleLowerCase().replace(/[\u200c\u200d]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
  function filterProducts(){
-   const q=search.value.trim().toLowerCase();
+   const q=search.value.trim();
    const terms=searchNormalize(q).split(/\s+/).filter(Boolean);
-    const list=allProducts.map(p=>{const hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>!q||x.hits>0).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
+   const list=allProducts.map(p=>{const hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>!q||x.hits>0).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
+   const searching=!!q;
+   searchHide.forEach(el=>el.style.display=searching?'none':'');
+   if(searching){
+     main.insertBefore(popular,hero||main.firstChild);
+     main.insertBefore(grid,popular.nextSibling);
+     main.insertBefore(empty,grid.nextSibling);
+     main.insertBefore(status,empty.nextSibling);
+     popular.querySelector('h2').textContent='Search results';
+     popular.querySelector('p').textContent='Matching products';
+   }else{
+     originalPopularParent.insertBefore(popular,originalPopularNext);
+     originalGridParent.insertBefore(grid,originalGridNext);
+     originalEmptyParent.insertBefore(empty,originalEmptyNext);
+     originalStatusParent.insertBefore(status,originalStatusNext);
+     popular.querySelector('h2').textContent='Popular picks';
+     popular.querySelector('p').textContent='Customer favourites at Fresh-Mart';
+   }
    renderProducts(list);
+   if(searching){ requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'})); }
  }
  async function loadLiveStore(){
    if(!db){status.textContent='Could not connect to product catalogue. Please refresh.';return}
