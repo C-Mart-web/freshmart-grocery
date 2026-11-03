@@ -71,7 +71,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-icon">🌾</div><h3>Rice & Grains</h3><p class="hint">Staples for every kitchen</p><button class="btn btn-outline">Explore</button></div>
     <div class="card"><div class="stat-icon">🥛</div><h3>Dairy & Essentials</h3><p class="hint">Daily household essentials</p><button class="btn btn-outline">Explore</button></div>
   </div>
-  <div class="card"><div class="section-head"><h2>Popular products</h2><span class="small">Sample design items</span></div><p class="hint">Product catalogue, live prices, cart and checkout will be connected to the Fresh-Mart database in the next stage.</p></div>
+  <div class="card"><div class="section-head"><h2>Available Products</h2><button class="link" type="button" onclick="loadFreshMartProducts()">Refresh</button></div><div class="searchrow" style="display:flex;gap:8px;margin:10px 0"><input id="shopProductSearch" placeholder="Search groceries…" oninput="renderFreshMartProducts()" style="flex:1;min-width:0;padding:11px;border:1px solid #dbe8de;border-radius:10px"><select id="shopProductCategory" onchange="renderFreshMartProducts()" style="padding:11px;border:1px solid #dbe8de;border-radius:10px"><option value="">All categories</option></select></div><p id="shopProductMsg" class="hint">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div></div>
 </section>
 <section class="page" id="plans">
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
@@ -184,11 +184,21 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <button data-page="team"><span>👥</span>Team</button>
 <button data-page="wallets"><span>👛</span>Wallet</button>
 </nav>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Load the currently signed-in Supabase member and auto-generate referral links.
 const SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
 const refIdentityInput=document.getElementById('refIdentity');
+const fmShopClient=window.supabase?.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let fmShopProducts=[];
+function shopEsc(v){return String(v??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function shopMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
+async function loadFreshMartProducts(){
+ const msg=document.getElementById('shopProductMsg'),grid=document.getElementById('freshMartProductGrid');if(!msg||!grid||!fmShopClient)return;msg.textContent='Loading live products…';
+ try{const {data,error}=await fmShopClient.from('fm_products').select('id,product_code,product_name,description,barcode,unit,image_url,mrp,offer_price,retail_price,wholesale_price,product_visibility,stock_quantity,is_active,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('product_name').limit(300);if(error)throw error;fmShopProducts=data||[];const cats=[...new Set(fmShopProducts.map(p=>p.fm_product_categories?.category_name).filter(Boolean))].sort();const sel=document.getElementById('shopProductCategory'),old=sel.value;sel.innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+shopEsc(c)+'">'+shopEsc(c)+'</option>').join('');sel.value=old;renderFreshMartProducts();msg.textContent=fmShopProducts.length+' product(s) available.';}catch(e){msg.textContent='Products could not load: '+(e.message||'Check Supabase SELECT permissions and run the product stock SQL.');grid.innerHTML='';}}
+function renderFreshMartProducts(){const grid=document.getElementById('freshMartProductGrid');if(!grid)return;const q=(document.getElementById('shopProductSearch')?.value||'').toLowerCase(),cat=document.getElementById('shopProductCategory')?.value||'';const rows=fmShopProducts.filter(p=>(!cat||(p.fm_product_categories?.category_name||'')===cat)&&(!q||[p.product_name,p.product_code,p.barcode].some(v=>String(v||'').toLowerCase().includes(q))));grid.innerHTML=rows.map(p=>'<article style="border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0">'+(p.image_url?'<img src="'+shopEsc(p.image_url)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy" style="width:100%;height:115px;object-fit:contain;border-radius:9px;background:#f5fbf6">':'<div style="height:115px;display:grid;place-items:center;background:#f5fbf6;border-radius:9px;font-size:34px">🛒</div>')+'<b style="display:block;margin-top:8px;font-size:13px">'+shopEsc(p.product_name)+'</b><small style="color:#718078">'+shopEsc(p.fm_product_categories?.category_name||'Grocery')+'</small><div style="font-weight:850;color:#168447;margin-top:6px">'+shopMoney(p.retail_price||p.offer_price)+'</div>'+(Number(p.mrp)>Number(p.retail_price||p.offer_price)?'<small style="text-decoration:line-through;color:#718078">'+shopMoney(p.mrp)+'</small>':'')+'<small style="display:block;color:#718078;margin-top:4px">Stock: '+Number(p.stock_quantity||0)+' '+shopEsc(p.unit||'pcs')+'</small></article>').join('')||'<p class="hint">No products available in this category right now.</p>'; }
+
 async function loadTeamData(accessToken){
  const msg=document.getElementById('teamLoadMessage'); const body=document.getElementById('joinedMembersRows');
  try{
@@ -517,7 +527,8 @@ function showPage(id){
  document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
  window.scrollTo({top:0,behavior:'smooth'});
 }
-document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='groceries')loadFreshMartProducts();}));
+loadFreshMartProducts();
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.goto)));
 function selectPlan(el){
  document.querySelectorAll('.planchoice').forEach(p=>p.classList.remove('selected'));
