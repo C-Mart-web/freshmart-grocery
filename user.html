@@ -71,7 +71,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-icon">🌾</div><h3>Rice & Grains</h3><p class="hint">Staples for every kitchen</p><button class="btn btn-outline">Explore</button></div>
     <div class="card"><div class="stat-icon">🥛</div><h3>Dairy & Essentials</h3><p class="hint">Daily household essentials</p><button class="btn btn-outline">Explore</button></div>
   </div>
-  <div class="card"><div class="section-head"><h2>Available Products</h2><button class="link" type="button" onclick="loadFreshMartProducts()">Refresh</button></div><div class="searchrow" style="display:flex;gap:7px;margin:10px 0;flex-wrap:wrap"><input id="shopProductSearch" placeholder="Search groceries…" oninput="renderFreshMartProducts()" style="flex:1;min-width:125px;padding:11px;border:1px solid #dbe8de;border-radius:10px"><select id="shopVoiceLanguage" aria-label="Voice search language" style="padding:9px 5px;border:1px solid #dbe8de;border-radius:10px;font-size:12px"><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search" style="border:0;border-radius:10px;background:#e8f5eb;color:#168447;padding:8px 12px;font-size:18px">🎤</button><select id="shopProductCategory" onchange="renderFreshMartProducts()" style="padding:11px;border:1px solid #dbe8de;border-radius:10px"><option value="">All categories</option></select></div><p id="shopVoiceMessage" class="hint" style="margin:0 0 8px"></p><p id="shopProductMsg" class="hint">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div></div>
+  <div class="card"><div class="section-head"><h2>Available Products</h2><button class="link" type="button" onclick="loadFreshMartProducts()">Refresh</button></div><div class="searchrow" style="display:flex;gap:7px;margin:10px 0;flex-wrap:wrap"><input id="shopProductSearch" placeholder="Search groceries…" oninput="renderFreshMartProducts()" style="flex:1;min-width:125px;padding:11px;border:1px solid #dbe8de;border-radius:10px"><select id="shopVoiceLanguage" aria-label="Voice search language" style="padding:9px 5px;border:1px solid #dbe8de;border-radius:10px;font-size:12px"><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search" style="border:0;border-radius:10px;background:#e8f5eb;color:#168447;padding:8px 12px;font-size:18px">🎤</button><select id="shopProductCategory" onchange="renderFreshMartProducts()" style="padding:11px;border:1px solid #dbe8de;border-radius:10px"><option value="">All categories</option></select></div><p id="shopVoiceMessage" class="hint" style="margin:0 0 8px"></p><p id="shopProductMsg" class="hint">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div><div id="shopSearchCategories" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid #e7ece7"><b style="display:block;margin-bottom:10px;color:#17231c">Browse categories</b><div id="shopSearchCategoryItems" style="display:flex;flex-wrap:wrap;gap:8px"></div></div></div>
 </section>
 <section class="page" id="plans">
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
@@ -198,7 +198,43 @@ async function loadFreshMartProducts(){
  const msg=document.getElementById('shopProductMsg'),grid=document.getElementById('freshMartProductGrid');if(!msg||!grid||!fmShopClient)return;msg.textContent='Loading live products…';
  try{const {data,error}=await fmShopClient.from('fm_products').select('id,product_code,product_name,description,barcode,unit,image_url,mrp,offer_price,retail_price,wholesale_price,product_visibility,stock_quantity,is_active,subcategory,search_aliases,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('product_name').limit(300);if(error)throw error;fmShopProducts=data||[];const cats=[...new Set(fmShopProducts.map(p=>p.fm_product_categories?.category_name).filter(Boolean))].sort();const sel=document.getElementById('shopProductCategory'),old=sel.value;sel.innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+shopEsc(c)+'">'+shopEsc(c)+'</option>').join('');sel.value=old;renderFreshMartProducts();msg.textContent=fmShopProducts.length+' product(s) available.';}catch(e){msg.textContent='Products could not load: '+(e.message||'Check Supabase SELECT permissions and run the product stock SQL.');grid.innerHTML='';}}
 function fmSearchNorm(v){return String(v??'').normalize('NFC').toLocaleLowerCase().replace(/[\u200c\u200d]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
-function renderFreshMartProducts(){const grid=document.getElementById('freshMartProductGrid');if(!grid)return;const q=fmSearchNorm(document.getElementById('shopProductSearch')?.value||''),cat=document.getElementById('shopProductCategory')?.value||'';const terms=q.split(/\s+/).filter(Boolean);const rows=fmShopProducts.map(p=>{const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>(!cat||(x.p.fm_product_categories?.category_name||'')===cat)&&(!q||x.hits>0)).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);grid.innerHTML=rows.map(p=>'<article style="border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0">'+(p.image_url?'<img src="'+shopEsc(p.image_url)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy" style="width:100%;height:115px;object-fit:contain;border-radius:9px;background:#f5fbf6">':'<div style="height:115px;display:grid;place-items:center;background:#f5fbf6;border-radius:9px;font-size:34px">🛒</div>')+'<b style="display:block;margin-top:8px;font-size:13px">'+shopEsc(p.product_name)+'</b><small style="color:#718078">'+shopEsc(p.fm_product_categories?.category_name||'Grocery')+'</small><div style="font-weight:850;color:#168447;margin-top:6px">'+shopMoney(p.retail_price||p.offer_price)+'</div>'+(Number(p.mrp)>Number(p.retail_price||p.offer_price)?'<small style="text-decoration:line-through;color:#718078">'+shopMoney(p.mrp)+'</small>':'')+'<small style="display:block;color:#718078;margin-top:4px">Stock: '+Number(p.stock_quantity||0)+' '+shopEsc(p.unit||'pcs')+'</small></article>').join('')||'<p class="hint">No products available in this category right now.</p>';if(q){requestAnimationFrame(()=>{const section=grid.closest('.card');section?.scrollIntoView({behavior:'smooth',block:'start'});});} }
+function renderFreshMartProducts(){
+ const grid=document.getElementById('freshMartProductGrid');
+ if(!grid)return;
+ const q=fmSearchNorm(document.getElementById('shopProductSearch')?.value||'');
+ const cat=document.getElementById('shopProductCategory')?.value||'';
+ const terms=q.split(/\s+/).filter(Boolean);
+ const rows=fmShopProducts.map(p=>{
+  const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));
+  const hits=terms.filter(t=>hay.includes(t)).length;
+  return {p,hits,all:terms.length>0&&hits===terms.length};
+ }).filter(x=>(!cat||(x.p.fm_product_categories?.category_name||'')===cat)&&(!q||x.hits>0))
+   .sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
+ grid.innerHTML=rows.map(p=>'<article style="border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0">'
+  +(p.image_url?'<img src="'+shopEsc(p.image_url)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy" style="width:100%;height:115px;object-fit:contain;border-radius:9px;background:#f5fbf6">':'<div style="height:115px;display:grid;place-items:center;background:#f5fbf6;border-radius:9px;font-size:34px">🛒</div>')
+  +'<b style="display:block;margin-top:8px;font-size:13px">'+shopEsc(p.product_name)+'</b><small style="color:#718078">'+shopEsc(p.fm_product_categories?.category_name||'Grocery')+'</small><div style="font-weight:850;color:#168447;margin-top:6px">'+shopMoney(p.retail_price||p.offer_price)+'</div>'
+  +(Number(p.mrp)>Number(p.retail_price||p.offer_price)?'<small style="text-decoration:line-through;color:#718078">'+shopMoney(p.mrp)+'</small>':'')
+  +'<small style="display:block;color:#718078;margin-top:4px">Stock: '+Number(p.stock_quantity||0)+' '+shopEsc(p.unit||'pcs')+'</small></article>').join('')
+  ||'<p class="hint" style="grid-column:1/-1">'+(q?'No matching products found. Explore categories below.':'No products available in this category right now.')+'</p>';
+
+ // Even when a search has no matching product, keep useful category shortcuts visible.
+ const browse=document.getElementById('shopSearchCategories');
+ const browseItems=document.getElementById('shopSearchCategoryItems');
+ if(browse&&browseItems){
+  const names=[...new Set(fmShopProducts.map(p=>p.fm_product_categories?.category_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  browse.style.display=q&&names.length?'block':'none';
+  browseItems.innerHTML=names.map(name=>'<button type="button" data-shop-category="'+shopEsc(name)+'" style="border:1px solid #dce9df;border-radius:20px;background:#f5faf6;color:#176b3d;padding:9px 13px;font-size:12px;font-weight:750">🛒 '+shopEsc(name)+'</button>').join('');
+  browseItems.querySelectorAll('[data-shop-category]').forEach(btn=>btn.addEventListener('click',()=>{
+   const selector=document.getElementById('shopProductCategory');
+   const field=document.getElementById('shopProductSearch');
+   if(selector)selector.value=btn.dataset.shopCategory;
+   if(field)field.value='';
+   renderFreshMartProducts();
+   requestAnimationFrame(()=>grid.closest('.card')?.scrollIntoView({behavior:'smooth',block:'start'}));
+  }));
+ }
+ if(q){requestAnimationFrame(()=>{const section=grid.closest('.card');section?.scrollIntoView({behavior:'smooth',block:'start'});});}
+}
 
 async function loadTeamData(accessToken){
  const msg=document.getElementById('teamLoadMessage'); const body=document.getElementById('joinedMembersRows');

@@ -67,11 +67,14 @@
  const status=document.getElementById('liveProductStatus'),toast=document.getElementById('toast');
  const main=document.getElementById('home'),hero=main.querySelector('.hero');
  const popular=document.getElementById('popular'),benefits=main.querySelector('.benefits');
+ const categoryHead=main.querySelector('.section-head:not(#popular)');
  const originalPopularParent=popular.parentNode, originalPopularNext=popular.nextSibling;
  const originalGridParent=grid.parentNode, originalGridNext=grid.nextSibling;
  const originalEmptyParent=empty.parentNode, originalEmptyNext=empty.nextSibling;
  const originalStatusParent=status.parentNode, originalStatusNext=status.nextSibling;
- const searchHide=[hero,main.querySelector('.section-head:not(#popular)'),categories,main.querySelector('.offer-strip'),benefits].filter(Boolean);
+ const originalCategoryHeadParent=categoryHead.parentNode, originalCategoryHeadNext=categoryHead.nextSibling;
+ const originalCategoriesParent=categories.parentNode, originalCategoriesNext=categories.nextSibling;
+ const searchHide=[hero,main.querySelector('.offer-strip'),benefits].filter(Boolean);
  let cart=0,toastTimer,allProducts=[];
  function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
  function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart}
@@ -103,19 +106,30 @@
    const searching=!!q;
    searchHide.forEach(el=>el.style.display=searching?'none':'');
    if(searching){
+     // Keep matching products at the top, then always show category browsing below.
      main.insertBefore(popular,hero||main.firstChild);
      main.insertBefore(grid,popular.nextSibling);
      main.insertBefore(empty,grid.nextSibling);
      main.insertBefore(status,empty.nextSibling);
+     main.insertBefore(categoryHead,status.nextSibling);
+     main.insertBefore(categories,categoryHead.nextSibling);
      popular.querySelector('h2').textContent='Search results';
      popular.querySelector('p').textContent='Matching products';
+     categoryHead.querySelector('h2').textContent='Browse categories';
+     categoryHead.querySelector('p').textContent='Explore products by category';
+     categoryHead.querySelector('.seeall').textContent='View all';
    }else{
      originalPopularParent.insertBefore(popular,originalPopularNext);
      originalGridParent.insertBefore(grid,originalGridNext);
      originalEmptyParent.insertBefore(empty,originalEmptyNext);
      originalStatusParent.insertBefore(status,originalStatusNext);
+     originalCategoriesParent.insertBefore(categories,originalCategoriesNext);
+     originalCategoryHeadParent.insertBefore(categoryHead,categories);
      popular.querySelector('h2').textContent='Popular picks';
      popular.querySelector('p').textContent='Customer favourites at Fresh-Mart';
+     categoryHead.querySelector('h2').textContent='Shop by category';
+     categoryHead.querySelector('p').textContent='Everything you need for your home';
+     categoryHead.querySelector('.seeall').textContent='View all';
    }
    renderProducts(list);
    if(searching){ requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'})); }
