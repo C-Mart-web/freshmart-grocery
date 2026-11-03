@@ -92,7 +92,7 @@
  function filterProducts(){
    const q=search.value.trim().toLowerCase();
    const terms=searchNormalize(q).split(/\s+/).filter(Boolean);
-    const list=allProducts.filter(p=>{const hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));return !q||terms.every(t=>hay.includes(t));});
+    const list=allProducts.map(p=>{const hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>!q||x.hits>0).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
    renderProducts(list);
  }
  async function loadLiveStore(){
