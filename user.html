@@ -162,7 +162,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="withdrawals">
   <div class="welcome"><div><h1>Withdrawals</h1><p>Request a withdrawal from your available Shopping Wallet balance.</p></div></div>
-  <div class="card"><h2 style="font-size:17px">Saved Payment Details</h2><p class="hint">These details are loaded from Profile & Support. To change them, open Profile & Support → Bank / UPI Details.</p><div id="fmWithdrawalPayoutSummary" class="hint">Loading saved bank / UPI details…</div></div>
+  <div class="card"><h2 style="font-size:17px">Saved Payment Details</h2><div id="fmWithdrawalPayoutSummary" class="hint">Loading saved bank / UPI details…</div></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">New withdrawal request</h2><p class="hint" id="fmWithdrawalRuleMsg">Loading withdrawal limits…</p><div class="field"><label>Available Shopping Wallet (₹)</label><input id="fmWithdrawalBalance" type="text" value="₹0.00" readonly></div><div class="field" style="margin-top:12px"><label>Withdrawal Amount (₹)</label><select id="fmWithdrawalAmount" onchange="fmWithdrawalAmountChanged()"><option value="">Loading amount options…</option></select></div><div class="field" id="fmWithdrawalCustomWrap" style="display:none;margin-top:12px"><label>Enter Custom Amount (₹)</label><input id="fmWithdrawalCustom" type="number" min="1" step="0.01" placeholder="Enter amount" oninput="fmUpdateWithdrawalPreview()"></div><div class="hint" id="fmWithdrawalPreview" style="margin-top:10px"></div><button class="btn btn-green" id="fmWithdrawalSubmitBtn" type="button" style="margin-top:14px" onclick="fmSubmitWithdrawal()">Request withdrawal</button><p id="fmWithdrawalMsg" class="hint" aria-live="polite"></p></div>
   <div class="card" style="margin-top:17px"><div class="section-head"><h2 style="font-size:17px">Withdrawal history</h2><button class="btn btn-outline btn-sm" onclick="fmLoadWithdrawalHistory()">Refresh</button></div><div class="tablewrap"><table><thead><tr><th>Request ID</th><th>Amount</th><th>Charge</th><th>Net</th><th>Status</th><th>Date</th></tr></thead><tbody id="fmWithdrawalHistoryRows"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody></table></div></div>
 </section>
@@ -170,7 +170,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="profile">
   <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account, delivery addresses and password.</p></div></div>
   <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Fresh-Mart support.</p></div>
-  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Bank / UPI Details for Withdrawals</h2>
+  <div class="card" id="fmBankDetailsCard" style="margin-top:17px"><h2 style="font-size:17px">Bank / UPI Details for Withdrawals</h2>
    <p class="hint">Enter all bank details together. You can save only once; after saving, only Super Admin can make corrections. These details will appear automatically on the Withdrawals page.</p>
    <div class="formgrid">
     <div class="field"><label>Account Holder Name</label><input id="fmPayoutHolder" maxlength="120" placeholder="Name as per bank account"></div>
@@ -877,6 +877,7 @@ function shareReferralLink(side){
  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
 }
 
+function fmGoToBankDetails(){showPage('profile');setTimeout(()=>{const card=document.getElementById('fmBankDetailsCard');if(card)card.scrollIntoView({behavior:'smooth',block:'start'});},120);}
 async function fmLoadPayoutDetails(){
  const formIds=['fmPayoutHolder','fmPayoutBank','fmPayoutAccount','fmPayoutIfsc','fmPayoutUpi'];
  const summary=document.getElementById('fmWithdrawalPayoutSummary');
@@ -907,7 +908,7 @@ async function fmLoadPayoutDetails(){
   if(summary){
    summary.innerHTML=has
     ? `<div style="line-height:1.8"><b>${shopEsc(p.bank_account_holder||'')}</b><br>${shopEsc(p.bank_name||'')}<br>Account: ${p.bank_account_number?'••••'+shopEsc(String(p.bank_account_number).slice(-4)):'Not added'}<br>IFSC: ${shopEsc(p.bank_ifsc||'Not added')}<br>UPI: ${shopEsc(p.upi_id||'Not added')}</div>`
-    : 'No bank / UPI details saved yet. Add them in Profile & Support.';
+    : '<div style="margin-bottom:10px">Bank details not added yet.</div><button type="button" class="btn btn-green" onclick="fmGoToBankDetails()">Add Bank Details</button>';
   }
  }catch(e){
   if(summary)summary.textContent='Could not load payment details: '+(e.message||String(e));
