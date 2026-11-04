@@ -802,7 +802,15 @@ async function fmAdminAssignScratch(){
   m.textContent='Scratch card assigned to '+(member.display_name||member.username||member.user_code)+'.';
  }catch(e){m.textContent='Could not assign card: '+(e.message||String(e));}
 }
-document.querySelectorAll('[data-page]').forEach(b=>{if(b.dataset.page==='offers')b.addEventListener('click',fmAdminLoadOffers)});
+// Always render six editable defaults immediately, even if the database request fails.
+fmRenderSpinSlots(FM_DEFAULT_SPIN_SLOTS);
+document.querySelectorAll('[data-page]').forEach(b=>{
+ if(b.dataset.page==='offers')b.addEventListener('click',()=>{
+  fmRenderSpinSlots(FM_DEFAULT_SPIN_SLOTS);
+  fmAdminLoadOffers();
+ });
+});
+if(document.getElementById('offers')?.classList.contains('active'))fmAdminLoadOffers();
 </script>
 </body>
 </html>
