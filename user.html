@@ -48,14 +48,16 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   .btn{max-width:100%;white-space:normal}
 }
 @media(min-width:681px){.mobile-menu-backdrop{display:none!important}}
-\n</style>
+</style>
 </head>
 <body>
 <header class="topbar">
+  <button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button>
   <div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div>
   <div class="topright"><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><button class="signout-btn" type="button" onclick="showPage('cart')" aria-label="Open Cart" style="position:relative;font-size:18px;padding:8px 11px">🛒<span id="fmTopCartCount" style="font-size:10px;background:#d8f36a;color:#173a26;border-radius:20px;padding:2px 6px;margin-left:3px">0</span></button><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
 </header>
-<div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>\n<div class="layout">
+<div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
+<div class="layout">
 <aside class="sidebar">
   <div class="navlabel">MY SPACE</div>
   <button class="navbtn active" data-page="dashboard"><span class="ico">⌂</span>Dashboard</button>
