@@ -148,7 +148,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
       <div class="field"><label for="addressLabel">Address type *</label><select id="addressLabel"><option value="Home">Home</option><option value="Work">Work</option><option value="Other">Other</option></select></div>
       <div class="field"><label for="addressRecipient">Recipient name *</label><input id="addressRecipient" maxlength="100" placeholder="Name receiving the order"></div>
       <div class="field"><label for="addressMobile">Mobile number *</label><input id="addressMobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"></div>
-      <div class="field"><label for="addressPincode">PIN code *</label><input id="addressPincode" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit PIN code" oninput="clearPostalLookup()" onblur="lookupPostalCode()"></div>
+      <div class="field"><label for="addressPincode">PIN code *</label><input id="addressPincode" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit PIN code" oninput="handleAddressPincodeInput()" onblur="lookupPostalCode()"></div>
       <div class="field" style="grid-column:1/-1"><label for="addressPostOffice">Post Office / Area *</label><input id="addressPostOffice" maxlength="120" placeholder="Select or enter your post office / area"></div>
       <div class="field"><label for="addressLine1">House / Flat / Door No. *</label><input id="addressLine1" maxlength="180" placeholder="House number, apartment"></div>
       <div class="field"><label for="addressLine2">Street / Road</label><input id="addressLine2" maxlength="180" placeholder="Street, road"></div>
@@ -436,7 +436,7 @@ document.getElementById('fmCheckoutAddress')?.addEventListener('change',async e=
 async function fmPlaceOrder(){const msg=document.getElementById('fmCheckoutMsg'),btn=document.getElementById('fmPlaceOrderBtn');try{if(!fmCart.length)throw new Error('Cart is empty.');const session=await getMemberSession(),address=fmAddresses.find(a=>String(a.id)===document.getElementById('fmCheckoutAddress').value);if(!address)throw new Error('Choose a saved delivery address.');const pin=document.getElementById('fmCheckoutPin').value.trim();if(pin!==address.pincode)throw new Error('Selected address and delivery pincode do not match.');if(!fmCheckoutArea)throw new Error('Please verify delivery serviceability for this address first.');const mode=document.querySelector('input[name="fmDeliveryMode"]:checked')?.value;if(!mode)throw new Error('No delivery option selected for this pincode.');const slotId=mode==='slot'?document.querySelector('input[name="fmDeliveryMode"]:checked')?.dataset.slot:null;const method=document.getElementById('fmCheckoutPayment').value;if(!method)throw new Error('No payment method is enabled.');btn.disabled=true;msg.textContent='Checking stock and placing order…';const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{p_items:fmCart,p_address:address,p_pincode:pin,p_delivery_mode:mode,p_slot_id:slotId,p_payment_method:method});if(error)throw error;const result=Array.isArray(data)?data[0]:data;if(!result?.success)throw new Error(result?.message||'Order could not be placed.');fmCart=[];fmSaveCart();msg.style.color='#168447';msg.textContent=`Order ${result.order_number} placed. Total ${shopMoney(result.grand_total)}. Payment status: ${result.payment_status}.`;alert('Order placed: '+result.order_number+'\nTotal: '+shopMoney(result.grand_total));}catch(e){msg.style.color='#b72e2e';msg.textContent=e.message||'Checkout failed.';}finally{btn.disabled=false;}}
 
 // Delivery address management. Requires the fm_member_addresses table and its RLS policies.
-let fmAddressSession=null, fmAddresses=[], fmAddressCoords=null, fmPostalLookupTimer=null;
+let fmAddressSession=null, fmAddresses=[], fmAddressCoords=null, fmPostalLookupTimer=null, fmPostalLookupSeq=0;
 async function getMemberSession(){
  const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
  if(!authKey)throw new Error('Login session not found. Please sign in again.');
@@ -467,34 +467,130 @@ function renderDeliveryAddresses(){
   return '<div class="card" style="padding:13px;margin:9px 0;background:'+(a.is_default?'#f3fff6':'#fff')+';box-shadow:none"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><strong>'+escapeTeamText(a.label||'Address')+' · '+escapeTeamText(a.recipient_name||'')+'</strong>'+(a.is_default?'<span class="badge approved">DEFAULT</span>':'')+'</div><p class="hint" style="margin:7px 0">'+escapeTeamText(full)+'<br>Mobile: '+escapeTeamText(a.mobile_number||'')+'</p><div style="display:flex;gap:8px;flex-wrap:wrap">'+(a.is_default?'':'<button class="btn btn-outline" type="button" onclick="setDefaultAddress('+JSON.stringify(String(a.id))+')">Set Default</button>')+'<button class="btn btn-outline" type="button" onclick="editDeliveryAddress('+JSON.stringify(String(a.id))+')">Edit</button><button class="btn btn-outline" type="button" onclick="deleteDeliveryAddress('+JSON.stringify(String(a.id))+')">Delete</button></div></div>';
  }).join('');
 }
-function clearPostalLookup(){clearTimeout(fmPostalLookupTimer);fmPostalLookupTimer=setTimeout(()=>{const pin=document.getElementById('addressPincode').value.trim();if(pin.length===6)lookupPostalCode();},500);}
+function handleAddressPincodeInput(){
+ clearTimeout(fmPostalLookupTimer);
+ const pin=document.getElementById('addressPincode').value.replace(/\D/g,'').slice(0,6);
+ document.getElementById('addressPincode').value=pin;
+ // As soon as PIN changes, discard the previous PIN's coordinates and map.
+ fmPostalLookupSeq++;
+ fmAddressCoords=null;
+ const map=document.getElementById('addressMapPreview');
+ if(map)map.style.display='none';
+ const msg=document.getElementById('addressLocationMsg');
+ if(pin.length<6){
+  msg.textContent=pin.length?'Enter all 6 digits to update the map.':'Enter PIN code to show its location on the map.';
+  msg.style.color='#718078';
+  return;
+ }
+ msg.textContent='PIN entered. Updating location on map…';
+ msg.style.color='#718078';
+ fmPostalLookupTimer=setTimeout(()=>lookupPostalCode(),350);
+}
+function clearPostalLookup(){handleAddressPincodeInput();}
+
+async function geocodePostalArea(pin,office,district,state,seq){
+ const clean=x=>(x||'').toString().trim();
+ const officeName=clean(office),dist=clean(district),st=clean(state);
+ // Structured search pins the search to the entered postal code and country.
+ const params1=new URLSearchParams({format:'jsonv2',limit:'8',country:'India',postalcode:pin});
+ if(officeName)params1.set('street',officeName);
+ if(dist)params1.set('county',dist);
+ if(st)params1.set('state',st);
+ const params2=new URLSearchParams({format:'jsonv2',limit:'8',q:[officeName,dist,st,pin,'India'].filter(Boolean).join(', ')});
+ for(const params of [params1,params2]){
+  const response=await fetch('https://nominatim.openstreetmap.org/search?'+params.toString(),{headers:{'Accept-Language':'en'}});
+  if(!response.ok)continue;
+  const results=await response.json();
+  if(seq!==fmPostalLookupSeq)return null;
+  if(!Array.isArray(results)||!results.length)continue;
+  // Reject results from a different district/state or a clearly unrelated PIN.
+  const valid=results.find(item=>{
+   const addr=item.address||{};
+   const hay=(item.display_name||'').toLowerCase();
+   const resultPin=String(addr.postcode||'').replace(/\s/g,'');
+   const stateOk=!st||hay.includes(st.toLowerCase());
+   const districtOk=!dist||hay.includes(dist.toLowerCase())||
+      hay.includes(dist.toLowerCase().replace(/\s+district$/,''));
+   const pinOk=!resultPin||resultPin===pin||resultPin.startsWith(pin);
+   return stateOk&&districtOk&&pinOk;
+  });
+  if(valid)return {lat:Number(valid.lat),lng:Number(valid.lon),label:valid.display_name||officeName};
+ }
+ return null;
+}
+
 async function lookupPostalCode(){
  const pin=document.getElementById('addressPincode').value.trim(),msg=document.getElementById('addressLocationMsg');
  if(!/^[1-9][0-9]{5}$/.test(pin))return;
- msg.textContent='Looking up India Post PIN code…';msg.style.color='#718078';
+ const seq=++fmPostalLookupSeq;
+ msg.textContent='Looking up PIN code and updating map…';msg.style.color='#718078';
  try{
   const r=await fetch('https://api.postalpincode.in/pincode/'+encodeURIComponent(pin));
   const d=await r.json();
+  if(seq!==fmPostalLookupSeq)return;
   if(!Array.isArray(d)||d[0]?.Status!=='Success'||!d[0]?.PostOffice?.length)throw new Error('No postal area found for this PIN code.');
   const offices=d[0].PostOffice;
-  // Prefer Palamaner main office for PIN 517408; otherwise prefer Sub/Head Office.
+  // Prefer Palamaner main office for PIN 517408; otherwise main Sub/Head Office.
   const preferred=offices.find(x=>/Palamaner/i.test(x.Name||''))||
-    offices.find(x=>/Sub Office|Head Office/i.test(x.BranchType||''))||
-    offices[0];
-  document.getElementById('addressDistrict').value=preferred.District||'';
-  document.getElementById('addressState').value=preferred.State||'';
+    offices.find(x=>/Sub Office|Head Office/i.test(x.BranchType||''))||offices[0];
+  const district=preferred.District||'';
+  const state=preferred.State||'';
+  document.getElementById('addressDistrict').value=district;
+  document.getElementById('addressState').value=state;
   const area=document.getElementById('addressPostOffice');
   if(offices.length>1){
    const names=offices.map(x=>x.Name).filter(Boolean);
    area.setAttribute('list','fmPostOfficeOptions');
-   let dl=document.getElementById('fmPostOfficeOptions');if(!dl){dl=document.createElement('datalist');dl.id='fmPostOfficeOptions';area.after(dl);}
+   let dl=document.getElementById('fmPostOfficeOptions');
+   if(!dl){dl=document.createElement('datalist');dl.id='fmPostOfficeOptions';area.after(dl);}
    dl.innerHTML=names.map(n=>'<option value="'+escapeTeamText(n)+'"></option>').join('');
-   area.value=preferred.Name||'';
-   msg.textContent='PIN code found. Suggested main post office: '+preferred.Name+'. You can change it using the suggestions.';
-  }else{area.value=preferred.Name||'';msg.textContent='PIN code verified: '+preferred.Name+', '+preferred.District+', '+preferred.State;}
-  msg.style.color='#168447';
- }catch(e){msg.textContent=e.message||'Could not look up PIN code. Enter the area and district manually.';msg.style.color='#b72e2e';}
+  }
+  area.value=preferred.Name||'';
+  document.getElementById('addressCity').value=preferred.Block||preferred.Taluk||district;
+
+  // Clear old map before geocoding the newly entered PIN.
+  fmAddressCoords=null;
+  document.getElementById('addressMapPreview').style.display='none';
+  msg.textContent='PIN '+pin+' found. Finding '+(preferred.Name||'postal area')+'…';
+  const point=await geocodePostalArea(pin,preferred.Name,district,state,seq);
+  if(seq!==fmPostalLookupSeq)return;
+  if(point&&Number.isFinite(point.lat)&&Number.isFinite(point.lng)){
+   fmAddressCoords={lat:point.lat,lng:point.lng};
+   showAddressMap(point.lat,point.lng);
+   msg.textContent='Location updated for PIN '+pin+' — '+preferred.Name+'. This is an approximate post-office area; set your exact home location before saving.';
+   msg.style.color='#168447';
+  }else{
+   fmAddressCoords=null;
+   document.getElementById('addressMapPreview').style.display='none';
+   msg.textContent='PIN '+pin+' and '+preferred.Name+' found, but map coordinates could not be verified for this postal area. Use Current Location or Open Map; the previous PIN location will not be reused.';
+   msg.style.color='#956500';
+  }
+ }catch(e){
+  if(seq!==fmPostalLookupSeq)return;
+  fmAddressCoords=null;
+  document.getElementById('addressMapPreview').style.display='none';
+  msg.textContent=e.message||'Could not look up PIN code. Enter the area and district manually.';
+  msg.style.color='#b72e2e';
+ }
 }
+document.addEventListener('change',function(ev){
+ if(ev.target&&ev.target.id==='addressPostOffice'){
+  const pin=document.getElementById('addressPincode').value.trim();
+  if(/^[1-9][0-9]{5}$/.test(pin)){
+   clearTimeout(fmPostalLookupTimer);
+   fmPostalLookupTimer=setTimeout(async()=>{
+    const seq=++fmPostalLookupSeq, msg=document.getElementById('addressLocationMsg');
+    fmAddressCoords=null;document.getElementById('addressMapPreview').style.display='none';
+    msg.textContent='Updating map for selected post office…';msg.style.color='#718078';
+    const point=await geocodePostalArea(pin,ev.target.value,document.getElementById('addressDistrict').value,document.getElementById('addressState').value,seq).catch(()=>null);
+    if(seq!==fmPostalLookupSeq)return;
+    if(point){fmAddressCoords={lat:point.lat,lng:point.lng};showAddressMap(point.lat,point.lng);msg.textContent='Map updated for '+ev.target.value+'. Approximate area only; verify your exact home location.';msg.style.color='#168447';}
+    else{msg.textContent='Could not verify map location for this post office. Use Current Location to set the exact location.';msg.style.color='#956500';}
+   },200);
+  }
+ }
+});
+
 function addressPayload(){
  const v=id=>document.getElementById(id).value.trim();
  return {label:v('addressLabel'),recipient_name:v('addressRecipient'),mobile_number:v('addressMobile'),pincode:v('addressPincode'),post_office:v('addressPostOffice'),address_line1:v('addressLine1'),address_line2:v('addressLine2'),landmark:v('addressLandmark'),district:v('addressDistrict'),city:v('addressCity'),state:v('addressState'),latitude:fmAddressCoords?.lat??null,longitude:fmAddressCoords?.lng??null,is_default:document.getElementById('addressIsDefault').checked};
