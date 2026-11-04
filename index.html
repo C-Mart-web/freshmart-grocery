@@ -48,7 +48,10 @@
  </section>
  <div class="section-head"><div><h2>Shop by category</h2><p>Everything you need for your home</p></div><a class="seeall" href="#categories">View all</a></div>
  <section class="category-grid" id="categories"><div class="empty" style="display:block;grid-column:1/-1">Loading categories…</div></section>
- <section class="offer-strip">
+ 
+<section id="fmLiveOffers" style="margin:18px 0"><div class="section-head"><div><h2>Fresh-Mart Offers & Deals 🎁</h2><p>Latest offers curated for you</p></div></div><div id="fmLiveOfferGrid" class="offer-strip"><div class="offer green"><div><small>Loading</small><h3>Fresh offers</h3><p>Fetching live campaigns…</p></div><div class="offer-icon">🎁</div></div></div></section>
+
+  <section class="offer-strip">
   <div class="offer green"><div><small>Fresh every day</small><h3>Farm fresh<br>vegetables</h3><p>Goodness for your family</p></div><div class="offer-icon">🥕</div></div>
   <div class="offer yellow"><div><small>Stock up & save</small><h3>Daily needs<br>made easy</h3><p>Shop your essentials</p></div><div class="offer-icon">🛍️</div></div>
  </section>
@@ -192,7 +195,8 @@
  else{voiceBtn.addEventListener('click',()=>{try{const rec=new SpeechRecognition();rec.lang=voiceLang.value;rec.continuous=false;rec.interimResults=false;voiceBtn.classList.add('listening');voiceBtn.textContent='…';rec.onresult=e=>{const spoken=e.results?.[0]?.[0]?.transcript||'';if(spoken){search.value=spoken;filterProducts();showToast('Searching: '+spoken)}};rec.onerror=e=>showToast(e.error==='not-allowed'?'Please allow microphone access.':'Voice search failed. Please try again.');rec.onend=()=>{voiceBtn.classList.remove('listening');voiceBtn.textContent='🎤'};rec.start();}catch(e){voiceBtn.classList.remove('listening');voiceBtn.textContent='🎤';showToast('Voice search could not start. Use HTTPS Chrome and allow microphone.')}})}
 
  document.getElementById('changeLocation').addEventListener('click',()=>{const pin=prompt('Enter your 6-digit delivery pincode:');if(pin===null)return;if(!/^[0-9]{6}$/.test(pin)){showToast('Please enter a valid 6-digit pincode');return}document.getElementById('deliveryPlace').textContent='Pincode '+pin;showToast('Location selected for this browsing session')});
- loadLiveStore();
+ async function loadFreshMartOffers(){const box=document.getElementById('fmLiveOfferGrid');if(!box||!db)return;try{const {data,error}=await db.from('fm_offer_campaigns').select('id,title,description,offer_type,badge_text,discount_type,discount_value,starts_at,ends_at,is_active,sort_order').eq('is_active',true).order('sort_order').limit(8);if(error)throw error;const now=Date.now(),rows=(data||[]).filter(x=>(!x.starts_at||new Date(x.starts_at).getTime()<=now)&&(!x.ends_at||new Date(x.ends_at).getTime()>=now));box.innerHTML=rows.length?rows.map(x=>'<article class="offer green"><div><small>'+esc(x.badge_text||'SPECIAL OFFER')+'</small><h3>'+esc(x.title)+'</h3><p>'+esc(x.description||'Shop now at Fresh-Mart')+'</p>'+(x.discount_value>0?'<b style="color:#168447">'+(x.discount_type==='percent'?Number(x.discount_value)+'% OFF':'₹'+Number(x.discount_value)+' OFF')+'</b>':'')+'</div><div class="offer-icon">🎁</div></article>').join(''):'<div class="offer yellow"><div><small>Fresh-Mart</small><h3>Offers coming soon</h3><p>Check back for new deals.</p></div><div class="offer-icon">🛍️</div></div>';}catch(e){box.innerHTML='<div class="offer yellow"><div><small>Offers</small><h3>Deals coming soon</h3><p>Refresh to check current offers.</p></div><div class="offer-icon">🎁</div></div>';}}
+ loadLiveStore();loadFreshMartOffers();
 })();
 </script>
 </body>

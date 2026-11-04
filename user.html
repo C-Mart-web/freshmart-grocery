@@ -36,6 +36,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button class="navbtn" data-page="wallets"><span class="ico">👛</span>My Wallets</button>
   <button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
   <button class="navbtn" data-page="orders"><span class="ico">📦</span>My Orders</button>
+  <button class="navbtn" data-page="myoffers"><span class="ico">🎁</span>Coupons & Offers</button>
   <div class="navlabel">ACCOUNT</div>
   <button class="navbtn" data-page="profile"><span class="ico">⚙</span>Profile & Support</button>
   <div class="sidebar-foot"><strong>Fresh-Mart Support</strong><br>Need help with an order or payment?<br><span style="color:var(--green);font-weight:800">Contact support →</span></div>
@@ -177,7 +178,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
 <div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping<br>Design preview — not yet connected to live account data.</div>
-</main>
+<section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">One spin per member when enabled. Rewards are pending Admin fulfilment.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
 </div>
 <nav class="mobile-nav">
 <button class="active" data-page="dashboard"><span>⌂</span>Home</button>
@@ -810,6 +811,36 @@ function demoSubmit(e){
  alert('Design demo only. This request is not saved to the server yet.');
 }
 function showWalletHistory(walletName){const msg=document.getElementById('walletHistoryMessage');if(msg)msg.textContent=walletName==='All'?'No live transactions are connected yet. All approved wallet credits and debits will appear here after database connection.':walletName+' history will appear here after the relevant wallet is connected to Supabase.';const rows=document.getElementById('walletTransactionRows');if(rows)rows.innerHTML='<tr><td colspan="5" style="color:#718078;font-weight:500">No live '+(walletName==='All'?'':walletName+' ' )+'transactions loaded yet.</td></tr>';}
+</script>
+
+<script>
+// Fresh-Mart offers and member rewards module
+function fmOfferEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmOfferMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
+async function fmLoadMyOffers(){
+ const offerBox=document.getElementById('fmUserOfferList'),couponBox=document.getElementById('fmUserCouponList'),scratchBox=document.getElementById('fmScratchList');if(!offerBox||!fmShopClient)return;
+ offerBox.textContent='Loading offers…';couponBox.textContent='Loading coupons…';scratchBox.textContent='Loading scratch cards…';
+ try{
+  const now=new Date().toISOString();
+  const [offers,cfg]=await Promise.all([fmShopClient.from('fm_offer_campaigns').select('*').eq('is_active',true).order('sort_order').limit(50),fmShopClient.from('fm_spin_settings').select('is_enabled,one_spin_per_user').eq('id',true).maybeSingle()]);
+  if(offers.error)throw offers.error;
+  const live=(offers.data||[]).filter(x=>(!x.starts_at||x.starts_at<=now)&&(!x.ends_at||x.ends_at>=now));
+  offerBox.innerHTML=live.length?live.map(x=>`<article style="padding:13px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.badge_text||'SPECIAL OFFER')} · ${fmOfferEsc(x.title)}</b><p class="hint">${fmOfferEsc(x.description||'')}</p>${x.discount_value>0?`<strong style="color:#168447">${x.discount_type==='percent'?Number(x.discount_value)+'% OFF':fmOfferMoney(x.discount_value)+' OFF'}</strong>`:''}</article>`).join(''):'No active offers right now.';
+  const session=await getMemberSession();
+  const {data:coupons,error:ce}=await fmShopClient.from('fm_user_coupons').select('id,status,assigned_at,redeemed_at,fm_coupons(code,title,description,discount_type,discount_value,min_order_amount,ends_at,is_active)').eq('user_id',session.user.id).order('assigned_at',{ascending:false});if(ce)throw ce;
+  const usable=(coupons||[]).filter(x=>x.status==='available'&&x.fm_coupons?.is_active);
+  document.getElementById('fmMyCouponCount').textContent=usable.length+' AVAILABLE';
+  couponBox.innerHTML=(coupons||[]).length?(coupons||[]).map(x=>{const c=x.fm_coupons||{};return `<article style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><div><b>${fmOfferEsc(c.title||'Coupon')}</b><div class="hint">${fmOfferEsc(c.description||'')} · Code: <strong>${fmOfferEsc(c.code||'')}</strong></div><small class="hint">${c.discount_type==='percent'?Number(c.discount_value)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':'Free Delivery'} · Min order ${fmOfferMoney(c.min_order_amount)}</small></div><div><span class="badge ${x.status==='available'?'approved':'pending'}">${fmOfferEsc(x.status.toUpperCase())}</span><button class="btn btn-outline" style="display:block;margin-top:7px" onclick="navigator.clipboard?.writeText('${fmOfferEsc(c.code||'')}').then(()=>alert('Coupon code copied'))">Copy Code</button></div></article>`}).join(''):'No coupons assigned to your account yet.';
+  const spinBtn=document.getElementById('fmSpinButton');spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?'Spin Now':'Spin Wheel Coming Soon';
+  const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('reward_label,status,played_at').eq('user_id',session.user.id).maybeSingle();if(pe)throw pe;
+  if(plays){spinBtn.disabled=true;spinBtn.textContent='Spin Already Used';document.getElementById('fmSpinResult').textContent='Your result: '+plays.reward_label+' ('+plays.status+').';}
+  const {data:scratch,error:se}=await fmShopClient.from('fm_scratch_cards').select('id,title,reward_label,status').eq('user_id',session.user.id).order('created_at',{ascending:false});if(se)throw se;
+  scratchBox.innerHTML=(scratch||[]).length?(scratch||[]).map(x=>`<article style="padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.title)}</b><p class="hint">${x.status==='available'?'Tap to reveal your reward.':fmOfferEsc(x.reward_label)+' · '+fmOfferEsc(x.status)}</p>${x.status==='available'?`<button class="btn btn-green" onclick="fmRevealScratch('${x.id}')">Scratch & Reveal</button>`:''}</article>`).join(''):'No scratch cards assigned yet.';
+ }catch(e){offerBox.textContent='Could not load offers: '+e.message;couponBox.textContent='Please sign in and try again.';scratchBox.textContent='Scratch cards unavailable: '+e.message;}
+}
+async function fmPlaySpin(){const btn=document.getElementById('fmSpinButton'),out=document.getElementById('fmSpinResult');btn.disabled=true;out.textContent='Spinning…';try{const {data,error}=await fmShopClient.rpc('fm_play_spin');if(error)throw error;out.textContent='🎉 '+data.reward_label+' · Status: '+(data.reward_type==='none'?'No prize':'Pending Admin fulfilment');await fmLoadMyOffers();}catch(e){out.textContent=e.message;btn.disabled=false;}}
+async function fmRevealScratch(id){try{const {data,error}=await fmShopClient.rpc('fm_reveal_scratch_card',{p_card_id:id});if(error)throw error;alert('You revealed: '+data.reward_label+'\nReward status: Pending Admin fulfilment where applicable.');await fmLoadMyOffers();}catch(e){alert(e.message);}}
+document.querySelectorAll('[data-page]').forEach(b=>{if(b.dataset.page==='myoffers')b.addEventListener('click',fmLoadMyOffers)});
 </script>
 </body>
 </html>
