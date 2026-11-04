@@ -108,7 +108,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   
 </section>
 <section class="page" id="cart"><div class="welcome"><div><h1>My Cart 🛒</h1><p>Review items and quantities before checkout.</p></div><button class="btn btn-outline" onclick="fmRenderCart()">Refresh</button></div><div class="card"><div id="fmCartRows" class="hint">Your cart is empty.</div><div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:850"><span>Subtotal</span><span id="fmCartSubtotal">₹0.00</span></div><button class="btn btn-green" style="margin-top:14px;width:100%" onclick="fmOpenCheckout()">Proceed to Checkout</button><button class="btn btn-outline" style="margin-top:9px;width:100%" onclick="showPage('groceries')">Continue Shopping</button></div></section>
-<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment"><option value="">Loading payment methods…</option></select></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Confirm & Place Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
+<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Confirm & Place Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
 <section class="page" id="plans">
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
   <div class="card" style="margin-bottom:14px;background:#f0faf3"><b>🚚 Membership Free Delivery</b><p class="hint" style="margin:6px 0 0">Some membership plans may include free delivery while the membership validity is active. The benefit is applied automatically at checkout when enabled by the store.</p></div>
@@ -434,10 +434,10 @@ async function fmPushCartToCloud(){
 }
 function fmSaveCart(){localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));fmRenderCart();renderFreshMartProducts();fmPushCartToCloud();if(document.getElementById('fmCheckoutCard')?.style.display!=='none'&&document.getElementById('fmCheckoutPin')?.value)fmLoadDeliveryChoices();}
 function fmAddToCart(id){const p=fmShopProducts.find(x=>String(x.id)===String(id));if(!p)return;const row=fmCart.find(x=>String(x.product_id)===String(id));if(row)row.quantity++;else fmCart.push({product_id:String(id),quantity:1});fmSaveCart();document.getElementById('fmTopCartCount')&&(document.getElementById('fmTopCartCount').textContent=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0));}
-function fmRenderCart(){const box=document.getElementById('fmCartRows');if(!box)return;let total=0;box.innerHTML=fmCart.map((x,i)=>{const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));if(!p)return '';const price=Number(p.retail_price||p.offer_price||p.central_price||0),line=price*x.quantity;total+=line;return `<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid #edf3ee;padding:9px 0"><div style="flex:1"><b>${shopEsc(p.product_name)}</b><div class="hint">${shopMoney(price)} × ${x.quantity} = ${shopMoney(line)}</div></div><button class="btn btn-outline" onclick="fmCartQty(${i},-1)">−</button><button class="btn btn-outline" onclick="fmCartQty(${i},1)">+</button><button class="btn btn-outline" onclick="fmRemoveCart(${i})">×</button></div>`}).join('')||'Your cart is empty.';document.getElementById('fmCartSubtotal').textContent=shopMoney(total);const ct=document.getElementById('fmCheckoutTotal');if(ct)ct.textContent=shopMoney(total+(Number(fmCheckoutArea?.delivery_charge)||0));const cc=document.getElementById('fmTopCartCount');if(cc)cc.textContent=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0);}
+function fmRenderCart(){const box=document.getElementById('fmCartRows');if(!box)return;let total=0;box.innerHTML=fmCart.map((x,i)=>{const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));if(!p)return '';const price=Number(p.retail_price||p.offer_price||p.central_price||0),line=price*x.quantity;total+=line;return `<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid #edf3ee;padding:9px 0"><div style="flex:1"><b>${shopEsc(p.product_name)}</b><div class="hint">${shopMoney(price)} × ${x.quantity} = ${shopMoney(line)}</div></div><button class="btn btn-outline" onclick="fmCartQty(${i},-1)">−</button><button class="btn btn-outline" onclick="fmCartQty(${i},1)">+</button><button class="btn btn-outline" onclick="fmRemoveCart(${i})">×</button></div>`}).join('')||'Your cart is empty.';document.getElementById('fmCartSubtotal').textContent=shopMoney(total);const ct=document.getElementById('fmCheckoutTotal');if(ct){if(typeof fmUpdateCouponTotal==='function')fmUpdateCouponTotal();else ct.textContent=shopMoney(total+(Number(fmCheckoutArea?.delivery_charge)||0));}const cc=document.getElementById('fmTopCartCount');if(cc)cc.textContent=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0);}
 function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].quantity<=0)fmCart.splice(i,1);fmSaveCart();}
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
-async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRenderCart();window.scrollTo({top:0,behavior:'smooth'});}
+async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
 function fmGoAddDeliveryAddress(){showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
 async function fmLoadCheckoutPayments(){const sel=document.getElementById('fmCheckoutPayment');try{const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','payment_methods').maybeSingle();if(error)throw error;const m=data?.setting_value||{};const names={razorpay:'Razorpay',upi:'UPI',cards:'Debit / Credit Card',netbanking:'Net Banking',cod:'Cash on Delivery',wallet:'Wallet'};const opts=Object.keys(names).filter(k=>m[k]===true);sel.innerHTML=opts.map(k=>`<option value="${k}">${names[k]}</option>`).join('')||'<option value="">No payment methods currently available</option>';}catch(e){sel.innerHTML='<option value="">Payment settings unavailable</option>';document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;}}
 async function fmLoadDeliveryChoices(){
@@ -474,11 +474,109 @@ async function fmLoadDeliveryChoices(){
    ? '<p style="color:#168447;font-weight:800">🎉 Your active membership includes Free Delivery.</p>'
    : (fee===0?'<p style="color:#168447;font-weight:800">🎉 Free Delivery applied.</p>':`<p class="hint">Delivery charge: <b>${shopMoney(fee)}</b>${threshold!==null&&threshold!==undefined?` · Free delivery on bills above ${shopMoney(threshold)}`:''}</p>`);
   box.innerHTML=html;
-  document.getElementById('fmCheckoutTotal').textContent=shopMoney(subtotal+fee);
+  if(typeof fmUpdateCouponTotal==='function')fmUpdateCouponTotal();else document.getElementById('fmCheckoutTotal').textContent=shopMoney(subtotal+fee);
  }catch(e){box.textContent='Delivery options could not load: '+(e.message||'Please try again.');}
 }
 document.getElementById('fmCheckoutAddress')?.addEventListener('change',async e=>{const a=fmAddresses.find(x=>String(x.id)===e.target.value);if(a){document.getElementById('fmCheckoutPin').value=a.pincode;await fmLoadDeliveryChoices();}});
-async function fmPlaceOrder(){const msg=document.getElementById('fmCheckoutMsg'),btn=document.getElementById('fmPlaceOrderBtn');try{if(!fmCart.length)throw new Error('Cart is empty.');const session=await getMemberSession(),address=fmAddresses.find(a=>String(a.id)===document.getElementById('fmCheckoutAddress').value);if(!address)throw new Error('Choose a saved delivery address.');const pin=document.getElementById('fmCheckoutPin').value.trim();if(pin!==address.pincode)throw new Error('Selected address and delivery pincode do not match.');if(!fmCheckoutArea)throw new Error('Please verify delivery serviceability for this address first.');const mode=document.querySelector('input[name="fmDeliveryMode"]:checked')?.value;if(!mode)throw new Error('No delivery option selected for this pincode.');const slotId=mode==='slot'?document.querySelector('input[name="fmDeliveryMode"]:checked')?.dataset.slot:null;const method=document.getElementById('fmCheckoutPayment').value;if(!method)throw new Error('No payment method is enabled.');btn.disabled=true;msg.textContent='Checking stock and placing order…';const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{p_items:fmCart,p_address:address,p_pincode:pin,p_delivery_mode:mode,p_slot_id:slotId,p_payment_method:method});if(error)throw error;const result=Array.isArray(data)?data[0]:data;if(!result?.success)throw new Error(result?.message||'Order could not be placed.');fmCart=[];fmSaveCart();msg.style.color='#168447';msg.textContent=`Order ${result.order_number} placed. Total ${shopMoney(result.grand_total)}. Payment status: ${result.payment_status}.`;alert('Order placed: '+result.order_number+'\nTotal: '+shopMoney(result.grand_total));}catch(e){msg.style.color='#b72e2e';msg.textContent=e.message||'Checkout failed.';}finally{btn.disabled=false;}}
+// FRESH-MART CHECKOUT COUPON SUPPORT
+let fmAppliedCoupon = null;
+let fmCouponDiscount = 0;
+
+function fmCheckoutSubtotal(){
+ return fmCart.reduce((total,item)=>{
+  const p=fmShopProducts.find(x=>String(x.id)===String(item.product_id));
+  if(!p)return total;
+  return total+Number(p.retail_price||p.offer_price||p.central_price||0)*Number(item.quantity||0);
+ },0);
+}
+function fmUpdateCouponTotal(){
+ const subtotal=fmCheckoutSubtotal();
+ const delivery=Number(fmCheckoutArea?.delivery_charge||0);
+ const discount=Math.min(Math.max(Number(fmCouponDiscount||0),0),subtotal+delivery);
+ const total=Math.max(0,subtotal+delivery-discount);
+ const d=document.getElementById('fmCheckoutDiscount');
+ const t=document.getElementById('fmCheckoutTotal');
+ if(d)d.textContent=shopMoney(discount);
+ if(t)t.textContent=shopMoney(total);
+}
+async function fmApplyCheckoutCoupon(){
+ const msg=document.getElementById('fmCouponApplyMsg');
+ const btn=document.getElementById('fmApplyCouponBtn');
+ try{
+  const code=document.getElementById('fmCheckoutCoupon').value.trim().toUpperCase();
+  if(!code)throw new Error('Please enter a coupon code.');
+  if(!fmCart.length)throw new Error('Your cart is empty.');
+  btn.disabled=true;msg.textContent='Checking coupon…';
+  const session=await getMemberSession();
+  const {data,error}=await fmShopClient.from('fm_user_coupons')
+   .select('id,coupon_id,status,fm_coupons(id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active)')
+   .eq('user_id',session.user.id).eq('status','available');
+  if(error)throw error;
+  const assigned=(data||[]).find(x=>x.fm_coupons&&x.fm_coupons.is_active&&String(x.fm_coupons.code||'').toUpperCase()===code);
+  if(!assigned)throw new Error('Invalid coupon or this coupon is not assigned to your account.');
+  const c=assigned.fm_coupons;
+  if(c.ends_at&&Date.now()>new Date(c.ends_at).getTime())throw new Error('This coupon has expired.');
+  const subtotal=fmCheckoutSubtotal(),delivery=Number(fmCheckoutArea?.delivery_charge||0);
+  if(subtotal<Number(c.min_order_amount||0))throw new Error('Minimum order amount is '+shopMoney(c.min_order_amount)+'.');
+  let discount=0;
+  if(c.discount_type==='percent')discount=subtotal*Number(c.discount_value||0)/100;
+  else if(c.discount_type==='fixed')discount=Number(c.discount_value||0);
+  else if(c.discount_type==='free_delivery')discount=delivery;
+  else throw new Error('Unsupported coupon discount type.');
+  fmAppliedCoupon={id:c.id,code:c.code};
+  fmCouponDiscount=Math.min(Math.max(discount,0),subtotal+delivery);
+  fmUpdateCouponTotal();
+  msg.style.color='#168447';msg.textContent='🎉 Coupon '+c.code+' applied successfully.';
+  document.getElementById('fmRemoveCouponBtn').style.display='inline-flex';
+ }catch(e){
+  fmAppliedCoupon=null;fmCouponDiscount=0;fmUpdateCouponTotal();
+  msg.style.color='#b72e2e';msg.textContent=e.message||'Coupon could not be applied.';
+ }finally{btn.disabled=false;}
+}
+function fmRemoveCheckoutCoupon(){
+ fmAppliedCoupon=null;fmCouponDiscount=0;
+ const input=document.getElementById('fmCheckoutCoupon');
+ const msg=document.getElementById('fmCouponApplyMsg');
+ const remove=document.getElementById('fmRemoveCouponBtn');
+ if(input)input.value='';
+ if(msg)msg.textContent='';
+ if(remove)remove.style.display='none';
+ fmUpdateCouponTotal();
+}
+
+async function fmPlaceOrder(){
+ const msg=document.getElementById('fmCheckoutMsg'),btn=document.getElementById('fmPlaceOrderBtn');
+ try{
+  if(!fmCart.length)throw new Error('Cart is empty.');
+  const session=await getMemberSession();
+  const address=fmAddresses.find(a=>String(a.id)===document.getElementById('fmCheckoutAddress').value);
+  if(!address)throw new Error('Choose a saved delivery address.');
+  const pin=document.getElementById('fmCheckoutPin').value.trim();
+  if(pin!==address.pincode)throw new Error('Selected address and delivery pincode do not match.');
+  if(!fmCheckoutArea)throw new Error('Please verify delivery serviceability for this address first.');
+  const mode=document.querySelector('input[name="fmDeliveryMode"]:checked')?.value;
+  if(!mode)throw new Error('No delivery option selected for this pincode.');
+  const slotId=mode==='slot'?document.querySelector('input[name="fmDeliveryMode"]:checked')?.dataset.slot:null;
+  const method=document.getElementById('fmCheckoutPayment').value;
+  if(!method)throw new Error('No payment method is enabled.');
+  btn.disabled=true;msg.textContent='Checking stock and placing order…';
+  const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{
+   p_items:fmCart,p_address:address,p_pincode:pin,p_delivery_mode:mode,
+   p_slot_id:slotId,p_payment_method:method,
+   p_coupon_code:fmAppliedCoupon?.code||null
+  });
+  if(error)throw error;
+  const result=Array.isArray(data)?data[0]:data;
+  if(!result?.success)throw new Error(result?.message||'Order could not be placed.');
+  fmCart=[];fmSaveCart();
+  fmAppliedCoupon=null;fmCouponDiscount=0;
+  const discount=Number(result.coupon_discount||0);
+  msg.style.color='#168447';
+  msg.textContent=`Order ${result.order_number} placed. Discount ${shopMoney(discount)}. Total ${shopMoney(result.grand_total)}. Payment status: ${result.payment_status}.`;
+  alert('Order placed: '+result.order_number+'\nCoupon Discount: '+shopMoney(discount)+'\nTotal: '+shopMoney(result.grand_total));
+ }catch(e){msg.style.color='#b72e2e';msg.textContent=e.message||'Checkout failed.';}
+ finally{btn.disabled=false;}
+}
 
 // Delivery address management. Requires the fm_member_addresses table and its RLS policies.
 let fmAddressSession=null, fmAddresses=[], fmAddressCoords=null, fmPostalLookupTimer=null, fmPostalLookupSeq=0;
