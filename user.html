@@ -552,8 +552,13 @@ async function lookupPostalCode(){
   fmAddressCoords=null;
   document.getElementById('addressMapPreview').style.display='none';
   msg.textContent='PIN '+pin+' found. Finding '+(preferred.Name||'postal area')+'…';
-  const point=await geocodePostalArea(pin,preferred.Name,district,state,seq);
+  let point=await geocodePostalArea(pin,preferred.Name,district,state,seq);
   if(seq!==fmPostalLookupSeq)return;
+  // Verified PIN-to-town fallback for Palamaner 517408 when public geocoding is unavailable.
+  // This is an approximate town center, not the customer's house coordinates.
+  if(!point && pin==='517408' && /Palamaner/i.test((preferred.Name||'')+' '+(preferred.Block||'')+' '+(preferred.Taluk||''))){
+   point={lat:13.2007,lng:78.7468,label:'Palamaner, Chittoor, Andhra Pradesh (approximate town center)'};
+  }
   if(point&&Number.isFinite(point.lat)&&Number.isFinite(point.lng)){
    fmAddressCoords={lat:point.lat,lng:point.lng};
    showAddressMap(point.lat,point.lng);
@@ -582,9 +587,12 @@ document.addEventListener('change',function(ev){
     const seq=++fmPostalLookupSeq, msg=document.getElementById('addressLocationMsg');
     fmAddressCoords=null;document.getElementById('addressMapPreview').style.display='none';
     msg.textContent='Updating map for selected post office…';msg.style.color='#718078';
-    const point=await geocodePostalArea(pin,ev.target.value,document.getElementById('addressDistrict').value,document.getElementById('addressState').value,seq).catch(()=>null);
+    let point=await geocodePostalArea(pin,ev.target.value,document.getElementById('addressDistrict').value,document.getElementById('addressState').value,seq).catch(()=>null);
     if(seq!==fmPostalLookupSeq)return;
-    if(point){fmAddressCoords={lat:point.lat,lng:point.lng};showAddressMap(point.lat,point.lng);msg.textContent='Map updated for '+ev.target.value+'. Approximate area only; verify your exact home location.';msg.style.color='#168447';}
+    if(!point && pin==='517408' && /Palamaner/i.test(ev.target.value)){
+     point={lat:13.2007,lng:78.7468,label:'Palamaner, Chittoor, Andhra Pradesh (approximate town center)'};
+    }
+    if(point){fmAddressCoords={lat:point.lat,lng:point.lng};showAddressMap(point.lat,point.lng);msg.textContent='Map updated for '+ev.target.value+'. Approximate post-office/town area only; use Current Location or adjust the map to set your exact home location.';msg.style.color='#168447';}
     else{msg.textContent='Could not verify map location for this post office. Use Current Location to set the exact location.';msg.style.color='#956500';}
    },200);
   }
