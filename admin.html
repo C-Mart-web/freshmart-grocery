@@ -287,10 +287,14 @@ async function signOutAdmin(){
  window.location.href=new URL('admin.html?login=1',window.location.href).toString();
 }
 (function initAdminBackNavigation(){
- const initial='dashboard';
- const cleanUrl=location.pathname+location.search;
+ const validPages=new Set(Array.from(document.querySelectorAll('.page')).map(p=>p.id));
+ let requested=decodeURIComponent((location.hash||'').slice(1));
+ const initial=validPages.has(requested)?requested:'dashboard';
+ const cleanUrl=location.pathname+location.search+'#'+encodeURIComponent(initial);
+ document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===initial));
+ document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===initial));
  history.replaceState({fmAdminPage:initial,fmRoot:true},'',cleanUrl);
- history.pushState({fmAdminPage:initial,fmRoot:true},'',location.href);
+ history.pushState({fmAdminPage:initial,fmRoot:true},'',cleanUrl);
  window.addEventListener('popstate',e=>{
    const target=e.state?.fmAdminPage;
    if(target){showPage(target,true);return;}
