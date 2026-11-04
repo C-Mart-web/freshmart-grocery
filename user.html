@@ -18,7 +18,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .page{display:none}.page.active{display:block}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;font-size:12px;font-weight:750;margin-bottom:7px}.field input,.field select{width:100%;border:1px solid #dbe8de;border-radius:10px;padding:12px;background:#fff;outline:none}.field input:focus,.field select:focus{border-color:var(--green)}.hint{font-size:11px;color:var(--muted);line-height:1.5}.upload{border:2px dashed #b9d9c3;border-radius:13px;padding:20px;text-align:center;background:var(--pale);color:var(--muted)}.upload input{max-width:100%;margin-top:10px}.planchoices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.planchoice{border:1px solid var(--line);background:#fff;border-radius:14px;padding:16px}.planchoice.selected{border:2px solid var(--green);background:#f3fff6}.planchoice h3{margin:0 0 7px}.planchoice .amount{font-size:23px;font-weight:850;color:var(--green)}.planchoice p{font-size:12px;color:var(--muted);line-height:1.5}.footer-note{color:#829087;text-align:center;font-size:11px;padding:22px 0 4px}
 .mobile-nav{display:none}
 @media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.twocol{grid-template-columns:1fr}.layout{grid-template-columns:205px minmax(0,1fr)}main{padding:20px}}
-@media(max-width:680px){.topbar{height:60px;padding:0 14px}.brand{font-size:18px}.logo{width:34px;height:34px}.topright .userlabel{display:none}.layout{display:block;min-height:calc(100vh - 60px)}.sidebar{display:none}main{padding:17px 13px 85px}.welcome{align-items:flex-start}.welcome h1{font-size:21px}.welcome p{font-size:12px}.status{font-size:10px;padding:7px 9px}.banner{padding:18px;border-radius:15px}.banner h2{font-size:17px}.banner .bannericon{font-size:35px}.grid{gap:9px}.card{padding:13px;border-radius:13px}.stat-value{font-size:21px}.stat-head{font-size:11px}.quicklinks{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.quick{padding:10px 8px}.quick strong{font-size:10px}.quick small{font-size:9px}.planchoices{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:20;justify-content:space-between;padding:7px 2px calc(7px + env(safe-area-inset-bottom));gap:0}.mobile-nav button{border:0;background:transparent;color:#718078;font-size:9px;display:flex;flex:1 1 0;min-width:0;flex-direction:column;align-items:center;gap:4px;padding:2px 0;white-space:nowrap}.mobile-nav button span{font-size:18px}.mobile-nav button.active{color:var(--green);font-weight:800}.tablewrap table{min-width:400px}}
+@media(max-width:680px){.topbar{height:60px;padding:0 14px}.brand{font-size:18px}.logo{width:34px;height:34px}.topright .userlabel{display:none}.layout{display:block;min-height:calc(100vh - 60px)}.sidebar{display:none}main{padding:17px 13px 85px}.welcome{align-items:flex-start}.welcome h1{font-size:21px}.welcome p{font-size:12px}.status{font-size:10px;padding:7px 9px}.banner{padding:18px;border-radius:15px}.banner h2{font-size:17px}.banner .bannericon{font-size:35px}.grid{gap:9px}.card{padding:13px;border-radius:13px}.stat-value{font-size:21px}.stat-head{font-size:11px}.quicklinks{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.quick{padding:10px 8px}.quick strong{font-size:10px}.quick small{font-size:9px}.planchoices{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:20;justify-content:space-around;padding:7px 3px calc(7px + env(safe-area-inset-bottom))}.mobile-nav button{border:0;background:transparent;color:#718078;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:50px}.mobile-nav button span{font-size:18px}.mobile-nav button.active{color:var(--green);font-weight:800}.tablewrap table{min-width:400px}}
 </style>
 </head>
 <body>
@@ -35,7 +35,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button class="navbtn" data-page="team"><span class="ico">👥</span>My Team</button>
   <button class="navbtn" data-page="wallets"><span class="ico">👛</span>My Wallets</button>
   <button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
-  <button class="navbtn" data-page="orders"><span class="ico">📦</span>Orders</button>
+  <button class="navbtn" data-page="orders"><span class="ico">📦</span>My Orders</button>
   <div class="navlabel">ACCOUNT</div>
   <button class="navbtn" data-page="profile"><span class="ico">⚙</span>Profile & Support</button>
   <div class="sidebar-foot"><strong>Fresh-Mart Support</strong><br>Need help with an order or payment?<br><span style="color:var(--green);font-weight:800">Contact support →</span></div>
@@ -133,7 +133,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card"><h2 style="font-size:17px">New withdrawal request</h2><p class="hint">Withdrawal eligibility, 10% charge and monthly purchase requirements will be calculated using the final Super Admin settings.</p><div class="formgrid"><div class="field"><label>Amount (₹)</label><input type="number" placeholder="Enter amount" min="1"></div><div class="field"><label>Payment details</label><input type="text" placeholder="Bank / UPI details"></div></div><button class="btn btn-green" style="margin-top:14px" onclick="alert('Withdrawal requests will work after secure database connection.')">Request withdrawal</button></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Withdrawal history</h2><p class="hint">No withdrawal requests yet.</p></div>
 </section>
-<section class="page" id="orders"><div class="welcome"><div><h1>Orders 📦</h1><p>Track order confirmation, processing and delivery status.</p></div><button class="btn btn-outline" onclick="loadMyGroceryOrders()">Refresh Orders</button></div><div class="card"><div class="section-head"><h2>Order History</h2><span class="badge approved" id="fmMyOrderCount">0 ORDERS</span></div><div id="fmMyOrdersList" class="hint">Your orders will appear here.</div></div></section>
+<section class="page" id="orders"><div class="welcome"><div><h1>My Orders 📦</h1><p>Track order confirmation, processing and delivery status.</p></div><button class="btn btn-outline" onclick="loadMyGroceryOrders()">Refresh Orders</button></div><div class="card"><div class="section-head"><h2>Order History</h2><span class="badge approved" id="fmMyOrderCount">0 ORDERS</span></div><div id="fmMyOrdersList" class="hint">Your orders will appear here.</div></div></section>
 <section class="page" id="profile">
   <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account, delivery addresses and password.</p></div></div>
   <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Fresh-Mart support.</p></div>
@@ -182,7 +182,6 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <nav class="mobile-nav">
 <button class="active" data-page="dashboard"><span>⌂</span>Home</button>
 <button data-page="groceries"><span>🛍️</span>Shop</button>
-<button data-page="orders"><span>📦</span>Orders</button>
 <button data-page="plans"><span>💳</span>Plan</button>
 <button data-page="team"><span>👥</span>Team</button>
 <button data-page="wallets"><span>👛</span>Wallet</button>
@@ -478,18 +477,21 @@ async function lookupPostalCode(){
   const d=await r.json();
   if(!Array.isArray(d)||d[0]?.Status!=='Success'||!d[0]?.PostOffice?.length)throw new Error('No postal area found for this PIN code.');
   const offices=d[0].PostOffice;
-  const first=offices[0];
-  document.getElementById('addressDistrict').value=first.District||'';
-  document.getElementById('addressState').value=first.State||'';
+  // Prefer Palamaner main office for PIN 517408; otherwise prefer Sub/Head Office.
+  const preferred=offices.find(x=>/Palamaner/i.test(x.Name||''))||
+    offices.find(x=>/Sub Office|Head Office/i.test(x.BranchType||''))||
+    offices[0];
+  document.getElementById('addressDistrict').value=preferred.District||'';
+  document.getElementById('addressState').value=preferred.State||'';
   const area=document.getElementById('addressPostOffice');
   if(offices.length>1){
    const names=offices.map(x=>x.Name).filter(Boolean);
    area.setAttribute('list','fmPostOfficeOptions');
    let dl=document.getElementById('fmPostOfficeOptions');if(!dl){dl=document.createElement('datalist');dl.id='fmPostOfficeOptions';area.after(dl);}
    dl.innerHTML=names.map(n=>'<option value="'+escapeTeamText(n)+'"></option>').join('');
-   area.value=first.Name||'';
-   msg.textContent='PIN code found. Choose your Post Office / area from the suggestions.';
-  }else{area.value=first.Name||'';msg.textContent='PIN code verified: '+first.Name+', '+first.District+', '+first.State;}
+   area.value=preferred.Name||'';
+   msg.textContent='PIN code found. Suggested main post office: '+preferred.Name+'. You can change it using the suggestions.';
+  }else{area.value=preferred.Name||'';msg.textContent='PIN code verified: '+preferred.Name+', '+preferred.District+', '+preferred.State;}
   msg.style.color='#168447';
  }catch(e){msg.textContent=e.message||'Could not look up PIN code. Enter the area and district manually.';msg.style.color='#b72e2e';}
 }
