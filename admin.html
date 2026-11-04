@@ -351,7 +351,8 @@ function fmToggleMobileMenu(open){
   const toggle=document.querySelector('.mobile-menu-toggle');
   if(toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
-\nfunction showPage(id,fromHistory=false){fmToggleMobileMenu(false);document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(!fromHistory)history.pushState({fmAdminPage:id},'', '#'+encodeURIComponent(id));window.scrollTo({top:0,behavior:'smooth'});}
+
+function showPage(id,fromHistory=false){fmToggleMobileMenu(false);document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(!fromHistory)history.pushState({fmAdminPage:id},'', '#'+encodeURIComponent(id));window.scrollTo({top:0,behavior:'smooth'});}
 async function signOutAdmin(){
  try{await fmSupabase.auth.signOut();}catch(e){console.warn('Admin sign-out:',e);}
  window.location.href=new URL('admin.html?login=1',window.location.href).toString();
