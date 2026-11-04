@@ -171,15 +171,16 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account, delivery addresses and password.</p></div></div>
   <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Fresh-Mart support.</p></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Bank / UPI Details for Withdrawals</h2>
-   <p class="hint">Enter the account where you want eligible withdrawals to be paid. These details will appear automatically on the Withdrawals page.</p>
+   <p class="hint">Enter all bank details together. You can save only once; after saving, only Super Admin can make corrections. These details will appear automatically on the Withdrawals page.</p>
    <div class="formgrid">
     <div class="field"><label>Account Holder Name</label><input id="fmPayoutHolder" maxlength="120" placeholder="Name as per bank account"></div>
     <div class="field"><label>Bank Name</label><input id="fmPayoutBank" maxlength="120" placeholder="Bank name"></div>
     <div class="field"><label>Account Number</label><input id="fmPayoutAccount" inputmode="numeric" maxlength="30" placeholder="Bank account number"></div>
+    <div class="field"><label>Confirm Account Number</label><input id="fmPayoutConfirmAccount" inputmode="numeric" maxlength="30" placeholder="Re-enter account number"></div>
     <div class="field"><label>IFSC Code</label><input id="fmPayoutIfsc" maxlength="11" autocapitalize="characters" placeholder="e.g. SBIN0001234"></div>
     <div class="field"><label>UPI ID (optional)</label><input id="fmPayoutUpi" maxlength="120" placeholder="name@bank"></div>
    </div>
-   <button class="btn btn-green" type="button" style="margin-top:12px" onclick="fmSavePayoutDetails()">Save Bank / UPI Details</button>
+   <button class="btn btn-green" type="button" style="margin-top:12px" onclick="fmSavePayoutDetails()">Save All Bank Details</button>
    <p id="fmPayoutMsg" class="hint" aria-live="polite"></p>
   </div>
 
@@ -879,38 +880,68 @@ function shareReferralLink(side){
 async function fmLoadPayoutDetails(){
  const formIds=['fmPayoutHolder','fmPayoutBank','fmPayoutAccount','fmPayoutIfsc','fmPayoutUpi'];
  const summary=document.getElementById('fmWithdrawalPayoutSummary');
+ const msg=document.getElementById('fmPayoutMsg');
+ const saveBtn=document.querySelector('button[onclick="fmSavePayoutDetails()"]');
  try{
   const session=await getMemberSession();
-  const {data,error}=await fmShopClient.from('fm_profiles').select('bank_account_holder,bank_name,bank_account_number,bank_ifsc,upi_id').eq('id',session.user.id).maybeSingle();
+  const {data,error}=await fmShopClient.from('fm_profiles')
+   .select('bank_account_holder,bank_name,bank_account_number,bank_ifsc,upi_id')
+   .eq('id',session.user.id).maybeSingle();
   if(error)throw error;
   const p=data||{};
   const values=[p.bank_account_holder||'',p.bank_name||'',p.bank_account_number||'',p.bank_ifsc||'',p.upi_id||''];
-  formIds.forEach((id,i)=>{const el=document.getElementById(id);if(el&&(!el.value||!el.dataset.loaded))el.value=values[i];if(el)el.dataset.loaded='1';});
+  const has=values.some(v=>String(v).trim()!=='');
+  formIds.forEach((id,i)=>{
+   const el=document.getElementById(id);
+   if(!el)return;
+   el.value=values[i];
+   el.readOnly=has;
+   el.disabled=has;
+  });
+  const confirm=document.getElementById('fmPayoutConfirmAccount');
+  if(confirm){confirm.value=has?'': '';confirm.disabled=has;confirm.readOnly=has;}
+  if(saveBtn){saveBtn.disabled=has;saveBtn.textContent=has?'Bank Details Already Saved':'Save All Bank Details';saveBtn.style.opacity=has?'.6':'1';}
+  if(msg)msg.textContent=has
+   ? 'Your bank details are saved and locked. Contact Fresh-Mart Super Admin if any correction is required.'
+   : 'Enter all required bank details and save once. After saving, only Super Admin can edit them.';
   if(summary){
-   const has=values.some(Boolean);
    summary.innerHTML=has
-    ? `<div style="line-height:1.8"><b>${shopEsc(p.bank_account_holder||'')}</b><br>${shopEsc(p.bank_name||'')}<br>Account: ${p.bank_account_number?'••••'+shopEsc(p.bank_account_number.slice(-4)):'Not added'}<br>IFSC: ${shopEsc(p.bank_ifsc||'Not added')}<br>UPI: ${shopEsc(p.upi_id||'Not added')}</div>`
+    ? `<div style="line-height:1.8"><b>${shopEsc(p.bank_account_holder||'')}</b><br>${shopEsc(p.bank_name||'')}<br>Account: ${p.bank_account_number?'••••'+shopEsc(String(p.bank_account_number).slice(-4)):'Not added'}<br>IFSC: ${shopEsc(p.bank_ifsc||'Not added')}<br>UPI: ${shopEsc(p.upi_id||'Not added')}</div>`
     : 'No bank / UPI details saved yet. Add them in Profile & Support.';
   }
- }catch(e){if(summary)summary.textContent='Could not load payment details: '+(e.message||String(e));const msg=document.getElementById('fmPayoutMsg');if(msg)msg.textContent='Could not load saved details: '+(e.message||String(e));}
+ }catch(e){
+  if(summary)summary.textContent='Could not load payment details: '+(e.message||String(e));
+  if(msg)msg.textContent='Could not load saved details: '+(e.message||String(e));
+ }
 }
 async function fmSavePayoutDetails(){
- const msg=document.getElementById('fmPayoutMsg');try{
+ const msg=document.getElementById('fmPayoutMsg');
+ const btn=document.querySelector('button[onclick="fmSavePayoutDetails()"]');
+ try{
   const holder=document.getElementById('fmPayoutHolder').value.trim();
   const bank=document.getElementById('fmPayoutBank').value.trim();
   const account=document.getElementById('fmPayoutAccount').value.trim();
+  const confirm=document.getElementById('fmPayoutConfirmAccount')?.value.trim()||'';
   const ifsc=document.getElementById('fmPayoutIfsc').value.trim().toUpperCase();
   const upi=document.getElementById('fmPayoutUpi').value.trim();
-  if(!holder||!bank||!account||!ifsc)throw new Error('Enter account holder name, bank name, account number and IFSC. UPI ID is optional.');
+  if(!holder||!bank||!account||!confirm||!ifsc)throw new Error('Fill all required bank details and confirm the account number. UPI ID is optional.');
+  if(account!==confirm)throw new Error('Account numbers do not match.');
   if(!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))throw new Error('Enter a valid 11-character IFSC code.');
   if(!/^[0-9]{6,30}$/.test(account))throw new Error('Account number must contain 6–30 digits.');
   const session=await getMemberSession();
-  const {error}=await fmShopClient.from('fm_profiles').update({bank_account_holder:holder,bank_name:bank,bank_account_number:account,bank_ifsc:ifsc,upi_id:upi||null}).eq('id',session.user.id);
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const {data,error}=await fmShopClient.rpc('fm_user_save_bank_details_v1',{
+   p_account_holder:holder,p_bank_name:bank,p_account_number:account,
+   p_confirm_account_number:confirm,p_ifsc:ifsc,p_upi_id:upi||null
+  });
   if(error)throw error;
-  msg.textContent='Bank / UPI details saved successfully.';
-  document.querySelectorAll('#fmPayoutHolder,#fmPayoutBank,#fmPayoutAccount,#fmPayoutIfsc,#fmPayoutUpi').forEach(el=>el.dataset.loaded='1');
+  if(data?.success===false)throw new Error(data.message||'Bank details could not be saved.');
+  msg.textContent='All bank details saved successfully and locked.';
   await fmLoadPayoutDetails();
- }catch(e){msg.textContent='Could not save bank details: '+(e.message||String(e));}
+ }catch(e){
+  msg.textContent='Could not save bank details: '+(e.message||String(e));
+  if(btn){btn.disabled=false;btn.textContent='Save All Bank Details';}
+ }
 }
 async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;badge.textContent=(orders||[]).length+' ORDERS';if(!orders?.length){box.textContent='No orders yet. Your placed orders will appear here.';return;}box.innerHTML=orders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div></article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
 async function signOut(){

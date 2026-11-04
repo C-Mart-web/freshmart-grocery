@@ -93,6 +93,24 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="searchrow"><input id="memberSearchInput" placeholder="Search name, username, mobile or user ID" onkeydown="if(event.key==='Enter')loadMembers()"><select id="memberStatusFilter"><option value="all">All account statuses</option><option value="inactive">Inactive</option><option value="active">Active</option><option value="blocked">Blocked</option></select><button class="btn btn-green" onclick="loadMembers()">Search</button></div>
 <p id="memberLoadStatus" class="hint" aria-live="polite">Members will load from Supabase after admin sign-in.</p>
 <div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Account Type</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="7" class="empty">Loading member records…</td></tr></tbody></table></div></div>
+<div class="card" style="margin-top:16px">
+ <div class="section-head"><h2>Member Bank Details</h2><span class="badge approved">SUPER ADMIN ONLY</span></div>
+ <p class="hint">Search by Fresh-Mart ID, username, mobile number or member name. Only Super Admin can update saved bank details.</p>
+ <div class="searchrow"><input id="fmAdminBankMemberSearch" placeholder="Enter Fresh-Mart ID / username / mobile"><button class="btn btn-green" type="button" onclick="fmAdminFindBankMember()">Find Member</button></div>
+ <p id="fmAdminBankMemberMsg" class="hint" aria-live="polite"></p>
+ <div id="fmAdminBankEditor" style="display:none">
+  <p class="hint" id="fmAdminBankMemberLabel"></p>
+  <input type="hidden" id="fmAdminBankUserId">
+  <div class="formgrid">
+   <div class="field"><label>Account Holder Name</label><input id="fmAdminBankHolder" maxlength="120"></div>
+   <div class="field"><label>Bank Name</label><input id="fmAdminBankName" maxlength="120"></div>
+   <div class="field"><label>Account Number</label><input id="fmAdminBankAccount" inputmode="numeric" maxlength="30"></div>
+   <div class="field"><label>IFSC Code</label><input id="fmAdminBankIfsc" maxlength="11"></div>
+   <div class="field"><label>UPI ID (optional)</label><input id="fmAdminBankUpi" maxlength="120"></div>
+  </div>
+  <button class="btn btn-green" type="button" style="margin-top:12px" onclick="fmAdminSaveBankDetails()">Save Bank Details</button>
+ </div>
+</div>
 </section>
 <section class="page" id="products">
 <div class="welcome"><div><h1>Products & Categories</h1><p>Manage grocery catalogue, prices and offers.</p></div><button class="btn btn-green" onclick="openModal('productModal')">+ Add Product</button></div>
@@ -811,6 +829,57 @@ document.querySelectorAll('[data-page]').forEach(b=>{
  });
 });
 if(document.getElementById('offers')?.classList.contains('active'))fmAdminLoadOffers();
+
+async function fmAdminFindBankMember(){
+ const msg=document.getElementById('fmAdminBankMemberMsg');
+ const editor=document.getElementById('fmAdminBankEditor');
+ editor.style.display='none';msg.textContent='Searching member…';
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Please sign in as Super Admin.');
+  const {data:me,error:meErr}=await fmSupabase.from('fm_profiles').select('role').eq('id',session.user.id).maybeSingle();
+  if(meErr)throw meErr;if(String(me?.role||'').toLowerCase()!=='super_admin')throw new Error('Only Super Admin can view or edit bank details.');
+  const term=(document.getElementById('fmAdminBankMemberSearch').value||'').trim();if(!term)throw new Error('Enter a Fresh-Mart ID, username, mobile or name.');
+  const safe=term.replace(/[(),]/g,' ').trim();
+  const {data:rows,error}=await fmSupabase.from('fm_profiles')
+   .select('id,user_code,display_name,username,mobile_number,bank_account_holder,bank_name,bank_account_number,bank_ifsc,upi_id')
+   .or(`user_code.ilike.%${safe}%,username.ilike.%${safe}%,mobile_number.ilike.%${safe}%,display_name.ilike.%${safe}%`)
+   .limit(5);
+  if(error)throw error;
+  if(!rows?.length)throw new Error('No member found.');
+  if(rows.length>1)throw new Error('More than one member matched. Search using the exact Fresh-Mart ID or username.');
+  const m=rows[0];
+  document.getElementById('fmAdminBankUserId').value=m.id;
+  document.getElementById('fmAdminBankMemberLabel').textContent=`${m.display_name||m.username||'Member'} · ${m.user_code||m.id}`;
+  document.getElementById('fmAdminBankHolder').value=m.bank_account_holder||'';
+  document.getElementById('fmAdminBankName').value=m.bank_name||'';
+  document.getElementById('fmAdminBankAccount').value=m.bank_account_number||'';
+  document.getElementById('fmAdminBankIfsc').value=m.bank_ifsc||'';
+  document.getElementById('fmAdminBankUpi').value=m.upi_id||'';
+  editor.style.display='block';msg.textContent='Member found. Verify details carefully before saving.';
+ }catch(e){msg.textContent='Could not find member: '+(e.message||String(e));}
+}
+async function fmAdminSaveBankDetails(){
+ const msg=document.getElementById('fmAdminBankMemberMsg');
+ try{
+  const userId=document.getElementById('fmAdminBankUserId').value;
+  const holder=document.getElementById('fmAdminBankHolder').value.trim();
+  const bank=document.getElementById('fmAdminBankName').value.trim();
+  const account=document.getElementById('fmAdminBankAccount').value.trim();
+  const ifsc=document.getElementById('fmAdminBankIfsc').value.trim().toUpperCase();
+  const upi=document.getElementById('fmAdminBankUpi').value.trim();
+  if(!userId)throw new Error('Find a member first.');
+  if(!holder||!bank||!account||!ifsc)throw new Error('Fill account holder, bank name, account number and IFSC.');
+  if(!/^[0-9]{6,30}$/.test(account))throw new Error('Account number must contain 6–30 digits.');
+  if(!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))throw new Error('Enter a valid 11-character IFSC code.');
+  const {data,error}=await fmSupabase.rpc('fm_admin_update_bank_details_v1',{
+   p_user_id:userId,p_account_holder:holder,p_bank_name:bank,
+   p_account_number:account,p_ifsc:ifsc,p_upi_id:upi||null
+  });
+  if(error)throw error;
+  if(data?.success===false)throw new Error(data.message||'Update failed.');
+  msg.textContent='Bank details updated successfully.';
+ }catch(e){msg.textContent='Could not update bank details: '+(e.message||String(e));}
+}
 </script>
 </body>
 </html>
