@@ -162,13 +162,26 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="withdrawals">
   <div class="welcome"><div><h1>Withdrawals</h1><p>Request a withdrawal from your eligible income balance.</p></div></div>
-  <div class="card"><h2 style="font-size:17px">New withdrawal request</h2><p class="hint">Withdrawal eligibility, 10% charge and monthly purchase requirements will be calculated using the final Super Admin settings.</p><div class="formgrid"><div class="field"><label>Amount (₹)</label><input type="number" placeholder="Enter amount" min="1"></div><div class="field"><label>Payment details</label><input type="text" placeholder="Bank / UPI details"></div></div><button class="btn btn-green" style="margin-top:14px" onclick="alert('Withdrawal requests will work after secure database connection.')">Request withdrawal</button></div>
+  <div class="card"><h2 style="font-size:17px">Saved Payment Details</h2><p class="hint">These details are loaded from Profile & Support. To change them, open Profile & Support → Bank / UPI Details.</p><div id="fmWithdrawalPayoutSummary" class="hint">Loading saved bank / UPI details…</div><button class="btn btn-outline" type="button" style="margin-top:10px" onclick="fmLoadPayoutDetails()">Refresh Details</button></div>
+  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">New withdrawal request</h2><p class="hint">Withdrawal eligibility, charges and monthly purchase requirements must be checked by the secure withdrawal backend.</p><div class="field"><label>Amount (₹)</label><input id="fmWithdrawalAmount" type="number" placeholder="Enter amount" min="1"></div><button class="btn btn-green" type="button" style="margin-top:14px" onclick="alert('Bank details are saved and displayed above. Withdrawal request submission still needs the secure withdrawal database workflow.')">Request withdrawal</button></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Withdrawal history</h2><p class="hint">No withdrawal requests yet.</p></div>
 </section>
 <section class="page" id="orders"><div class="welcome"><div><h1>My Orders 📦</h1><p>Track order confirmation, processing and delivery status.</p></div><button class="btn btn-outline" onclick="loadMyGroceryOrders()">Refresh Orders</button></div><div class="card"><div class="section-head"><h2>Order History</h2><span class="badge approved" id="fmMyOrderCount">0 ORDERS</span></div><div id="fmMyOrdersList" class="hint">Your orders will appear here.</div></div></section>
 <section class="page" id="profile">
   <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account, delivery addresses and password.</p></div></div>
   <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Fresh-Mart support.</p></div>
+  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Bank / UPI Details for Withdrawals</h2>
+   <p class="hint">Enter the account where you want eligible withdrawals to be paid. These details will appear automatically on the Withdrawals page.</p>
+   <div class="formgrid">
+    <div class="field"><label>Account Holder Name</label><input id="fmPayoutHolder" maxlength="120" placeholder="Name as per bank account"></div>
+    <div class="field"><label>Bank Name</label><input id="fmPayoutBank" maxlength="120" placeholder="Bank name"></div>
+    <div class="field"><label>Account Number</label><input id="fmPayoutAccount" inputmode="numeric" maxlength="30" placeholder="Bank account number"></div>
+    <div class="field"><label>IFSC Code</label><input id="fmPayoutIfsc" maxlength="11" autocapitalize="characters" placeholder="e.g. SBIN0001234"></div>
+    <div class="field"><label>UPI ID (optional)</label><input id="fmPayoutUpi" maxlength="120" placeholder="name@bank"></div>
+   </div>
+   <button class="btn btn-green" type="button" style="margin-top:12px" onclick="fmSavePayoutDetails()">Save Bank / UPI Details</button>
+   <p id="fmPayoutMsg" class="hint" aria-live="polite"></p>
+  </div>
 
   <div class="card" style="margin-top:17px">
     <div class="section-head"><h2>My Delivery Addresses 📍</h2><span class="badge approved" id="addressCount">0 / 3</span></div>
@@ -377,6 +390,7 @@ async function loadSignedInMember(){
    document.getElementById('memberProfileUsername').value=profile.username||'';
    document.getElementById('memberProfileMobile').value=profile.mobile_number||'';
    document.getElementById('memberProfileCode').value=profile.user_code||'';
+   fmLoadPayoutDetails();
    loadDeliveryAddresses();
    loadMyMatchingSlabs(session.user.id,session.access_token);
    document.getElementById('topWelcome').textContent='Welcome, '+display;
@@ -764,6 +778,42 @@ function shareReferralLink(side){
  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
 }
 
+async function fmLoadPayoutDetails(){
+ const formIds=['fmPayoutHolder','fmPayoutBank','fmPayoutAccount','fmPayoutIfsc','fmPayoutUpi'];
+ const summary=document.getElementById('fmWithdrawalPayoutSummary');
+ try{
+  const session=await getMemberSession();
+  const {data,error}=await fmShopClient.from('fm_profiles').select('bank_account_holder,bank_name,bank_account_number,bank_ifsc,upi_id').eq('id',session.user.id).maybeSingle();
+  if(error)throw error;
+  const p=data||{};
+  const values=[p.bank_account_holder||'',p.bank_name||'',p.bank_account_number||'',p.bank_ifsc||'',p.upi_id||''];
+  formIds.forEach((id,i)=>{const el=document.getElementById(id);if(el&&(!el.value||!el.dataset.loaded))el.value=values[i];if(el)el.dataset.loaded='1';});
+  if(summary){
+   const has=values.some(Boolean);
+   summary.innerHTML=has
+    ? `<div style="line-height:1.8"><b>${shopEsc(p.bank_account_holder||'')}</b><br>${shopEsc(p.bank_name||'')}<br>Account: ${p.bank_account_number?'••••'+shopEsc(p.bank_account_number.slice(-4)):'Not added'}<br>IFSC: ${shopEsc(p.bank_ifsc||'Not added')}<br>UPI: ${shopEsc(p.upi_id||'Not added')}</div>`
+    : 'No bank / UPI details saved yet. Add them in Profile & Support.';
+  }
+ }catch(e){if(summary)summary.textContent='Could not load payment details: '+(e.message||String(e));const msg=document.getElementById('fmPayoutMsg');if(msg)msg.textContent='Could not load saved details: '+(e.message||String(e));}
+}
+async function fmSavePayoutDetails(){
+ const msg=document.getElementById('fmPayoutMsg');try{
+  const holder=document.getElementById('fmPayoutHolder').value.trim();
+  const bank=document.getElementById('fmPayoutBank').value.trim();
+  const account=document.getElementById('fmPayoutAccount').value.trim();
+  const ifsc=document.getElementById('fmPayoutIfsc').value.trim().toUpperCase();
+  const upi=document.getElementById('fmPayoutUpi').value.trim();
+  if(!holder||!bank||!account||!ifsc)throw new Error('Enter account holder name, bank name, account number and IFSC. UPI ID is optional.');
+  if(!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))throw new Error('Enter a valid 11-character IFSC code.');
+  if(!/^[0-9]{6,30}$/.test(account))throw new Error('Account number must contain 6–30 digits.');
+  const session=await getMemberSession();
+  const {error}=await fmShopClient.from('fm_profiles').update({bank_account_holder:holder,bank_name:bank,bank_account_number:account,bank_ifsc:ifsc,upi_id:upi||null}).eq('id',session.user.id);
+  if(error)throw error;
+  msg.textContent='Bank / UPI details saved successfully.';
+  document.querySelectorAll('#fmPayoutHolder,#fmPayoutBank,#fmPayoutAccount,#fmPayoutIfsc,#fmPayoutUpi').forEach(el=>el.dataset.loaded='1');
+  await fmLoadPayoutDetails();
+ }catch(e){msg.textContent='Could not save bank details: '+(e.message||String(e));}
+}
 async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;badge.textContent=(orders||[]).length+' ORDERS';if(!orders?.length){box.textContent='No orders yet. Your placed orders will appear here.';return;}box.innerHTML=orders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div></article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
 async function signOut(){
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -820,7 +870,7 @@ function showPage(id,fromHistory=false){
    if(target)showPage(target,true);
  });
 })();
-document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='groceries')loadFreshMartProducts();if(b.dataset.page==='cart')fmRenderCart();if(b.dataset.page==='orders')loadMyGroceryOrders();}));
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='groceries')loadFreshMartProducts();if(b.dataset.page==='cart')fmRenderCart();if(b.dataset.page==='orders')loadMyGroceryOrders();if(b.dataset.page==='withdrawals')fmLoadPayoutDetails();}));
 loadFreshMartProducts();
 // Voice search in the member shop. Language is selectable for reliable recognition.
 (function(){const btn=document.getElementById('shopVoiceSearchBtn'),lang=document.getElementById('shopVoiceLanguage'),msg=document.getElementById('shopVoiceMessage'),field=document.getElementById('shopProductSearch');if(!btn||!field)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){btn.disabled=true;btn.style.opacity='.45';if(msg)msg.textContent='Voice search is not supported in this browser. Try Chrome.';return;}btn.addEventListener('click',()=>{try{const rec=new SR();rec.lang=lang?.value||'en-IN';rec.continuous=false;rec.interimResults=false;btn.textContent='…';if(msg)msg.textContent='Listening… Speak now.';rec.onresult=e=>{const spoken=e.results?.[0]?.[0]?.transcript||'';field.value=spoken;renderFreshMartProducts();if(msg)msg.textContent=spoken?'Voice search: '+spoken:''};rec.onerror=e=>{if(msg)msg.textContent=e.error==='not-allowed'?'Please allow microphone access.':'Voice search failed. Please try again.'};rec.onend=()=>{btn.textContent='🎤'};rec.start();}catch(e){btn.textContent='🎤';if(msg)msg.textContent='Allow microphone access and try again.'}})})();
