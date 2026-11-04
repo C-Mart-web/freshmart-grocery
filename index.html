@@ -38,7 +38,7 @@
   <a class="brand" href="index.html" aria-label="Fresh-Mart home"><div class="brandmark">🛒</div><div class="brandname">Fresh<span>-Mart</span></div></a>
   <div class="delivery"><small>Delivering to</small> <strong id="deliveryPlace">Your location</strong> <button type="button" id="changeLocation">Change</button></div>
   <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search for atta, milk, vegetables..." aria-label="Search products"><select id="voiceLanguage" class="voice-lang" aria-label="Voice search language"><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select><button id="voiceSearchBtn" class="voice-btn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
-  <div class="actions"><a class="action hide-mobile" href="login.html">Login</a><a class="action primary" href="register.html">Join / Register</a><a class="action" href="#popular" aria-label="Cart">🛒 <span class="cartcount" id="cartCount">0</span></a></div>
+  <div class="actions"><a class="action hide-mobile" href="login.html">Login</a><a class="action primary" href="register.html">Join / Register</a><button class="action" type="button" id="indexCartButton" aria-label="Open Cart">🛒 <span class="cartcount" id="cartCount">0</span></button></div>
  </div>
 </header>
 <main class="container" id="home">
@@ -60,9 +60,10 @@
   <div class="benefit"><div class="benefit-icon">🥬</div><div><b>Everyday essentials</b><span>Shop daily needs in one place</span></div></div>
   <div class="benefit"><div class="benefit-icon">🏪</div><div><b>Store pickup</b><span>Choose store pickup where available</span></div></div>
  </section>
+<section id="indexCartView" class="cart-view" style="display:none;max-width:760px;margin:18px auto 90px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px"><div class="section-head"><div><h2>My Cart 🛒</h2><p>Review products and quantities</p></div><button class="action" id="indexContinueShopping" type="button">Continue Shopping</button></div><div id="indexCartRows"></div><div style="display:flex;justify-content:space-between;padding:16px 0;font-weight:850"><span>Subtotal</span><strong id="indexCartSubtotal">₹0</strong></div><button class="hero-cta" id="indexProceedCheckout" type="button" style="width:100%;justify-content:center">Proceed to Checkout</button></section>
 </main>
 <footer class="footer"><div class="footer-inner"><div><div class="brandname">🛒 Fresh<span style="color:#b8e77b">-Mart</span></div><p>Good Food · Better Life</p><p>© Fresh-Mart. All rights reserved.</p></div><div class="footer-links"><a href="login.html">Login</a><a href="register.html">Create account</a><a href="user.html">My account</a></div></div></footer>
-<nav class="bottom-nav" aria-label="Main navigation"><a class="active" href="#home"><span>⌂</span>Home</a><a href="#categories"><span>▦</span>Categories</a><a href="#popular"><span>🛒</span>Cart <small id="mobileCartCount">0</small></a><a href="login.html"><span>♙</span>Account</a></nav>
+<nav class="bottom-nav" aria-label="Main navigation"><a class="active" href="#home" data-index-view="home"><span>⌂</span>Home</a><a href="#categories" data-index-view="categories"><span>▦</span>Categories</a><a href="#cart" data-index-view="cart"><span>🛒</span>Cart <small id="mobileCartCount">0</small></a><a href="login.html"><span>♙</span>Account</a></nav>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -82,7 +83,7 @@
  const searchHide=[hero,main.querySelector('.offer-strip'),benefits].filter(Boolean);
  let cart=0,toastTimer,allProducts=[];try{cart=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]').reduce((n,x)=>n+Number(x.quantity||0),0)}catch(e){}
  function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
- function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart}
+ function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart;renderIndexCart();}
  updateCart();
  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
  function iconFor(name){const n=String(name||'').toLowerCase();if(n.includes('fruit'))return '🍎';if(n.includes('veget'))return '🥦';if(n.includes('dairy')||n.includes('milk'))return '🥛';if(n.includes('rice')||n.includes('staple'))return '🍚';if(n.includes('snack'))return '🍪';if(n.includes('beverage')||n.includes('drink'))return '🧃';if(n.includes('home'))return '🧴';if(n.includes('personal'))return '🧼';return '🛒'}
@@ -160,6 +161,10 @@
    renderProducts(list);
    if(searching){ requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'})); }
  }
+ function showIndexCart(){main.querySelectorAll(':scope > section,:scope > .section-head').forEach(el=>el.style.display='none');document.getElementById('indexCartView').style.display='block';renderIndexCart();window.scrollTo({top:0,behavior:'smooth'});}
+ function showIndexHome(){document.getElementById('indexCartView').style.display='none';main.querySelectorAll(':scope > section,:scope > .section-head').forEach(el=>el.style.display='');filterProducts();window.scrollTo({top:0,behavior:'smooth'});}
+ function renderIndexCart(){const box=document.getElementById('indexCartRows');if(!box)return;let subtotal=0;const rows=cartRows();if(!rows.length){box.innerHTML='<p class="empty">Your cart is empty. Add products to continue.</p>';document.getElementById('indexCartSubtotal').textContent='₹0';return;}box.innerHTML=rows.map(r=>{const p=allProducts.find(x=>String(x.id)===String(r.product_id));if(!p)return '';const price=priceOf(p),line=price*Number(r.quantity||0);subtotal+=line;return `<div style="display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding:12px 0"><div style="flex:1"><b>${esc(p.product_name)}</b><small style="display:block;color:var(--muted)">₹${price} × ${r.quantity} = ₹${line}</small></div><button class="action" data-index-qty="-1" data-id="${esc(r.product_id)}">−</button><b>${r.quantity}</b><button class="action" data-index-qty="1" data-id="${esc(r.product_id)}">+</button></div>`}).join('');document.getElementById('indexCartSubtotal').textContent='₹'+subtotal.toFixed(2);box.querySelectorAll('[data-index-qty]').forEach(b=>b.onclick=()=>changeCartQty(b.dataset.id,Number(b.dataset.indexQty)));}
+ document.getElementById('indexCartButton')?.addEventListener('click',showIndexCart);document.getElementById('indexContinueShopping')?.addEventListener('click',showIndexHome);document.getElementById('indexProceedCheckout')?.addEventListener('click',()=>{location.href='login.html?next=user.html%23cart'});document.querySelectorAll('[data-index-view]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();if(a.dataset.indexView==='cart')showIndexCart();else{showIndexHome();if(a.dataset.indexView==='categories')document.getElementById('categories').scrollIntoView({behavior:'smooth'});}}));
  async function loadLiveStore(){
    if(!db){status.textContent='Could not connect to product catalogue. Please refresh.';return}
    status.textContent='Loading latest products…';
@@ -172,7 +177,7 @@
      if(prodRes.error)throw prodRes.error;
      allProducts=prodRes.data||[];
      renderCategories(catRes.data||[]);
-     filterProducts();
+     filterProducts();renderIndexCart();
      status.textContent=allProducts.length+' live product(s) available.';
    }catch(e){
      status.textContent='Products could not be loaded: '+(e.message||'Please check Supabase public read permissions.');
