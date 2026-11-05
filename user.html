@@ -77,8 +77,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● CHECKING PLAN</span></div>
   <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Fresh-Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
-    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">₹0.00</div><div class="stat-note">Available shopping balance</div></div>
-    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmDashIncomeBalance">₹0.00</div><div class="stat-note">Withdrawable earnings balance</div></div>
+    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmHomeShoppingBalance">Loading…</div><div class="stat-note">Product purchases only</div></div>
+    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmHomeIncomeBalance">Loading…</div><div class="stat-note">Eligible earnings and withdrawals</div></div>
     <div class="card"><div class="stat-head">Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value">0</div><div class="stat-note">Earn points on eligible activity</div></div>
     <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
   </div>
@@ -90,7 +90,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="section-head"><h2>My Matching Reward Slabs ⚖️</h2><span class="badge approved" id="myMatchingPlanBadge">PLAN</span></div>
     <p class="hint" id="myMatchingMessage">Loading matching rewards for your active plan…</p>
     <div class="tablewrap"><table class="matching-table"><thead><tr><th>Slab</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Status</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
-    <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Rewards are credited to your Shopping Wallet after eligible orders are processed.</p>
+    <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Matching rewards are credited to your Income Wallet after eligible orders are processed.</p>
   </div>
   <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="orders">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>No activity yet</td><td>—</td><td>—</td><td><span class="badge pending">WAITING</span></td></tr></tbody></table></div></div>
 </section>
@@ -151,7 +151,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   </div>
   <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">50% of remaining eligible plan amount; used for eligible products.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
-    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">📈</span></div><div class="stat-value" id="walletRoiBalance">₹0.00</div><div class="stat-note">ROI allocation credited over 50 days, subject to plan activation and approved rules.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('ROI Income')">View ROI history</button></div>
+    <div class="card"><div class="stat-head">ROI Income Wallet <span class="stat-icon">📈</span></div><div class="stat-value" id="walletRoiBalance">₹0.00</div><div class="stat-note">ROI allocation credited over 50 days, subject to plan activation and approved rules.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('ROI Income')">View ROI history</button></div>
     <div class="card"><div class="stat-head">Self Purchase Income <span class="stat-icon">🧾</span></div><div class="stat-value" id="walletSelfPurchase">₹0.00</div><div class="stat-note">Benefits earned from your own eligible product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Self Purchase Income')">View details</button></div>
     <div class="card"><div class="stat-head">Direct Referral Income <span class="stat-icon">👥</span></div><div class="stat-value" id="walletReferral">₹0.00</div><div class="stat-note">Level 1: 10% · Level 2: 5% on eligible plan purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Direct Referral Income')">View L1 / L2 details</button></div>
     <div class="card"><div class="stat-head">Top-up Referral Income <span class="stat-icon">🔄</span></div><div class="stat-value" id="walletTopup">₹0.00</div><div class="stat-note">Level 1: 5% · Level 2: 2% on eligible top-ups.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Top-up Referral Income')">View top-up details</button></div>
@@ -159,7 +159,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="walletPoints">0</div><div class="stat-note">Points from eligible team product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Team Purchase Reward Points')">View points history</button></div>
     <div class="card"><div class="stat-head">Rewards <span class="stat-icon">🎁</span></div><div class="stat-value">To be configured</div><div class="stat-note">Reward milestones will be added after the client confirms the reward rules.</div></div>
   </div>
-  <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Wallet transaction history</h2><button class="link" type="button" onclick="showWalletHistory('All')">All transactions</button></div><p class="hint" id="walletHistoryMessage">No live transactions are connected yet. After the secure database connection, approved credits and debits will appear here with date, income type, amount and status.</p><div class="tablewrap"><table><thead><tr><th>Date</th><th>Wallet / Income type</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody id="walletTransactionRows"><tr><td colspan="5" style="color:#718078;font-weight:500">Transaction history will appear here after database connection.</td></tr></tbody></table></div></div>
+  <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Wallet transaction history</h2><button class="link" type="button" onclick="showWalletHistory('All')">All transactions</button></div><p class="hint" id="walletHistoryMessage">Wallet transaction history is loaded from the secure database when available.</p><div class="tablewrap"><table><thead><tr><th>Date</th><th>Wallet / Income type</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody id="walletTransactionRows"><tr><td colspan="5" style="color:#718078;font-weight:500">Transaction history will appear here after database connection.</td></tr></tbody></table></div></div>
   <p class="hint">Important: This is the updated wallet design. Balances are placeholders until Supabase wallet transactions and approved income rules are connected. No income is being credited by this design alone.</p>
 </section>
 <section class="page" id="withdrawals">
@@ -469,18 +469,6 @@ async function fmLoadMemberPlanSplit(userId,token){
  }
 }
 
-async function fmLoadWalletBalances(){
- try{
-  const {data,error}=await fmShopClient.rpc('fm_get_member_dashboard_v1');
-  if(error)throw error;
-  const d=data||{}, money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=money(v);};
-  set('fmDashShoppingBalance',d.shopping_wallet_balance);
-  set('fmDashIncomeBalance',d.income_wallet_balance);
-  set('walletShoppingBalance',d.shopping_wallet_balance);
-  set('walletRoiBalance',d.income_wallet_balance);
- }catch(e){console.warn('Wallet balances could not load:',e.message||e);}
-}
 async function loadSignedInMember(){
  try{
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -489,7 +477,7 @@ async function loadSignedInMember(){
   if(!session.access_token||!session.user?.id){document.getElementById('refLinkMessage').textContent='Login session is incomplete. Please sign in again.';return;}
   await fmSyncCartForUser(session.user.id);
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
-  fmLoadMemberPlanSplit(session.user.id,session.access_token);\n  fmLoadWalletBalances();
+  fmLoadMemberPlanSplit(session.user.id,session.access_token);
   loadTeamData(session.access_token);
   const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status',{headers});
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
@@ -566,7 +554,7 @@ function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
 async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
 function fmGoAddDeliveryAddress(){showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
-async function fmLoadCheckoutPayments(){const sel=document.getElementById('fmCheckoutPayment');try{const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','payment_methods').maybeSingle();if(error)throw error;const m=data?.setting_value||{};const names={razorpay:'Razorpay',upi:'UPI',cards:'Debit / Credit Card',netbanking:'Net Banking',cod:'Cash on Delivery',wallet:'Shopping Wallet'};const opts=Object.keys(names).filter(k=>m[k]===true);sel.innerHTML=opts.map(k=>`<option value="${k}">${names[k]}</option>`).join('')||'<option value="">No payment methods currently available</option>';}catch(e){sel.innerHTML='<option value="">Payment settings unavailable</option>';document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;}}
+async function fmLoadCheckoutPayments(){const sel=document.getElementById('fmCheckoutPayment');try{const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','payment_methods').maybeSingle();if(error)throw error;const m=data?.setting_value||{};const names={razorpay:'Razorpay',upi:'UPI',cards:'Debit / Credit Card',netbanking:'Net Banking',cod:'Cash on Delivery',wallet:'Wallet'};const opts=Object.keys(names).filter(k=>m[k]===true);sel.innerHTML=opts.map(k=>`<option value="${k}">${names[k]}</option>`).join('')||'<option value="">No payment methods currently available</option>';}catch(e){sel.innerHTML='<option value="">Payment settings unavailable</option>';document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;}}
 async function fmLoadDeliveryChoices(){
  const pin=document.getElementById('fmCheckoutPin').value.trim(),box=document.getElementById('fmDeliveryChoices');
  fmCheckoutArea=null;fmCheckoutSlots=[];
@@ -1201,6 +1189,23 @@ async function fmSubmitWithdrawal(){const msg=document.getElementById('fmWithdra
 async function fmLoadWithdrawalHistory(){const rows=document.getElementById('fmWithdrawalHistoryRows');if(!rows)return;try{const {data,error}=await fmShopClient.rpc('fm_user_list_withdrawals_v1');if(error)throw error;rows.innerHTML=(data||[]).map(x=>`<tr><td>${shopEsc(x.withdrawal_ref)}</td><td>${fmWithdrawalMoney(x.requested_amount)}</td><td>${fmWithdrawalMoney(x.charge_amount)}</td><td>${fmWithdrawalMoney(x.net_amount)}</td><td>${shopEsc(x.status)}</td><td>${new Date(x.created_at).toLocaleString('en-IN')}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">No withdrawal requests yet.</td></tr>';}catch(e){rows.innerHTML=`<tr><td colspan="6" class="empty">Could not load history: ${shopEsc(e.message||e)}</td></tr>`;}}
 </script>
 
+<script>
+// Load authoritative wallet balances through the existing security-definer dashboard RPC.
+async function fmRefreshWalletBalances(){
+  try{
+    const {data,error}=await fmShopClient.rpc('fm_get_member_dashboard_v1');
+    if(error) throw error;
+    const d=data||{};
+    const money=v=>'₹'+Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const shopping=Number(d.shopping_wallet_balance||0), income=Number(d.income_wallet_balance||0);
+    ['fmHomeShoppingBalance','walletShoppingBalance'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=money(shopping);});
+    const home=document.getElementById('fmHomeIncomeBalance');if(home)home.textContent=money(income);
+    // The ROI Income Wallet display is sourced from the dashboard's ROI balance field.
+    const roi=document.getElementById('walletRoiBalance');if(roi)roi.textContent=money(d.roi_balance||0);
+  }catch(e){console.warn('Wallet balances could not be loaded:',e.message||e);}
+}
+try{document.addEventListener('DOMContentLoaded',fmRefreshWalletBalances); }catch(e){}
+</script>
 </body>
 </html>
 <script>
