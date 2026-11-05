@@ -121,6 +121,14 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="welcome"><div><h1>Plans & Income Rules</h1><p>Configure membership plan values and business rules.</p></div></div>
 <div class="note"><strong>Plan allocation settings:</strong> Company subscription is deducted first. The remaining amount is split between Shopping Wallet and ROI using the percentages below. Changes are saved to Supabase only when your signed-in Super Admin account has the required table permissions.</div>
 <div class="card"><div class="section-head"><h2>Membership plan allocation</h2><button class="btn btn-green btn-sm" onclick="openNewPlan()">+ Add Plan</button></div><p id="planStatus" class="hint" aria-live="polite">Loading plan settings from Supabase…</p><div class="tablewrap"><table><thead><tr><th>Plan</th><th>Amount</th><th>Company Subscription</th><th>Shopping Wallet</th><th>Total ROI</th><th>ROI / Day</th><th>ROI Days</th><th>Membership Validity</th><th>Free Delivery</th><th>Action</th></tr></thead><tbody id="planTableBody"><tr><td colspan="10" class="empty">Loading plans…</td></tr></tbody></table></div></div>
+<div class="card" style="margin-top:16px">
+ <div class="section-head"><h2>Plan-wise Daily Income Cap</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmLoadPlanDailyCaps()">Refresh</button></div>
+ <p class="hint">This setting controls the shared daily cap for Self Purchase Income + Team Purchase Reward Points + Binary Matching + Admin Daily Income only. ROI, Direct Referral and Rewards are excluded. Keep the cap disabled until all income credit functions are integrated and tested.</p>
+ <div class="note"><strong>Important:</strong> Saving a cap here only saves the plan setting. It does not yet connect or activate the income processors.</div>
+ <p id="fmDailyCapAdminMsg" class="hint" aria-live="polite">Loading daily cap settings…</p>
+ <div class="tablewrap"><table><thead><tr><th>Plan</th><th>Plan Amount</th><th>Enable Cap</th><th>Daily Cap (₹)</th></tr></thead><tbody id="fmPlanDailyCapRows"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody></table></div>
+ <button class="btn btn-green" type="button" style="margin-top:12px" onclick="fmSavePlanDailyCaps()">Save Daily Cap Settings</button>
+</div>
 <div class="card" style="margin-top:16px"><div class="section-head"><h2>Live allocation calculator</h2><span class="badge approved">PREVIEW</span></div><div class="formgrid"><div class="field"><label>Plan amount (₹)</label><input id="calcAmount" type="number" min="0" value="500" oninput="calculatePlanPreview()"></div><div class="field"><label>Company subscription type</label><select id="calcSubType" onchange="calculatePlanPreview()"><option value="fixed">Fixed Amount (₹)</option><option value="percent">Percentage (%)</option></select></div><div class="field"><label>Subscription value</label><input id="calcSubValue" type="number" min="0" value="100" oninput="calculatePlanPreview()"></div><div class="field"><label>Shopping Wallet allocation (%) of remaining</label><input id="calcShoppingPercent" type="number" min="0" max="100" value="50" oninput="calculatePlanPreview()"></div><div class="field"><label>ROI allocation (%) of remaining</label><input id="calcRoiPercent" type="number" min="0" max="100" value="50" oninput="calculatePlanPreview()"></div><div class="field"><label>ROI days</label><input id="calcRoiDays" type="number" min="1" value="50" oninput="calculatePlanPreview()"></div></div><div class="grid" style="margin-top:15px;margin-bottom:0"><div class="card"><div class="stat-head">Company Subscription</div><div class="stat-value" id="pvSubscription">₹100</div></div><div class="card"><div class="stat-head">Remaining</div><div class="stat-value" id="pvRemaining">₹400</div></div><div class="card"><div class="stat-head">Shopping Wallet</div><div class="stat-value" id="pvShopping">₹200</div></div><div class="card"><div class="stat-head">Total ROI / Daily ROI</div><div class="stat-value" id="pvRoi">₹200</div><div class="stat-note" id="pvDaily">₹4 per day · 50 days</div></div></div><p id="previewWarning" class="hint" style="margin-top:12px"></p></div>
 <div class="card" style="margin-top:16px"><div class="section-head"><h2>Income rule settings</h2></div><div class="formgrid"><div class="field"><label>Daily direct income ceiling (₹)</label><input type="number" placeholder="Set daily cap"></div><div class="field"><label>Daily binary income ceiling (₹)</label><input type="number" placeholder="Set daily cap"></div><div class="field"><label>Daily product income ceiling (₹)</label><input type="number" placeholder="Set daily cap"></div><div class="field"><label>Daily reward ceiling (₹)</label><input type="number" placeholder="Set daily cap"></div><div class="field"><label>Withdrawal charge (%)</label><input type="number" value="10"></div><div class="field"><label>Monthly purchase requirement (%)</label><input type="number" value="20"></div></div><button class="btn btn-green" style="margin-top:15px" onclick="alert('Settings are design-only and are not saved yet.')">Save preview settings</button></div>
 </section>
@@ -602,8 +610,73 @@ async function loadPlanSettings(){
  const status=document.getElementById('planStatus'); if(!status)return;
  try{
   const {data,error}=await fmSupabase.from('fm_membership_plans').select('id,plan_code,plan_name,plan_amount,purchase_benefit_percent,daily_credit_percent,is_active,company_subscription_type,company_subscription_value,shopping_wallet_percent,roi_percent,roi_days,self_purchase_discount_percent,matching_business_levels,membership_validity_days,free_delivery_enabled').order('plan_amount',{ascending:true});
-  if(error)throw error; fmPlanRows=data||[]; renderPlanRows(); await populateMatchingPlans(); status.textContent=fmPlanRows.length?'Loaded '+fmPlanRows.length+' plan(s) from Supabase.':'No plans found in fm_membership_plans.';status.style.color='#168447';
+  if(error)throw error; fmPlanRows=data||[]; renderPlanRows(); await fmLoadPlanDailyCaps(); await populateMatchingPlans(); status.textContent=fmPlanRows.length?'Loaded '+fmPlanRows.length+' plan(s) from Supabase.':'No plans found in fm_membership_plans.';status.style.color='#168447';
  }catch(e){status.textContent='Could not load plans: '+(e.message||'Check table columns and Supabase permissions.');status.style.color='#b72e2e';document.getElementById('planTableBody').innerHTML='<tr><td colspan="8" class="empty">Plan settings could not load. Check that the allocation columns exist and this admin has SELECT permission.</td></tr>';console.error('Plan settings load:',e);}
+}
+let fmPlanDailyCapRows=[];
+async function fmLoadPlanDailyCaps(){
+ const msg=document.getElementById('fmDailyCapAdminMsg');
+ const body=document.getElementById('fmPlanDailyCapRows');
+ if(!msg||!body)return;
+ try{
+  const {data,error}=await fmSupabase.from('fm_plan_daily_cap_settings')
+    .select('plan_id,is_enabled,daily_cap,updated_at')
+    .order('plan_id',{ascending:true});
+  if(error)throw error;
+  const byPlan=new Map((data||[]).map(x=>[String(x.plan_id),x]));
+  fmPlanDailyCapRows=(fmPlanRows||[]).map(p=>{
+   const setting=byPlan.get(String(p.id));
+   return {plan_id:p.id,plan_name:p.plan_name||p.plan_code||('Plan '+p.id),
+    plan_amount:Number(p.plan_amount||0),is_enabled:!!setting?.is_enabled,
+    daily_cap:Number(setting?.daily_cap||0)};
+  });
+  if(!fmPlanDailyCapRows.length){
+   body.innerHTML='<tr><td colspan="4" class="empty">Load membership plans first.</td></tr>';
+  }else{
+   body.innerHTML=fmPlanDailyCapRows.map(p=>`<tr>
+    <td>${escapeHtml(p.plan_name)}</td><td>${fmMoney(p.plan_amount)}</td>
+    <td><input type="checkbox" id="fmCapEnabled_${p.plan_id}" ${p.is_enabled?'checked':''} aria-label="Enable daily cap for ${escapeHtml(p.plan_name)}"></td>
+    <td><input type="number" id="fmCapAmount_${p.plan_id}" min="0" step="0.01" value="${p.daily_cap}" style="width:130px;padding:9px;border:1px solid #dbe8de;border-radius:8px"></td>
+   </tr>`).join('');
+  }
+  msg.textContent='Loaded '+fmPlanDailyCapRows.length+' plan cap setting(s).';
+  msg.style.color='#168447';
+ }catch(e){
+  msg.textContent='Could not load daily cap settings: '+(e.message||'Check table permissions.');
+  msg.style.color='#b72e2e';
+  body.innerHTML='<tr><td colspan="4" class="empty">Could not load daily cap settings.</td></tr>';
+  console.error('Daily cap settings load:',e);
+ }
+}
+async function fmSavePlanDailyCaps(){
+ const msg=document.getElementById('fmDailyCapAdminMsg');
+ const btn=event?.currentTarget;
+ try{
+  const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!session)throw new Error('Please sign in as Super Admin first.');
+  const rows=fmPlanDailyCapRows.map(p=>{
+   const enabled=document.getElementById('fmCapEnabled_'+p.plan_id)?.checked||false;
+   const raw=document.getElementById('fmCapAmount_'+p.plan_id)?.value;
+   const cap=Number(raw);
+   if(!Number.isFinite(cap)||cap<0)throw new Error('Daily cap must be zero or a positive amount for '+p.plan_name+'.');
+   if(enabled&&cap<=0)throw new Error('Enter a Daily Cap greater than zero before enabling '+p.plan_name+'.');
+   return {plan_id:p.plan_id,is_enabled:enabled,daily_cap:cap,updated_at:new Date().toISOString(),updated_by:session.user.id};
+  });
+  if(!rows.length)throw new Error('No plans available to save.');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const {error}=await fmSupabase.from('fm_plan_daily_cap_settings').upsert(rows,{onConflict:'plan_id'});
+  if(error)throw error;
+  msg.textContent='Daily cap settings saved. Income processors are still not connected; keep caps disabled until integration is complete.';
+  msg.style.color='#168447';
+  await fmLoadPlanDailyCaps();
+ }catch(e){
+  msg.textContent='Save failed: '+(e.message||'Unknown error');
+  msg.style.color='#b72e2e';
+  console.error('Daily cap settings save:',e);
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent='Save Daily Cap Settings';}
+ }
 }
 function renderPlanRows(){
  const body=document.getElementById('planTableBody'); if(!fmPlanRows.length){body.innerHTML='<tr><td colspan="10" class="empty">No plans found. Use Add Plan to create one.</td></tr>';return;}
