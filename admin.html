@@ -92,7 +92,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="welcome"><div><h1>Members</h1><p>Search member accounts and review activation status.</p></div></div>
 <div class="searchrow"><input id="memberSearchInput" placeholder="Search name, username, mobile or user ID" onkeydown="if(event.key==='Enter')loadMembers()"><select id="memberStatusFilter"><option value="all">All account statuses</option><option value="inactive">Inactive</option><option value="active">Active</option><option value="blocked">Blocked</option></select><button class="btn btn-green" onclick="loadMembers()">Search</button></div>
 <p id="memberLoadStatus" class="hint" aria-live="polite">Members will load from Supabase after admin sign-in.</p>
-<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Account Type</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="7" class="empty">Loading member records…</td></tr></tbody></table></div></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Referred By</th><th>Account Type</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="8" class="empty">Loading member records…</td></tr></tbody></table></div></div>
 <div class="card" style="margin-top:16px">
  <div class="section-head"><h2>Member Bank Details</h2><span class="badge approved">SUPER ADMIN ONLY</span></div>
  <p class="hint">Search by Fresh-Mart ID, username, mobile number or member name. Only Super Admin can update saved bank details.</p>
@@ -292,7 +292,7 @@ async function loadMembers(){
  const tbody=document.getElementById('membersTable');
  const status=document.getElementById('memberLoadStatus');
  if(!tbody||!status)return;
- tbody.innerHTML='<tr><td colspan="7" class="empty">Loading members…</td></tr>';
+ tbody.innerHTML='<tr><td colspan="8" class="empty">Loading members…</td></tr>';
  status.textContent='Connecting to member records…';status.style.color='#718078';
  try{
   const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
@@ -309,11 +309,48 @@ async function loadMembers(){
   const {data,error}=await query;
   if(error)throw error;
   const rows=data||[];
-  tbody.innerHTML=rows.map(m=>`<tr><td>${escapeHtml(m.user_code||m.id||'—')}</td><td>${escapeHtml(m.display_name||'—')}</td><td>${escapeHtml(m.username||'—')}</td><td>${escapeHtml(m.mobile_number||'—')}</td><td>${escapeHtml(m.account_type||'Not set')}</td><td><span class="badge ${String(m.account_status).toLowerCase()==='active'?'approved':String(m.account_status).toLowerCase()==='blocked'?'rejected':'pending'}">${escapeHtml(m.account_status||'unknown')}</span></td><td><button class="btn btn-outline btn-sm" onclick="resetMemberPassword('${m.id}')">Reset Password</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No member records match this search.</td></tr>';
-  status.textContent=`Showing ${rows.length} member record(s).`;
-  status.style.color='#168447';
+  // Referral relationship is stored separately in fm_network_members.
+  // Fetch sponsors in batches for the currently displayed member rows.
+  const memberIds=rows.map(m=>m.id).filter(Boolean);
+  let networkRows=[], referralWarning='';
+  if(memberIds.length){
+   const {data:netData,error:netError}=await fmSupabase
+    .from('fm_network_members')
+    .select('user_id,sponsor_id')
+    .in('user_id',memberIds);
+   if(netError){
+    referralWarning=' Referral details could not be loaded: '+(netError.message||'check fm_network_members permissions/schema.');
+   }else{
+    networkRows=netData||[];
+   }
+  }
+  const sponsorIds=[...new Set(networkRows.map(n=>n.sponsor_id).filter(Boolean).map(String))];
+  let sponsorMap=new Map();
+  if(sponsorIds.length){
+   const {data:sponsorProfiles,error:sponsorError}=await fmSupabase
+    .from('fm_profiles')
+    .select('id,user_code,display_name,username')
+    .in('id',sponsorIds);
+   if(sponsorError){
+    referralWarning=' Sponsor names could not be loaded: '+(sponsorError.message||'check profile permissions.');
+   }else{
+    sponsorMap=new Map((sponsorProfiles||[]).map(p=>[String(p.id),p]));
+   }
+  }
+  const networkMap=new Map(networkRows.map(n=>[String(n.user_id),n]));
+  const referralCell=m=>{
+   const network=networkMap.get(String(m.id));
+   if(!network||!network.sponsor_id)return '<span class="small">No referral recorded</span>';
+   const sponsor=sponsorMap.get(String(network.sponsor_id));
+   if(!sponsor)return `<span title="${escapeHtml(String(network.sponsor_id))}">Sponsor ID: ${escapeHtml(String(network.sponsor_id))}</span>`;
+   const label=sponsor.display_name||sponsor.username||sponsor.user_code||'Member';
+   return `<span>${escapeHtml(label)}</span><br><span class="small">${escapeHtml(sponsor.user_code||sponsor.username||'')}</span>`;
+  };
+  tbody.innerHTML=rows.map(m=>`<tr><td>${escapeHtml(m.user_code||m.id||'—')}</td><td>${escapeHtml(m.display_name||'—')}</td><td>${escapeHtml(m.username||'—')}</td><td>${escapeHtml(m.mobile_number||'—')}</td><td>${referralCell(m)}</td><td>${escapeHtml(m.account_type||'Not set')}</td><td><span class="badge ${String(m.account_status).toLowerCase()==='active'?'approved':String(m.account_status).toLowerCase()==='blocked'?'rejected':'pending'}">${escapeHtml(m.account_status||'unknown')}</span></td><td><button class="btn btn-outline btn-sm" onclick="resetMemberPassword('${m.id}')">Reset Password</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">No member records match this search.</td></tr>';
+  status.textContent=`Showing ${rows.length} member record(s).`+referralWarning;
+  status.style.color=referralWarning?'#956500':'#168447';
  }catch(e){
-  tbody.innerHTML=`<tr><td colspan="7" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
+  tbody.innerHTML=`<tr><td colspan="8" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
   status.textContent='Member list could not be loaded. Check the message in the table and Supabase SELECT permissions.';
   status.style.color='#b72e2e';
   console.error('Fresh-Mart members load:',e);
