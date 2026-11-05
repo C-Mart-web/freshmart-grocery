@@ -74,8 +74,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </aside>
 <main>
 <section class="page active" id="dashboard">
-  <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● INACTIVE</span></div>
-  <div class="banner"><div><h2>Your Fresh-Mart journey starts here</h2><p>Choose a membership plan and upload your payment proof.<br>Your plan activates after admin payment verification.</p><button class="btn btn-white" data-goto="plans">Choose a Plan →</button></div><div class="bannericon">🛒</div></div>
+  <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● CHECKING PLAN</span></div>
+  <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Fresh-Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Available shopping balance</div></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Earnings balance</div></div>
@@ -83,7 +83,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
   </div>
   <div class="twocol">
-    <div class="card"><div class="section-head"><h2>Membership plan</h2><button class="link" data-goto="plans">View plans →</button></div><div class="planbox"><div><h3>No active plan</h3><p>Choose a plan to submit payment for verification.</p></div><div class="planprice">—</div></div><p class="hint" style="margin:12px 0 0">Plan activation happens only after payment is verified by an administrator.</p></div>
+    <div class="card"><div class="section-head"><h2>Membership plan</h2><button class="link" data-goto="plans">View plans →</button></div><div class="planbox"><div><h3 id="fmDashboardPlanName">Checking membership…</h3><p id="fmDashboardPlanInfo">Loading approved activation details.</p></div><div class="planprice" id="fmDashboardPlanAmount">—</div></div><p class="hint" id="fmDashboardPlanNote" style="margin:12px 0 0">Membership status will update after secure activation lookup.</p></div>
     <div class="card"><div class="section-head"><h2>Quick actions</h2></div><div class="quicklinks"><button class="quick" data-goto="plans"><span>💳</span><strong>Pay for plan</strong><small>Upload proof</small></button><button class="quick" data-goto="groceries"><span>🥬</span><strong>Shop groceries</strong><small>Browse items</small></button><button class="quick" data-goto="team"><span>🔗</span><strong>Invite friends</strong><small>Referral tools</small></button></div></div>
   </div>
   <div class="card matching-card" id="myMatchingCard">
@@ -415,30 +415,58 @@ async function fmLoadMemberPlanDiscount(userId,token){
 async function fmLoadMemberPlanSplit(userId,token){
  const ids=['fmPlanSplitStatus','fmPlanSplitMessage','fmSplitPlanAmount','fmSplitCompany','fmSplitShopping','fmSplitRoi','fmSplitDailyRoi','fmSplitDays','fmPlanSplitDates'];
  const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
- if(!el.fmPlanSplitStatus)return;
  const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const dash=id=>document.getElementById(id);
  try{
-  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token};
-  const ar=await fetch(SUPABASE_URL+'/rest/v1/fm_plan_roi_activations?user_id=eq.'+encodeURIComponent(userId)+'&select=id,plan_id,plan_amount,daily_roi_amount,roi_days,start_date,end_date,status&order=start_date.desc&limit=1',{headers});
-  if(!ar.ok)throw new Error('Membership activation lookup failed ('+ar.status+').');
-  const acts=await ar.json(),a=acts?.[0];
-  if(!a){el.fmPlanSplitStatus.textContent='NO ACTIVE PLAN';el.fmPlanSplitMessage.textContent='Your approved membership allocation will appear here after plan activation.';return;}
-  const pr=await fetch(SUPABASE_URL+'/rest/v1/fm_membership_plans?id=eq.'+encodeURIComponent(a.plan_id)+'&select=plan_name,company_subscription_type,company_subscription_value,shopping_wallet_percent,roi_percent&limit=1',{headers});
-  if(!pr.ok)throw new Error('Plan settings lookup failed ('+pr.status+').');
-  const plans=await pr.json(),p=plans?.[0]||{};
-  const amount=Number(a.plan_amount)||0,subType=String(p.company_subscription_type||'fixed').toLowerCase();
-  const rawSub=subType==='percent'?amount*(Number(p.company_subscription_value)||0)/100:(Number(p.company_subscription_value)||0);
-  const company=Math.min(amount,Math.max(0,rawSub)),remaining=Math.max(0,amount-company);
-  const shopping=remaining*(Number(p.shopping_wallet_percent)||0)/100;
-  const roi=remaining*(Number(p.roi_percent)||0)/100;
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'};
+  const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_user_membership_allocation_v1',{method:'POST',headers,body:'{}'});
+  const payload=await response.json().catch(()=>null);
+  if(!response.ok)throw new Error(payload?.message||payload?.error||'Secure membership lookup failed ('+response.status+').');
+  const a=payload?.activation||null;
+  if(!a){
+   if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='NO ACTIVE PLAN';el.fmPlanSplitMessage.textContent=payload?.message||'No active membership activation was found for this account.';}
+   if(dash('accountStatus'))dash('accountStatus').textContent='● INACTIVE';
+   if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='No active plan';
+   if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='No approved activation record was found.';
+   if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent='—';
+   if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Choose your Fresh-Mart plan';
+   if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Your payment becomes active after administrator approval and successful activation.';
+   if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='Choose a Plan →';
+   if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='If your payment request says APPROVED, contact support to verify its activation record.';
+   return;
+  }
+  const amount=Number(a.plan_amount)||0,company=Number(a.company_subscription)||0;
+  const shopping=Number(a.shopping_wallet_allocation)||0,roi=Number(a.roi_allocation)||0;
   const days=Number(a.roi_days)||0,daily=Number(a.daily_roi_amount)||0;
-  el.fmPlanSplitStatus.textContent=String(a.status||'active').toUpperCase();
-  el.fmPlanSplitMessage.textContent=(p.plan_name||'Membership plan')+' · Your approved plan amount is split according to the plan settings.';
-  el.fmSplitPlanAmount.textContent=money(amount);el.fmSplitCompany.textContent=money(company);
-  el.fmSplitShopping.textContent=money(shopping);el.fmSplitRoi.textContent=money(roi);
-  el.fmSplitDailyRoi.textContent=money(daily);el.fmSplitDays.textContent=days+' days';
-  el.fmPlanSplitDates.textContent='ROI period: '+(a.start_date||'—')+' to '+(a.end_date||'—')+'. Company subscription is shown as an allocation, not as a user wallet balance.';
- }catch(e){console.warn('Membership allocation display:',e);el.fmPlanSplitStatus.textContent='UNAVAILABLE';el.fmPlanSplitMessage.textContent='Could not load membership allocation: '+(e.message||'Please refresh or contact support.');}
+  const status=String(a.status||'active').toUpperCase();
+  if(el.fmPlanSplitStatus){
+   el.fmPlanSplitStatus.textContent=status;
+   el.fmPlanSplitMessage.textContent=(a.plan_name||'Membership plan')+' · Allocation from your approved activation.';
+   el.fmSplitPlanAmount.textContent=money(amount);
+   el.fmSplitCompany.textContent=money(company);
+   el.fmSplitShopping.textContent=money(shopping);
+   el.fmSplitRoi.textContent=money(roi);
+   el.fmSplitDailyRoi.textContent=money(daily);
+   el.fmSplitDays.textContent=days+' days';
+   el.fmPlanSplitDates.textContent='ROI period: '+(a.start_date||'—')+' to '+(a.end_date||'—')+'. Company subscription is an allocation, not a user wallet balance.';
+  }
+  if(dash('accountStatus'))dash('accountStatus').textContent='● '+status;
+  if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent=a.plan_name||'Active membership';
+  if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='Membership active · ROI '+days+' days · Daily ROI '+money(daily);
+  if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent=money(amount);
+  if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Your membership is active!';
+  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent=(a.plan_name||'Membership plan')+' · Company subscription '+money(company)+' · Shopping allocation '+money(shopping)+'.';
+  if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='View Membership →';
+  if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='ROI allocation '+money(roi)+' · '+money(daily)+' per day for '+days+' days.';
+ }catch(e){
+  console.warn('Membership allocation display:',e);
+  if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='UNAVAILABLE';el.fmPlanSplitMessage.textContent='Membership data could not load: '+(e.message||'Please refresh or contact support.');}
+  if(dash('accountStatus'))dash('accountStatus').textContent='● STATUS UNAVAILABLE';
+  if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='Could not verify membership';
+  if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent=e.message||'Secure membership lookup failed.';
+  if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Membership status unavailable';
+  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Please refresh or contact Fresh-Mart support. No membership status is being guessed.';
+ }
 }
 
 async function loadSignedInMember(){
