@@ -136,16 +136,18 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="wallets">
   <div class="welcome"><div><h1>My Wallets 👛</h1><p>Separate balances for shopping, ROI and each eligible income type.</p></div></div>
-  <div class="card" style="margin-bottom:16px;background:linear-gradient(110deg,#167d43,#24a65b);color:#fff;border:0">
-    <h2 style="margin:0 0 8px;font-size:19px;color:#fff">Your Plan Benefit Split</h2>
-    <p style="margin:0;line-height:1.6;color:#e6ffed;font-size:13px">₹100 company subscription is deducted first. The remaining plan amount is split: 50% Shopping Wallet and 50% ROI amount, credited across 50 days as per the final approved plan rules.</p>
+  <div class="card" id="fmMemberPlanSplitCard" style="margin-bottom:16px;background:linear-gradient(110deg,#167d43,#24a65b);color:#fff;border:0">
+    <div class="section-head"><h2 style="margin:0 0 8px;font-size:19px;color:#fff">My Membership Allocation</h2><span class="badge" id="fmPlanSplitStatus">LOADING</span></div>
+    <p id="fmPlanSplitMessage" style="margin:0;line-height:1.6;color:#e6ffed;font-size:13px">Your approved membership plan allocation will appear here.</p>
     <div class="grid" style="margin:15px 0 0;gap:10px">
-      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Company subscription</div><div class="stat-value" style="margin:7px 0 0">₹100</div></div>
-      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Shopping allocation</div><div class="stat-value" style="margin:7px 0 0">50%</div></div>
-      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">ROI allocation</div><div class="stat-value" style="margin:7px 0 0">50%</div></div>
-      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">ROI period</div><div class="stat-value" style="margin:7px 0 0">50 days</div></div>
+      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Plan amount</div><div class="stat-value" id="fmSplitPlanAmount" style="margin:7px 0 0">—</div></div>
+      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Company subscription</div><div class="stat-value" id="fmSplitCompany" style="margin:7px 0 0">—</div></div>
+      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Shopping Wallet allocation</div><div class="stat-value" id="fmSplitShopping" style="margin:7px 0 0">—</div></div>
+      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Total ROI allocation</div><div class="stat-value" id="fmSplitRoi" style="margin:7px 0 0">—</div></div>
+      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">Daily ROI</div><div class="stat-value" id="fmSplitDailyRoi" style="margin:7px 0 0">—</div></div>
+      <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">ROI duration</div><div class="stat-value" id="fmSplitDays" style="margin:7px 0 0">—</div></div>
     </div>
-    <p style="margin:12px 0 0;color:#e6ffed;font-size:11px">Example for ₹2,000 plan: ₹1,900 remaining → ₹950 shopping allocation + ₹950 ROI allocation (₹19/day for 50 days). Example only; final values depend on plan configuration.</p>
+    <p id="fmPlanSplitDates" style="margin:12px 0 0;color:#e6ffed;font-size:11px"></p>
   </div>
   <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">50% of remaining eligible plan amount; used for eligible products.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
@@ -410,6 +412,35 @@ async function fmLoadMemberPlanDiscount(userId,token){
  fmRenderMemberDiscountBanner();renderFreshMartProducts();fmRenderCart();fmUpdateCouponTotal();
 }
 
+async function fmLoadMemberPlanSplit(userId,token){
+ const ids=['fmPlanSplitStatus','fmPlanSplitMessage','fmSplitPlanAmount','fmSplitCompany','fmSplitShopping','fmSplitRoi','fmSplitDailyRoi','fmSplitDays','fmPlanSplitDates'];
+ const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
+ if(!el.fmPlanSplitStatus)return;
+ const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ try{
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token};
+  const ar=await fetch(SUPABASE_URL+'/rest/v1/fm_plan_roi_activations?user_id=eq.'+encodeURIComponent(userId)+'&select=id,plan_id,plan_amount,daily_roi_amount,roi_days,start_date,end_date,status&order=start_date.desc&limit=1',{headers});
+  if(!ar.ok)throw new Error('Membership activation lookup failed ('+ar.status+').');
+  const acts=await ar.json(),a=acts?.[0];
+  if(!a){el.fmPlanSplitStatus.textContent='NO ACTIVE PLAN';el.fmPlanSplitMessage.textContent='Your approved membership allocation will appear here after plan activation.';return;}
+  const pr=await fetch(SUPABASE_URL+'/rest/v1/fm_membership_plans?id=eq.'+encodeURIComponent(a.plan_id)+'&select=plan_name,company_subscription_type,company_subscription_value,shopping_wallet_percent,roi_percent&limit=1',{headers});
+  if(!pr.ok)throw new Error('Plan settings lookup failed ('+pr.status+').');
+  const plans=await pr.json(),p=plans?.[0]||{};
+  const amount=Number(a.plan_amount)||0,subType=String(p.company_subscription_type||'fixed').toLowerCase();
+  const rawSub=subType==='percent'?amount*(Number(p.company_subscription_value)||0)/100:(Number(p.company_subscription_value)||0);
+  const company=Math.min(amount,Math.max(0,rawSub)),remaining=Math.max(0,amount-company);
+  const shopping=remaining*(Number(p.shopping_wallet_percent)||0)/100;
+  const roi=remaining*(Number(p.roi_percent)||0)/100;
+  const days=Number(a.roi_days)||0,daily=Number(a.daily_roi_amount)||0;
+  el.fmPlanSplitStatus.textContent=String(a.status||'active').toUpperCase();
+  el.fmPlanSplitMessage.textContent=(p.plan_name||'Membership plan')+' · Your approved plan amount is split according to the plan settings.';
+  el.fmSplitPlanAmount.textContent=money(amount);el.fmSplitCompany.textContent=money(company);
+  el.fmSplitShopping.textContent=money(shopping);el.fmSplitRoi.textContent=money(roi);
+  el.fmSplitDailyRoi.textContent=money(daily);el.fmSplitDays.textContent=days+' days';
+  el.fmPlanSplitDates.textContent='ROI period: '+(a.start_date||'—')+' to '+(a.end_date||'—')+'. Company subscription is shown as an allocation, not as a user wallet balance.';
+ }catch(e){console.warn('Membership allocation display:',e);el.fmPlanSplitStatus.textContent='UNAVAILABLE';el.fmPlanSplitMessage.textContent='Could not load membership allocation: '+(e.message||'Please refresh or contact support.');}
+}
+
 async function loadSignedInMember(){
  try{
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -418,6 +449,7 @@ async function loadSignedInMember(){
   if(!session.access_token||!session.user?.id){document.getElementById('refLinkMessage').textContent='Login session is incomplete. Please sign in again.';return;}
   await fmSyncCartForUser(session.user.id);
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
+  fmLoadMemberPlanSplit(session.user.id,session.access_token);
   loadTeamData(session.access_token);
   const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status',{headers});
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
