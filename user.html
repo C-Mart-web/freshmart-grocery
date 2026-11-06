@@ -476,24 +476,21 @@ function fmUpdateShoppingSpend(){
   if(allocation)allocation.textContent=money(total);
  });
 }
-function fmUpdateRoiProgress(activation){
- const roi=Number(activation?.roi_allocation)||0;
- const daily=Number(activation?.daily_roi_amount)||0;
+let fmWalletRoiCredited=0;
+let fmWalletRoiCreditedDates=[];
+function fmRenderActualRoiProgress(activation){
+ const roi=Math.max(0,Number(activation?.roi_allocation)||0);
+ const credited=Math.max(0,Number(fmWalletRoiCredited)||0);
  const totalDays=Math.max(0,Number(activation?.roi_days)||0);
- let day=0;
- if(activation?.start_date){
-  const start=new Date(String(activation.start_date).slice(0,10)+'T00:00:00');
-  const today=new Date();today.setHours(0,0,0,0);
-  if(!Number.isNaN(start.getTime()))day=Math.max(0,Math.floor((today-start)/86400000)+1);
- }
- day=Math.min(day,totalDays);
- const scheduled=Math.min(roi,daily*day);
  const progress=document.getElementById('walletRoiProgress');
  const note=document.getElementById('walletRoiProgressNote');
  const days=document.getElementById('walletRoiDayCount');
- if(progress)progress.textContent=fmMoneyDisplay(scheduled)+' / '+fmMoneyDisplay(roi);
- if(note)note.textContent='Scheduled ROI through today / total ROI allocation. Actual credits are confirmed in transaction history.';
- if(days)days.textContent='Day '+day+' / '+totalDays;
+ if(progress)progress.textContent=fmMoneyDisplay(credited)+' / '+fmMoneyDisplay(roi);
+ if(note)note.textContent='Actual completed ROI credits / total ROI allocation. Uncredited ROI is shown as ₹0.';
+ if(days)days.textContent='Credited days '+fmWalletRoiCreditedDates.length+' / '+totalDays;
+}
+function fmUpdateRoiProgress(activation){
+ fmRenderActualRoiProgress(activation);
  const alloc=document.getElementById('walletShoppingAllocation');
  fmCurrentShoppingAllocation=Math.max(0,Number(activation?.shopping_wallet_allocation)||0);
  if(alloc)alloc.textContent=fmMoneyDisplay(fmCurrentShoppingAllocation);
@@ -578,8 +575,14 @@ async function fmLoadWalletIncomeBreakdown(token){
   if(Object.prototype.hasOwnProperty.call(totals,category))totals[category]+=signed;
  });
  const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
- const ids={walletRoiProgressIncome:totals.roi,walletSelfPurchase:totals.self,walletReferral:totals.referral,walletTopup:totals.topup,walletBinary:totals.binary};
+ fmWalletRoiCredited=totals.roi;
+ fmWalletRoiCreditedDates=[...new Set(fmWalletIncomeRows
+  .filter(r=>fmIncomeCategory(r)==='roi'&&String(r.transaction_type||'').toLowerCase()==='credit')
+  .map(r=>r.created_at?new Date(r.created_at).toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'}):null)
+  .filter(Boolean))];
+ const ids={walletSelfPurchase:totals.self,walletReferral:totals.referral,walletTopup:totals.topup,walletBinary:totals.binary};
  Object.entries(ids).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=money(value);});
+ fmRenderActualRoiProgress(fmCurrentActivationForPlan);
  fmRenderWalletHistory('All');
  return totals;
 }
