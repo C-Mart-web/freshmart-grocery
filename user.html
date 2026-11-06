@@ -163,6 +163,15 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     </div>
     <p id="fmPlanSplitDates" style="margin:12px 0 0;color:#e6ffed;font-size:11px"></p>
   </div>
+  <div class="card" id="fmWalletBinarySummary" style="margin:0 0 16px;border:1px solid #cfe8d6;background:#f3fff6">
+    <div class="section-head"><h2 style="font-size:17px;margin:0">My Binary Carry Forward Points ⚖️</h2><button class="link" type="button" onclick="fmLoadBinaryPoints()">Refresh</button></div>
+    <p class="hint" style="margin:0 0 12px">Matching ayina points deduct ayyaka migilina Left / Right points ikkada kanipistayi.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <div style="background:#fff;border:1px solid #dceee1;border-radius:12px;padding:14px"><div style="font-size:12px;color:#718078;font-weight:800">⬅️ LEFT SIDE</div><div id="fmWalletTopLeftPoints" style="font-size:26px;font-weight:900;color:#168447;margin-top:6px">—</div><div class="small">Carry forward points</div></div>
+      <div style="background:#fff;border:1px solid #dceee1;border-radius:12px;padding:14px"><div style="font-size:12px;color:#718078;font-weight:800">RIGHT SIDE ➡️</div><div id="fmWalletTopRightPoints" style="font-size:26px;font-weight:900;color:#168447;margin-top:6px">—</div><div class="small">Carry forward points</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;padding:10px 12px;background:#e7f6eb;border-radius:10px"><span style="font-size:12px;font-weight:800;color:#315b40">Available matching points</span><strong id="fmWalletTopPossibleMatch" style="font-size:17px;color:#168447">—</strong></div>
+  </div>
   <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">Available balance for eligible product purchases.</div><div class="small" style="margin-top:8px">Plan allocation: <b id="walletShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="walletShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="walletShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="walletShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="walletIncomeTotal">—</div><div class="stat-note">Total balance from all eligible income sources, including ROI, referrals and matching.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('All Income')">View income history</button></div>
@@ -697,7 +706,7 @@ async function fmLoadRecentActivity(token){
 // Matching credits themselves are processed by the secured database queue worker.
 async function fmLoadBinaryPoints(userId,accessToken){
  const message=document.getElementById('fmBinaryPointsMessage');
- const ids=['fmBinaryLeftPoints','fmBinaryRightPoints','fmBinaryPossibleMatch','walletBinaryLeft','walletBinaryRight','walletBinaryAvailableMatch'];
+ const ids=['fmBinaryLeftPoints','fmBinaryRightPoints','fmBinaryPossibleMatch','walletBinaryLeft','walletBinaryRight','walletBinaryAvailableMatch','fmWalletTopLeftPoints','fmWalletTopRightPoints','fmWalletTopPossibleMatch'];
  if(!message)return;
  try{
   let uid=userId,token=accessToken;
@@ -712,7 +721,7 @@ async function fmLoadBinaryPoints(userId,accessToken){
   const right=rows.reduce((sum,row)=>sum+Math.max(0,Number(row.right_points)||0),0);
   const possible=Math.min(left,right);
   const fmt=n=>Number(n).toLocaleString('en-IN',{maximumFractionDigits:2});
-  const values={fmBinaryLeftPoints:fmt(left),fmBinaryRightPoints:fmt(right),fmBinaryPossibleMatch:fmt(possible),walletBinaryLeft:fmt(left),walletBinaryRight:fmt(right),walletBinaryAvailableMatch:fmt(possible)};
+  const values={fmBinaryLeftPoints:fmt(left),fmBinaryRightPoints:fmt(right),fmBinaryPossibleMatch:fmt(possible),walletBinaryLeft:fmt(left),walletBinaryRight:fmt(right),walletBinaryAvailableMatch:fmt(possible),fmWalletTopLeftPoints:fmt(left),fmWalletTopRightPoints:fmt(right),fmWalletTopPossibleMatch:fmt(possible)};
   Object.entries(values).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=value;});
   message.textContent=rows.length?'Live points updated from your binary progress record.':'No binary points are currently available for this account.';
  }catch(error){
