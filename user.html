@@ -48,6 +48,9 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   .btn{max-width:100%;white-space:normal}
 }
 @media(min-width:681px){.mobile-menu-backdrop{display:none!important}}
+.planchoice.fm-active-plan{border:2px solid #168447!important;background:#effaf2!important;box-shadow:0 0 0 2px rgba(22,132,71,.08)}
+.planchoice.fm-plan-locked{opacity:.58;cursor:not-allowed}
+.fm-plan-action-label{display:inline-block;margin:7px 0 0;padding:4px 9px;border-radius:20px;background:#e8f6ed;color:#167d43;font-size:11px;font-weight:800}
 </style>
 </head>
 <body>
@@ -77,8 +80,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● CHECKING PLAN</span></div>
   <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Fresh-Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
-    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Available shopping balance</div></div>
-    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value">₹0.00</div><div class="stat-note">Earnings balance</div></div>
+    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available shopping balance</div></div>
+    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmDashIncomeBalance">—</div><div class="stat-note">Total eligible income balance</div></div>
     <div class="card"><div class="stat-head">Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value">0</div><div class="stat-note">Earn points on eligible activity</div></div>
     <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
   </div>
@@ -90,7 +93,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="section-head"><h2>My Matching Reward Slabs ⚖️</h2><span class="badge approved" id="myMatchingPlanBadge">PLAN</span></div>
     <p class="hint" id="myMatchingMessage">Loading matching rewards for your active plan…</p>
     <div class="tablewrap"><table class="matching-table"><thead><tr><th>Slab</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Status</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
-    <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Rewards are credited to your Shopping Wallet after eligible orders are processed.</p>
+    <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Eligible matching rewards are credited to your Income Wallet after orders are processed.</p>
   </div>
   <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="orders">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>No activity yet</td><td>—</td><td>—</td><td><span class="badge pending">WAITING</span></td></tr></tbody></table></div></div>
 </section>
@@ -112,11 +115,12 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="plans">
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
   <div class="card" style="margin-bottom:14px;background:#f0faf3"><b>🚚 Membership Free Delivery</b><p class="hint" style="margin:6px 0 0">Some membership plans may include free delivery while the membership validity is active. The benefit is applied automatically at checkout when enabled by the store.</p></div>
-  <div class="card" style="margin-bottom:17px"><div class="section-head"><h2>Choose your membership plan</h2><span class="badge pending" id="fmPlanActionStatus">SELECT PLAN</span></div><div class="planchoices">
+  <div class="card" style="margin-bottom:17px"><div class="section-head"><h2>Choose your membership plan</h2><span class="badge pending" id="fmPlanActionStatus">SELECT PLAN</span></div><div class="planchoices" id="fmMembershipPlanChoices">
     <button class="planchoice" data-plan="500" onclick="selectPlan(this)"><h3>Starter</h3><div class="amount">₹500</div><p>Starter membership<br>Benefits as per current plan rules.</p></button>
-    <button class="planchoice selected" data-plan="2000" onclick="selectPlan(this)"><h3>Growth</h3><div class="amount">₹2,000</div><p>Growth membership<br>Benefits as per current plan rules.</p></button>
+    <button class="planchoice" data-plan="2000" onclick="selectPlan(this)"><h3>Growth</h3><div class="amount">₹2,000</div><p>Growth membership<br>Benefits as per current plan rules.</p></button>
+    <button class="planchoice" data-plan="5000" onclick="selectPlan(this)"><h3>Precide</h3><div class="amount">₹5,000</div><p>Precide membership<br>Benefits as per current plan rules.</p></button>
     <button class="planchoice" data-plan="10000" onclick="selectPlan(this)"><h3>Premium</h3><div class="amount">₹10,000</div><p>Premium membership<br>Benefits as per current plan rules.</p></button>
-  </div><p class="hint" style="margin:12px 0 0">These are design preview values. Final plan names, amounts and benefits will be controlled by Super Admin.</p></div>
+  </div><p class="hint" id="fmPlanChoiceHelp" style="margin:12px 0 0">Your active plan is highlighted. Higher-value plans are available as Top-up when permitted.</p></div>
   <div class="card"><div class="section-head"><h2>Submit payment proof</h2><span class="badge pending">ADMIN VERIFICATION REQUIRED</span></div>
   <form id="paymentForm" onsubmit="demoSubmit(event)"><div class="formgrid">
     <div class="field"><label for="payAmount">Payment amount (₹)</label><input id="payAmount" type="number" min="1" value="2000" required></div>
@@ -151,7 +155,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   </div>
   <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">Available balance for eligible product purchases.</div><div class="small" style="margin-top:8px">Plan allocation: <b id="walletShoppingAllocation">₹0.00</b></div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
-    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="walletIncomeTotal">Balance from eligible incomes</div><div class="stat-note">Total eligible income balance available for withdrawal, subject to wallet ledger.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('All Income')">View income history</button></div>
+    <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="walletIncomeTotal">—</div><div class="stat-note">Total balance from all eligible income sources, including ROI, referrals and matching.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('All Income')">View income history</button></div>
     <div class="card"><div class="stat-head">ROI Progress <span class="stat-icon">📈</span></div><div class="stat-value" id="walletRoiProgress">₹0.00 / ₹0.00</div><div class="stat-note" id="walletRoiProgressNote">Daily ROI credited / total ROI allocation.</div><div class="small" style="margin-top:8px" id="walletRoiDayCount">Day 0 / 0</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('ROI Income')">View ROI history</button></div>
     <div class="card"><div class="stat-head">Self Purchase Income <span class="stat-icon">🧾</span></div><div class="stat-value" id="walletSelfPurchase">₹0.00</div><div class="stat-note">Benefits earned from your own eligible product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Self Purchase Income')">View details</button></div>
     <div class="card"><div class="stat-head">Direct Referral Income <span class="stat-icon">👥</span></div><div class="stat-value" id="walletReferral">₹0.00</div><div class="stat-note">Level 1: 10% · Level 2: 5% on eligible plan purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Direct Referral Income')">View L1 / L2 details</button></div>
@@ -423,20 +427,36 @@ function fmUpdatePlanTypeLabels(){
  const expired=String(fmCurrentActivationForPlan?.status||'').toLowerCase()==='expired';
  document.querySelectorAll('.planchoice[data-plan]').forEach(btn=>{
   const amount=Number(btn.dataset.plan)||0;
-  let tag='';
-  if(active && current>0 && amount>current) tag='Top-up';
-  else if(expired && amount>0) tag='Renewal';
+  const isCurrent=active && current>0 && amount===current;
+  const isHigher=active && current>0 && amount>current;
+  const isLower=active && current>0 && amount<current;
+  btn.classList.toggle('fm-active-plan',isCurrent);
+  btn.classList.toggle('fm-plan-locked',isLower);
+  btn.disabled=!!isLower;
   const old=btn.querySelector('.fm-plan-action-label');
   if(old)old.remove();
+  let tag='';
+  if(isCurrent)tag='ACTIVE PLAN';
+  else if(isHigher)tag='TOP-UP';
+  else if(expired)tag='RENEWAL';
+  else if(isLower)tag='NOT ELIGIBLE';
   if(tag){
    const badge=document.createElement('span');
    badge.className='fm-plan-action-label';
    badge.textContent=tag;
-   badge.style.cssText='display:inline-block;margin-top:7px;padding:4px 9px;border-radius:20px;background:#e8f6ed;color:#167d43;font-size:11px;font-weight:800';
    btn.appendChild(badge);
   }
  });
+ const help=document.getElementById('fmPlanChoiceHelp');
+ if(help){
+  help.textContent=active&&current>0
+   ? 'Your current plan is highlighted. Higher-value plans are marked TOP-UP. Lower-value plans cannot replace an active plan.'
+   : expired
+    ? 'Your previous plan has expired. Eligible plans are marked RENEWAL.'
+    : 'Select a plan to continue. Plan activation starts only after administrator approval.';
+ }
 }
+
 function fmUpdateRoiProgress(activation){
  const roi=Number(activation?.roi_allocation)||0;
  const daily=Number(activation?.daily_roi_amount)||0;
@@ -457,6 +477,21 @@ function fmUpdateRoiProgress(activation){
  if(days)days.textContent='Day '+day+' / '+totalDays;
  const alloc=document.getElementById('walletShoppingAllocation');
  if(alloc)alloc.textContent=fmMoneyDisplay(activation?.shopping_wallet_allocation||0);
+}
+async function fmLoadWalletBalances(token){
+ const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'};
+ const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_get_member_dashboard_v1',{method:'POST',headers,body:'{}'});
+ const data=await r.json().catch(()=>null);
+ if(!r.ok)throw new Error(data?.message||data?.error||'Wallet balance lookup failed ('+r.status+').');
+ const shopping=Number(data?.shopping_wallet_balance)||0;
+ const income=Number(data?.income_wallet_balance)||0;
+ const ids={walletShoppingBalance:shopping,walletIncomeTotal:income,fmDashShoppingBalance:shopping,fmDashIncomeBalance:income};
+ Object.entries(ids).forEach(([id,value])=>{
+  const el=document.getElementById(id);
+  if(el)el.textContent=money(value);
+ });
+ return data;
 }
 async function fmLoadMemberPlanSplit(userId,token){
  const ids=['fmPlanSplitStatus','fmPlanSplitMessage','fmSplitPlanAmount','fmSplitCompany','fmSplitShopping','fmSplitRoi','fmSplitDailyRoi','fmSplitDays','fmPlanSplitDates'];
@@ -527,6 +562,12 @@ async function loadSignedInMember(){
   await fmSyncCartForUser(session.user.id);
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
   fmLoadMemberPlanSplit(session.user.id,session.access_token);
+  fmLoadWalletBalances(session.access_token).catch(walletError=>{
+   console.warn('Wallet balance lookup:',walletError);
+   ['walletShoppingBalance','walletIncomeTotal','fmDashShoppingBalance','fmDashIncomeBalance'].forEach(id=>{
+    const node=document.getElementById(id);if(node)node.textContent='Unavailable';
+   });
+  });
   loadTeamData(session.access_token);
   const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status',{headers});
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
@@ -1173,6 +1214,7 @@ loadFreshMartProducts();
 (function(){const btn=document.getElementById('shopVoiceSearchBtn'),lang=document.getElementById('shopVoiceLanguage'),msg=document.getElementById('shopVoiceMessage'),field=document.getElementById('shopProductSearch');if(!btn||!field)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){btn.disabled=true;btn.style.opacity='.45';if(msg)msg.textContent='Voice search is not supported in this browser. Try Chrome.';return;}btn.addEventListener('click',()=>{try{const rec=new SR();rec.lang=lang?.value||'en-IN';rec.continuous=false;rec.interimResults=false;btn.textContent='…';if(msg)msg.textContent='Listening… Speak now.';rec.onresult=e=>{const spoken=e.results?.[0]?.[0]?.transcript||'';field.value=spoken;renderFreshMartProducts();if(msg)msg.textContent=spoken?'Voice search: '+spoken:''};rec.onerror=e=>{if(msg)msg.textContent=e.error==='not-allowed'?'Please allow microphone access.':'Voice search failed. Please try again.'};rec.onend=()=>{btn.textContent='🎤'};rec.start();}catch(e){btn.textContent='🎤';if(msg)msg.textContent='Allow microphone access and try again.'}})})();
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.goto)));
 function selectPlan(el){
+ if(el.disabled||el.classList.contains('fm-active-plan'))return;
  document.querySelectorAll('.planchoice').forEach(p=>p.classList.remove('selected'));
  el.classList.add('selected');
  document.getElementById('payAmount').value=el.dataset.plan;
