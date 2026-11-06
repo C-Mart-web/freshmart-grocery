@@ -516,6 +516,73 @@ async function fmLoadWalletBalances(token){
  fmUpdateShoppingSpend();
  return data;
 }
+
+// Load income categories from completed Income Wallet transactions.
+// This is display-only: it never creates or changes wallet credits.
+let fmWalletIncomeRows=[];
+let fmWalletSessionToken=null;
+function fmIncomeCategory(row){
+ const src=String(row.source_type||'').toLowerCase();
+ const ref=String(row.transaction_ref||'').toLowerCase();
+ const desc=String(row.description||'').toLowerCase();
+ if(src.includes('topup')||src.includes('top_up')||src.includes('renewal')||ref.includes('topup')||ref.includes('top-up')||desc.includes('top-up')||desc.includes('renewal')) return 'topup';
+ if(src.includes('referral')) return 'referral';
+ if(src.includes('matching')||src.includes('binary')) return 'binary';
+ if(src.includes('roi')||src.includes('membership_roi')) return 'roi';
+ if(src.includes('self_purchase')||src.includes('self-purchase')) return 'self';
+ return 'other';
+}
+function fmRenderWalletHistory(filter){
+ const tbody=document.getElementById('walletTransactionRows');
+ const msg=document.getElementById('walletHistoryMessage');
+ if(!tbody)return;
+ const rows=fmWalletIncomeRows.filter(r=>{
+  if(filter==='All'||filter==='All Income')return true;
+  const c=fmIncomeCategory(r);
+  return (filter==='Direct Referral Income'&&c==='referral')||
+   (filter==='Top-up Referral Income'&&c==='topup')||
+   (filter==='ROI Income'&&c==='roi')||
+   (filter==='Binary Matching Income'&&c==='binary')||
+   (filter==='Self Purchase Income'&&c==='self');
+ });
+ if(msg)msg.textContent=rows.length+' completed Income Wallet transaction(s).';
+ if(!rows.length){
+  tbody.innerHTML='<tr><td colspan="5" style="color:#718078;font-weight:500">No matching completed income transactions found.</td></tr>';
+  return;
+ }
+ const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const label=r=>{
+  const c=fmIncomeCategory(r);
+  return c==='referral'?'Direct Referral Income':c==='topup'?'Top-up Referral Income':c==='roi'?'ROI Income':c==='binary'?'Binary Matching Income':c==='self'?'Self Purchase Income':(r.description||'Other Income');
+ };
+ tbody.innerHTML=rows.map(r=>{
+  const date=r.created_at?new Date(r.created_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'—';
+  const debit=String(r.transaction_type||'').toLowerCase()==='debit';
+  const amount=(debit?'-':'+')+money(r.amount);
+  return `<tr><td>${shopEsc(date)}</td><td>${shopEsc(label(r))}</td><td>${shopEsc(r.description||r.source_type||'—')}</td><td style="font-weight:800;${debit?'':'color:#168447'}">${shopEsc(amount)}</td><td><span class="badge approved">${shopEsc(String(r.status||'completed').toUpperCase())}</span></td></tr>`;
+ }).join('');
+}
+async function fmLoadWalletIncomeBreakdown(token){
+ const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'};
+ const url=SUPABASE_URL+'/rest/v1/fm_wallet_transactions?select=id,transaction_ref,user_id,wallet_type,transaction_type,amount,source_type,source_ref,description,status,created_at&wallet_type=eq.income&status=eq.completed&order=created_at.desc&limit=1000';
+ const response=await fetch(url,{headers});
+ const payload=await response.json().catch(()=>null);
+ if(!response.ok)throw new Error(payload?.message||payload?.details||'Income transaction lookup failed ('+response.status+').');
+ fmWalletIncomeRows=Array.isArray(payload)?payload:[];
+ const totals={roi:0,referral:0,topup:0,binary:0,self:0};
+ fmWalletIncomeRows.forEach(r=>{
+  const amount=Number(r.amount)||0;
+  const signed=String(r.transaction_type||'').toLowerCase()==='debit'?-amount:amount;
+  const category=fmIncomeCategory(r);
+  if(Object.prototype.hasOwnProperty.call(totals,category))totals[category]+=signed;
+ });
+ const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const ids={walletRoiProgressIncome:totals.roi,walletSelfPurchase:totals.self,walletReferral:totals.referral,walletTopup:totals.topup,walletBinary:totals.binary};
+ Object.entries(ids).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=money(value);});
+ fmRenderWalletHistory('All');
+ return totals;
+}
+
 async function fmLoadMemberPlanSplit(userId,token){
  const ids=['fmPlanSplitStatus','fmPlanSplitMessage','fmSplitPlanAmount','fmSplitCompany','fmSplitShopping','fmSplitRoi','fmSplitDailyRoi','fmSplitDays','fmPlanSplitDates'];
  const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
@@ -619,6 +686,7 @@ async function loadSignedInMember(){
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
   fmLoadMemberPlanSplit(session.user.id,session.access_token);
   fmLoadRecentActivity(session.access_token);
+  fmLoadWalletIncomeBreakdown(session.access_token).catch(incomeError=>{console.warn('Income breakdown lookup:',incomeError);const msg=document.getElementById('walletHistoryMessage');if(msg)msg.textContent='Income breakdown could not load: '+(incomeError.message||'Check transaction table access.');});
   fmLoadWalletBalances(session.access_token).catch(walletError=>{
    console.warn('Wallet balance lookup:',walletError);
    ['walletShoppingBalance','walletIncomeTotal','fmDashShoppingBalance','fmDashIncomeBalance'].forEach(id=>{
@@ -1314,7 +1382,7 @@ async function demoSubmit(e){
 async function fmLoadMembershipPayments(){const body=document.getElementById('paymentRows');if(!body)return;try{const j=await fmPaymentCall('membership_payment_list');body.innerHTML=(j.requests||[]).map(x=>'<tr><td>'+shopEsc(x.plan_name)+'</td><td>'+shopMoney(x.amount)+'</td><td>'+shopEsc(x.transaction_reference||'—')+'</td><td><span class="badge '+(x.status==='approved'?'approved':x.status==='rejected'?'rejected':'pending')+'">'+shopEsc(String(x.status).toUpperCase())+'</span>'+(x.admin_note?'<div class="hint">'+shopEsc(x.admin_note)+'</div>':'')+'</td></tr>').join('')||'<tr><td colspan="4">No payment requests yet.</td></tr>';}catch(e){body.innerHTML='<tr><td colspan="4">'+shopEsc(e.message)+'</td></tr>';}}
 document.querySelectorAll('[data-page="plans"]').forEach(b=>b.addEventListener('click',fmLoadMembershipPayments));
 
-function showWalletHistory(walletName){const msg=document.getElementById('walletHistoryMessage');if(msg)msg.textContent=walletName==='All'?'No live transactions are connected yet. All approved wallet credits and debits will appear here after database connection.':walletName+' history will appear here after the relevant wallet is connected to Supabase.';const rows=document.getElementById('walletTransactionRows');if(rows)rows.innerHTML='<tr><td colspan="5" style="color:#718078;font-weight:500">No live '+(walletName==='All'?'':walletName+' ' )+'transactions loaded yet.</td></tr>';}
+function showWalletHistory(walletName){fmRenderWalletHistory(walletName||'All');}
 </script>
 
 <script>
