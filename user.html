@@ -154,7 +154,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <p id="fmPlanSplitDates" style="margin:12px 0 0;color:#e6ffed;font-size:11px"></p>
   </div>
   <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">Available balance for eligible product purchases.</div><div class="small" style="margin-top:8px">Plan allocation: <b id="walletShoppingAllocation">₹0.00</b></div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
+    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">Available balance for eligible product purchases.</div><div class="small" style="margin-top:8px">Plan allocation: <b id="walletShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="walletShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="walletShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="walletShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="walletIncomeTotal">—</div><div class="stat-note">Total balance from all eligible income sources, including ROI, referrals and matching.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('All Income')">View income history</button></div>
     <div class="card"><div class="stat-head">ROI Progress <span class="stat-icon">📈</span></div><div class="stat-value" id="walletRoiProgress">₹0.00 / ₹0.00</div><div class="stat-note" id="walletRoiProgressNote">Daily ROI credited / total ROI allocation.</div><div class="small" style="margin-top:8px" id="walletRoiDayCount">Day 0 / 0</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('ROI Income')">View ROI history</button></div>
     <div class="card"><div class="stat-head">Self Purchase Income <span class="stat-icon">🧾</span></div><div class="stat-value" id="walletSelfPurchase">₹0.00</div><div class="stat-note">Benefits earned from your own eligible product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Self Purchase Income')">View details</button></div>
@@ -457,6 +457,21 @@ function fmUpdatePlanTypeLabels(){
  }
 }
 
+let fmCurrentShoppingAllocation=0;
+let fmCurrentShoppingBalance=0;
+function fmUpdateShoppingSpend(){
+ const total=Math.max(0,Number(fmCurrentShoppingAllocation)||0);
+ const balance=Math.max(0,Number(fmCurrentShoppingBalance)||0);
+ const spent=Math.min(total,Math.max(0,total-balance));
+ const pct=total>0?Math.min(100,(spent/total)*100):0;
+ const money=n=>fmMoneyDisplay(n);
+ const value=document.getElementById('walletShoppingSpent');
+ const bar=document.getElementById('walletShoppingSpentBar');
+ const note=document.getElementById('walletShoppingSpentNote');
+ if(value)value.textContent=money(spent)+' / '+money(total);
+ if(bar)bar.style.width=pct.toFixed(2)+'%';
+ if(note)note.textContent=money(balance)+' remaining in Shopping Wallet · '+pct.toFixed(1)+'% used';
+}
 function fmUpdateRoiProgress(activation){
  const roi=Number(activation?.roi_allocation)||0;
  const daily=Number(activation?.daily_roi_amount)||0;
@@ -476,7 +491,9 @@ function fmUpdateRoiProgress(activation){
  if(note)note.textContent='Scheduled ROI through today / total ROI allocation. Actual credits are confirmed in transaction history.';
  if(days)days.textContent='Day '+day+' / '+totalDays;
  const alloc=document.getElementById('walletShoppingAllocation');
- if(alloc)alloc.textContent=fmMoneyDisplay(activation?.shopping_wallet_allocation||0);
+ fmCurrentShoppingAllocation=Math.max(0,Number(activation?.shopping_wallet_allocation)||0);
+ if(alloc)alloc.textContent=fmMoneyDisplay(fmCurrentShoppingAllocation);
+ fmUpdateShoppingSpend();
 }
 async function fmLoadWalletBalances(token){
  const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -485,12 +502,14 @@ async function fmLoadWalletBalances(token){
  const data=await r.json().catch(()=>null);
  if(!r.ok)throw new Error(data?.message||data?.error||'Wallet balance lookup failed ('+r.status+').');
  const shopping=Number(data?.shopping_wallet_balance)||0;
+ fmCurrentShoppingBalance=shopping;
  const income=Number(data?.income_wallet_balance)||0;
  const ids={walletShoppingBalance:shopping,walletIncomeTotal:income,fmDashShoppingBalance:shopping,fmDashIncomeBalance:income};
  Object.entries(ids).forEach(([id,value])=>{
   const el=document.getElementById(id);
   if(el)el.textContent=money(value);
  });
+ fmUpdateShoppingSpend();
  return data;
 }
 async function fmLoadMemberPlanSplit(userId,token){
