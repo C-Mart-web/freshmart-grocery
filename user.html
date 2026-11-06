@@ -95,6 +95,16 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="tablewrap"><table class="matching-table"><thead><tr><th>Slab</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Status</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
     <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Eligible matching rewards are credited to your Income Wallet after orders are processed.</p>
   </div>
+  <div class="card matching-card" id="fmBinaryPointsCard">
+    <div class="section-head"><h2>My Binary Points ⚖️</h2><button class="link" type="button" onclick="fmLoadBinaryPoints()">Refresh</button></div>
+    <p class="hint" id="fmBinaryPointsMessage">Loading your left and right carry-forward points…</p>
+    <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:12px 0 0">
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Left Carry Forward</div><div class="stat-value" id="fmBinaryLeftPoints">—</div><div class="stat-note">Available left points</div></div>
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Right Carry Forward</div><div class="stat-value" id="fmBinaryRightPoints">—</div><div class="stat-note">Available right points</div></div>
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Possible Match</div><div class="stat-value" id="fmBinaryPossibleMatch">—</div><div class="stat-note">Minimum of available sides</div></div>
+    </div>
+    <p class="hint" style="margin:10px 0 0">Only the points currently available on both sides are shown as possible matching. Actual matching income is shown separately in your Income Wallet.</p>
+  </div>
   <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="wallets">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody id="fmRecentActivityRows"><tr><td colspan="4">Loading recent transactions…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="groceries">
@@ -161,6 +171,9 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-head">Direct Referral Income <span class="stat-icon">👥</span></div><div class="stat-value" id="walletReferral">₹0.00</div><div class="stat-note">Level 1: 10% · Level 2: 5% on eligible plan purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Direct Referral Income')">View L1 / L2 details</button></div>
     <div class="card"><div class="stat-head">Top-up Referral Income <span class="stat-icon">🔄</span></div><div class="stat-value" id="walletTopup">₹0.00</div><div class="stat-note">Level 1: 5% · Level 2: 2% on eligible top-ups.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Top-up Referral Income')">View top-up details</button></div>
     <div class="card"><div class="stat-head">Binary Matching Income <span class="stat-icon">⚖️</span></div><div class="stat-value" id="walletBinary">₹0.00</div><div class="stat-note">Calculated from eligible left/right team matching under final rules.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Binary Matching Income')">View matching details</button></div>
+    <div class="card"><div class="stat-head">Left Binary Points <span class="stat-icon">⬅️</span></div><div class="stat-value" id="walletBinaryLeft">—</div><div class="stat-note">Available left-side points carried forward.</div></div>
+    <div class="card"><div class="stat-head">Right Binary Points <span class="stat-icon">➡️</span></div><div class="stat-value" id="walletBinaryRight">—</div><div class="stat-note">Available right-side points carried forward.</div></div>
+    <div class="card"><div class="stat-head">Available Matching Points <span class="stat-icon">🔁</span></div><div class="stat-value" id="walletBinaryAvailableMatch">—</div><div class="stat-note">Potential match from current available points; not a cash credit.</div></div>
     <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="walletPoints">0</div><div class="stat-note">Points from eligible team product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Team Purchase Reward Points')">View points history</button></div>
     <div class="card"><div class="stat-head">Rewards <span class="stat-icon">🎁</span></div><div class="stat-value">To be configured</div><div class="stat-note">Reward milestones will be added after the client confirms the reward rules.</div></div>
   </div>
@@ -680,6 +693,34 @@ async function fmLoadRecentActivity(token){
  }catch(e){tbody.innerHTML=`<tr><td colspan="4">Recent activity unavailable: ${shopEsc(e.message||'Please refresh.')}</td></tr>`;}
 }
 
+// Read-only display of this member's current binary carry-forward points.
+// Matching credits themselves are processed by the secured database queue worker.
+async function fmLoadBinaryPoints(userId,accessToken){
+ const message=document.getElementById('fmBinaryPointsMessage');
+ const ids=['fmBinaryLeftPoints','fmBinaryRightPoints','fmBinaryPossibleMatch','walletBinaryLeft','walletBinaryRight','walletBinaryAvailableMatch'];
+ if(!message)return;
+ try{
+  let uid=userId,token=accessToken;
+  if(!uid||!token){const session=await getMemberSession();uid=session.user.id;token=session.access_token;}
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token};
+  const url=SUPABASE_URL+'/rest/v1/fm_binary_points_progress?upline_user_id=eq.'+encodeURIComponent(uid)+'&select=left_points,right_points';
+  const response=await fetch(url,{headers});
+  const payload=await response.json().catch(()=>[]);
+  if(!response.ok)throw new Error(payload?.message||payload?.details||'Binary points lookup failed ('+response.status+').');
+  const rows=Array.isArray(payload)?payload:[];
+  const left=rows.reduce((sum,row)=>sum+Math.max(0,Number(row.left_points)||0),0);
+  const right=rows.reduce((sum,row)=>sum+Math.max(0,Number(row.right_points)||0),0);
+  const possible=Math.min(left,right);
+  const fmt=n=>Number(n).toLocaleString('en-IN',{maximumFractionDigits:2});
+  const values={fmBinaryLeftPoints:fmt(left),fmBinaryRightPoints:fmt(right),fmBinaryPossibleMatch:fmt(possible),walletBinaryLeft:fmt(left),walletBinaryRight:fmt(right),walletBinaryAvailableMatch:fmt(possible)};
+  Object.entries(values).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=value;});
+  message.textContent=rows.length?'Live points updated from your binary progress record.':'No binary points are currently available for this account.';
+ }catch(error){
+  message.textContent='Binary points could not load: '+(error.message||String(error))+'. Check SELECT permission/RLS for your own fm_binary_points_progress row.';
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Unavailable';});
+ }
+}
+
 async function loadSignedInMember(){
  try{
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -689,6 +730,7 @@ async function loadSignedInMember(){
   await fmSyncCartForUser(session.user.id);
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
   fmLoadMemberPlanSplit(session.user.id,session.access_token);
+  fmLoadBinaryPoints(session.user.id,session.access_token);
   fmLoadRecentActivity(session.access_token);
   fmLoadWalletIncomeBreakdown(session.access_token).catch(incomeError=>{console.warn('Income breakdown lookup:',incomeError);const msg=document.getElementById('walletHistoryMessage');if(msg)msg.textContent='Income breakdown could not load: '+(incomeError.message||'Check transaction table access.');});
   fmLoadWalletBalances(session.access_token).catch(walletError=>{
