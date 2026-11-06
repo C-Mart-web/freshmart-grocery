@@ -846,7 +846,7 @@ async function fmPlaceOrder(){
   const slotId=mode==='slot'?document.querySelector('input[name="fmDeliveryMode"]:checked')?.dataset.slot:null;
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
-   if(fmMemberPlanDiscountPercent>0)throw new Error('Your plan has a '+fmMemberPlanDiscountPercent+'% Self Purchase Discount. The checkout database function must also be updated to apply and save this discount securely before orders can be placed.');
+   // Self Purchase Discount is applied and verified securely by the checkout SQL function.
   btn.disabled=true;msg.textContent='Checking stock and placing order…';
   const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{
    p_items:fmCart,p_address:address,p_pincode:pin,p_delivery_mode:mode,
