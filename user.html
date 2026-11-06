@@ -95,7 +95,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="tablewrap"><table class="matching-table"><thead><tr><th>Slab</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Status</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
     <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Eligible matching rewards are credited to your Income Wallet after orders are processed.</p>
   </div>
-  <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="orders">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td>No activity yet</td><td>—</td><td>—</td><td><span class="badge pending">WAITING</span></td></tr></tbody></table></div></div>
+  <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="wallets">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody id="fmRecentActivityRows"><tr><td colspan="4">Loading recent transactions…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="groceries">
   <div class="welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
@@ -576,6 +576,39 @@ async function fmLoadMemberPlanSplit(userId,token){
  }
 }
 
+async function fmLoadRecentActivity(token){
+ const tbody=document.getElementById('fmRecentActivityRows');
+ if(!tbody)return;
+ tbody.innerHTML='<tr><td colspan="4">Loading recent transactions…</td></tr>';
+ try{
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'};
+  const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_user_recent_activity_v1',{method:'POST',headers,body:JSON.stringify({p_limit:5})});
+  const rows=await response.json().catch(()=>null);
+  if(!response.ok)throw new Error(rows?.message||rows?.details||'Recent activity lookup failed ('+response.status+').');
+  if(!Array.isArray(rows)||!rows.length){tbody.innerHTML='<tr><td colspan="4">No completed or pending wallet transactions yet.</td></tr>';return;}
+  const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const label=r=>{
+   const src=String(r.source_type||'').toLowerCase();
+   if(src.includes('membership_roi'))return 'ROI Credit';
+   if(src.includes('membership_activation'))return 'Plan Activation / Shopping Allocation';
+   if(src.includes('matching'))return 'Matching Income';
+   if(src.includes('referral'))return 'Referral Income';
+   if(src.includes('grocery_order'))return 'Shopping Purchase';
+   if(src.includes('withdrawal'))return 'Withdrawal';
+   if(src.includes('refund'))return 'Refund';
+   return r.description||((r.wallet_type||'Wallet')+' '+(r.transaction_type||'transaction'));
+  };
+  tbody.innerHTML=rows.map(r=>{
+   const date=r.created_at?new Date(r.created_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'—';
+   const debit=r.transaction_type==='debit';
+   const amount=(debit?'-':'+')+money(r.amount);
+   const status=String(r.status||'pending').toLowerCase();
+   const cls=status==='completed'?'approved':status==='rejected'||status==='reversed'?'rejected':'pending';
+   return `<tr><td>${shopEsc(label(r))}<small style="display:block;color:#77847d">${shopEsc(r.wallet_type||'')} · ${shopEsc(r.description||'')}</small></td><td>${shopEsc(date)}</td><td style="font-weight:800;${debit?'':'color:#168447'}">${shopEsc(amount)}</td><td><span class="badge ${cls}">${shopEsc(status.toUpperCase())}</span></td></tr>`;
+  }).join('');
+ }catch(e){tbody.innerHTML=`<tr><td colspan="4">Recent activity unavailable: ${shopEsc(e.message||'Please refresh.')}</td></tr>`;}
+}
+
 async function loadSignedInMember(){
  try{
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
@@ -585,6 +618,7 @@ async function loadSignedInMember(){
   await fmSyncCartForUser(session.user.id);
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
   fmLoadMemberPlanSplit(session.user.id,session.access_token);
+  fmLoadRecentActivity(session.access_token);
   fmLoadWalletBalances(session.access_token).catch(walletError=>{
    console.warn('Wallet balance lookup:',walletError);
    ['walletShoppingBalance','walletIncomeTotal','fmDashShoppingBalance','fmDashIncomeBalance'].forEach(id=>{
@@ -667,7 +701,29 @@ function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
 async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
 function fmGoAddDeliveryAddress(){showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
-async function fmLoadCheckoutPayments(){const sel=document.getElementById('fmCheckoutPayment');try{const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','payment_methods').maybeSingle();if(error)throw error;const m=data?.setting_value||{};const names={razorpay:'Razorpay',upi:'UPI',cards:'Debit / Credit Card',netbanking:'Net Banking',cod:'Cash on Delivery',wallet:'Wallet'};const opts=Object.keys(names).filter(k=>m[k]===true);sel.innerHTML=opts.map(k=>`<option value="${k}">${names[k]}</option>`).join('')||'<option value="">No payment methods currently available</option>';}catch(e){sel.innerHTML='<option value="">Payment settings unavailable</option>';document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;}}
+async function fmLoadCheckoutPayments(){
+ const sel=document.getElementById('fmCheckoutPayment');
+ try{
+  const [{data,error},session]=await Promise.all([
+   fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','payment_methods').maybeSingle(),
+   getMemberSession()
+  ]);
+  if(error)throw error;
+  const methods=data?.setting_value||{};
+  const {data:dash,error:dashError}=await fmShopClient.rpc('fm_get_member_dashboard_v1');
+  if(dashError)throw dashError;
+  const balance=Number(dash?.shopping_wallet_balance)||0;
+  const names={razorpay:'Razorpay',upi:'UPI',cards:'Debit / Credit Card',netbanking:'Net Banking',cod:'Cash on Delivery'};
+  const opts=['<option value="" selected disabled>Select a payment method</option>'];
+  opts.push(`<option value="shopping_wallet" ${balance<=0?'disabled':''}>Shopping Wallet — Available ₹${balance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</option>`);
+  Object.keys(names).filter(k=>methods[k]===true).forEach(k=>opts.push(`<option value="${k}">${names[k]}</option>`));
+  sel.innerHTML=opts.join('');
+  if(balance<=0)sel.options[0].text+=' (Insufficient balance)';
+ }catch(e){
+  sel.innerHTML='<option value="">Payment settings unavailable</option>';
+  document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;
+ }
+}
 async function fmLoadDeliveryChoices(){
  const pin=document.getElementById('fmCheckoutPin').value.trim(),box=document.getElementById('fmDeliveryChoices');
  fmCheckoutArea=null;fmCheckoutSlots=[];
