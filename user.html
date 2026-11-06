@@ -121,7 +121,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   
 </section>
 <section class="page" id="cart"><div class="welcome"><div><h1>My Cart 🛒</h1><p>Review items and quantities before checkout.</p></div><button class="btn btn-outline" onclick="fmRenderCart()">Refresh</button></div><div class="card"><div id="fmCartRows" class="hint">Your cart is empty.</div><div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:850"><span>Subtotal</span><span id="fmCartSubtotal">₹0.00</span></div><button class="btn btn-green" style="margin-top:14px;width:100%" onclick="fmOpenCheckout()">Proceed to Checkout</button><button class="btn btn-outline" style="margin-top:9px;width:100%" onclick="showPage('groceries')">Continue Shopping</button></div></section>
-<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Choose today or a future date for advance booking.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Discount</span><b id="fmCheckoutSelfDiscount">₹0.00</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Confirm & Place Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
+<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Discount</span><b id="fmCheckoutSelfDiscount">₹0.00</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Confirm & Place Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
 <section class="page" id="plans">
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
   <div class="card" style="margin-bottom:14px;background:#f0faf3"><b>🚚 Membership Free Delivery</b><p class="hint" style="margin:6px 0 0">Some membership plans may include free delivery while the membership validity is active. The benefit is applied automatically at checkout when enabled by the store.</p></div>
@@ -822,7 +822,7 @@ function fmRenderCart(){
 }
 function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].quantity<=0)fmCart.splice(i,1);fmSaveCart();}
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
-async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');if(dateInput&&!dateInput.value){const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());dateInput.min=today;dateInput.value=today;}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
+async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;if(!dateInput.value||dateInput.value<today)dateInput.value=today;}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
 function fmGoAddDeliveryAddress(){showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
 async function fmLoadCheckoutPayments(){
  const sel=document.getElementById('fmCheckoutPayment');
@@ -853,41 +853,57 @@ async function fmLoadDeliveryChoices(){
  if(!/^\d{6}$/.test(pin)){box.textContent='Enter a valid 6-digit pincode.';return;}
  const address=fmAddresses.find(a=>String(a.id)===document.getElementById('fmCheckoutAddress').value);
  const subtotal=fmCart.reduce((t,x)=>{const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));return t+(p?Number(p.retail_price||p.offer_price||p.central_price||0)*Number(x.quantity||0):0)},0);
+ box.textContent='Checking delivery dates and available slots…';
  try{
   const {data:area,error}=await fmShopClient.from('fm_delivery_areas').select('*').eq('pincode',pin).maybeSingle();
   if(error)throw error;
   if(!area||!area.is_serviceable){box.innerHTML='<b style="color:#b72e2e">We will start our service in your area soon.</b>';return;}
   const {data:quote,error:qe}=await fmShopClient.rpc('fm_get_delivery_quote',{
-    p_pincode:pin,
-    p_lat:address?.latitude??null,
-    p_lng:address?.longitude??null,
-    p_subtotal:subtotal
+    p_pincode:pin,p_lat:address?.latitude??null,p_lng:address?.longitude??null,p_subtotal:subtotal
   });
   if(qe)throw qe;
   if(!quote?.serviceable){box.innerHTML='<b style="color:#b72e2e">'+shopEsc(quote?.message||'We will start our service in your area soon.')+'</b>';return;}
   fmCheckoutArea={...area,delivery_charge:Number(quote.delivery_charge||0),free_delivery:quote.free_delivery===true};
-  let html='<div style="display:grid;gap:8px">';
   const dateInput=document.getElementById('fmCheckoutDeliveryDate');
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());
   if(dateInput){dateInput.min=today;if(!dateInput.value||dateInput.value<today)dateInput.value=today;}
-  const selectedDate=dateInput?.value||today;
-  const now=new Date(),mins=now.getHours()*60+now.getMinutes(),start=Number(String(area.express_start).slice(0,2))*60+Number(String(area.express_start).slice(3,5)),end=Number(String(area.express_end).slice(0,2))*60+Number(String(area.express_end).slice(3,5));
+  let selectedDate=dateInput?.value||today;
+  const now=new Date();
+  const indiaParts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);
+  const mins=Number(indiaParts.find(x=>x.type==='hour')?.value||0)*60+Number(indiaParts.find(x=>x.type==='minute')?.value||0);
+  const slotIsBookable=s=>{
+    const startM=Number(String(s.start_time).slice(0,2))*60+Number(String(s.start_time).slice(3,5));
+    if(s.delivery_date>today)return true;
+    return s.delivery_date===today && mins < startM-60;
+  };
+  let slots=[],autoMovedToNextDate=false;
+  if(area.slot_booking_enabled){
+    const {data,error:se}=await fmShopClient.rpc('fm_get_available_delivery_slots',{p_pincode:pin,p_from_date:today});
+    if(se)throw se;
+    const allSlots=data||[];
+    slots=allSlots.filter(s=>s.delivery_date===selectedDate&&slotIsBookable(s));
+    // If today's final slot has passed, automatically move to the first future date with a bookable slot.
+    if(selectedDate===today&&!slots.length){
+      const next=allSlots.find(s=>s.delivery_date>today&&slotIsBookable(s));
+      if(next){selectedDate=next.delivery_date;autoMovedToNextDate=true;if(dateInput)dateInput.value=selectedDate;slots=allSlots.filter(s=>s.delivery_date===selectedDate&&slotIsBookable(s));}
+    }
+    fmCheckoutSlots=slots;
+  }
+  let html='<div style="display:grid;gap:8px">';
+  const start=Number(String(area.express_start).slice(0,2))*60+Number(String(area.express_start).slice(3,5));
+  const end=Number(String(area.express_end).slice(0,2))*60+Number(String(area.express_end).slice(3,5));
   const hasExpress=selectedDate===today&&area.express_enabled&&mins>=start&&mins<=end;
   if(hasExpress)html+=`<label class="card" style="padding:10px"><input type="radio" name="fmDeliveryMode" value="express" checked> Express · ${area.express_minutes} minutes</label>`;
   if(area.slot_booking_enabled){
-   const {data:slots,error:se}=await fmShopClient.from('fm_delivery_slots').select('*').eq('is_active',true).eq('delivery_date',selectedDate).or(`pincode.is.null,pincode.eq.${pin}`).order('start_time');
-   if(se)throw se;
-   const nowMs=Date.now();
-   fmCheckoutSlots=(slots||[]).filter(s=>new Date(`${s.delivery_date}T${String(s.start_time).slice(0,8)}+05:30`).getTime()-nowMs>=(60*60*1000));
-   if(fmCheckoutSlots.length){html+='<b>Available delivery slots</b>';html+=fmCheckoutSlots.map((s,i)=>`<label class="card" style="padding:10px"><input type="radio" name="fmDeliveryMode" value="slot" data-slot="${s.id}" ${i===0&&!hasExpress?'checked':''}> ${shopEsc(s.slot_label)} · ${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)}</label>`).join('');}
-   else html+='<p class="hint">No slots available for this date. Please choose another date.</p>';
+    if(slots.length){
+      html+=`<b>Available delivery slots for ${selectedDate}</b>`;
+      html+=slots.map((s,i)=>`<label class="card" style="padding:10px"><input type="radio" name="fmDeliveryMode" value="slot" data-slot="${s.id}" ${i===0&&!hasExpress?'checked':''}> ${shopEsc(s.slot_label)} · ${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)}</label>`).join('');
+      if(autoMovedToNextDate)html+='<p class="hint">Today’s booking window is closed. The next available delivery date is selected automatically. You can choose another future date above.</p>';
+    }else html+=`<p class="hint">No delivery slots are available for ${selectedDate}. Choose another date or ask the store to add slots in Admin Panel.</p>`;
   }
   html+='</div>';
-  const threshold=quote.free_delivery_threshold;
-  const fee=Number(quote.delivery_charge||0);
-  html+=quote.free_delivery
-   ? '<p style="color:#168447;font-weight:800">🎉 Your active membership includes Free Delivery.</p>'
-   : (fee===0?'<p style="color:#168447;font-weight:800">🎉 Free Delivery applied.</p>':`<p class="hint">Delivery charge: <b>${shopMoney(fee)}</b>${threshold!==null&&threshold!==undefined?` · Free delivery on bills above ${shopMoney(threshold)}`:''}</p>`);
+  const fee=Number(quote.delivery_charge||0),threshold=quote.free_delivery_threshold;
+  html+=quote.free_delivery?'<p style="color:#168447;font-weight:800">🎉 Your active membership includes Free Delivery.</p>':(fee===0?'<p style="color:#168447;font-weight:800">🎉 Free Delivery applied.</p>':`<p class="hint">Delivery charge: <b>${shopMoney(fee)}</b>${threshold!==null&&threshold!==undefined?` · Free delivery on bills above ${shopMoney(threshold)}`:''}</p>`);
   box.innerHTML=html;
   if(typeof fmUpdateCouponTotal==='function')fmUpdateCouponTotal();else document.getElementById('fmCheckoutTotal').textContent=shopMoney(subtotal+fee);
  }catch(e){box.textContent='Delivery options could not load: '+(e.message||'Please try again.');}
@@ -975,6 +991,7 @@ async function fmPlaceOrder(){
   const mode=document.querySelector('input[name="fmDeliveryMode"]:checked')?.value;
   if(!mode)throw new Error('No delivery option selected for this pincode.');
   const slotId=mode==='slot'?document.querySelector('input[name="fmDeliveryMode"]:checked')?.dataset.slot:null;
+  if(mode==='slot'&&!slotId)throw new Error('Please choose a delivery date and slot.');
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
    // Self Purchase Discount is applied and verified securely by the checkout SQL function.
