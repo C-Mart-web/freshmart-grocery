@@ -80,7 +80,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● CHECKING PLAN</span></div>
   <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Fresh-Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
-    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available shopping balance</div></div>
+    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available shopping balance</div><div class="small" style="margin-top:8px">Plan allocation: <b id="fmDashShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="fmDashShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="fmDashShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="fmDashShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmDashIncomeBalance">—</div><div class="stat-note">Total eligible income balance</div></div>
     <div class="card"><div class="stat-head">Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value">0</div><div class="stat-note">Earn points on eligible activity</div></div>
     <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
@@ -465,12 +465,16 @@ function fmUpdateShoppingSpend(){
  const spent=Math.min(total,Math.max(0,total-balance));
  const pct=total>0?Math.min(100,(spent/total)*100):0;
  const money=n=>fmMoneyDisplay(n);
- const value=document.getElementById('walletShoppingSpent');
- const bar=document.getElementById('walletShoppingSpentBar');
- const note=document.getElementById('walletShoppingSpentNote');
- if(value)value.textContent=money(spent)+' / '+money(total);
- if(bar)bar.style.width=pct.toFixed(2)+'%';
- if(note)note.textContent=money(balance)+' remaining in Shopping Wallet · '+pct.toFixed(1)+'% used';
+ ['wallet','dash'].forEach(prefix=>{
+  const value=document.getElementById(prefix==='dash'?'fmDashShoppingSpent':'walletShoppingSpent');
+  const bar=document.getElementById(prefix==='dash'?'fmDashShoppingSpentBar':'walletShoppingSpentBar');
+  const note=document.getElementById(prefix==='dash'?'fmDashShoppingSpentNote':'walletShoppingSpentNote');
+  const allocation=document.getElementById(prefix==='dash'?'fmDashShoppingAllocation':'walletShoppingAllocation');
+  if(value)value.textContent=money(spent)+' / '+money(total);
+  if(bar)bar.style.width=pct.toFixed(2)+'%';
+  if(note)note.textContent=money(balance)+' remaining in Shopping Wallet · '+pct.toFixed(1)+'% used';
+  if(allocation)allocation.textContent=money(total);
+ });
 }
 function fmUpdateRoiProgress(activation){
  const roi=Number(activation?.roi_allocation)||0;
