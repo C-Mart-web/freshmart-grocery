@@ -82,7 +82,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="grid">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available shopping balance</div><div class="small" style="margin-top:8px">Plan allocation: <b id="fmDashShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="fmDashShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="fmDashShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="fmDashShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmDashIncomeBalance">—</div><div class="stat-note">Total eligible income balance</div></div>
-    <div class="card"><div class="stat-head">Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value">0</div><div class="stat-note">Earn points on eligible activity</div></div>
+    <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="fmDashRewardPoints">—</div><div class="stat-note">Points earned from eligible team grocery purchases.</div></div>
     <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
   </div>
   <div class="twocol">
@@ -183,7 +183,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-head">Left Binary Points <span class="stat-icon">⬅️</span></div><div class="stat-value" id="walletBinaryLeft">—</div><div class="stat-note">Available left-side points carried forward.</div></div>
     <div class="card"><div class="stat-head">Right Binary Points <span class="stat-icon">➡️</span></div><div class="stat-value" id="walletBinaryRight">—</div><div class="stat-note">Available right-side points carried forward.</div></div>
     <div class="card"><div class="stat-head">Available Matching Points <span class="stat-icon">🔁</span></div><div class="stat-value" id="walletBinaryAvailableMatch">—</div><div class="stat-note">Potential match from current available points; not a cash credit.</div></div>
-    <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="walletPoints">0</div><div class="stat-note">Points from eligible team product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Team Purchase Reward Points')">View points history</button></div>
+    <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="walletPoints">—</div><div class="stat-note">Completed points from eligible team product purchases, after reversals.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="fmLoadTeamPurchaseRewardPoints()">Refresh points</button></div>
     <div class="card"><div class="stat-head">Rewards <span class="stat-icon">🎁</span></div><div class="stat-value">To be configured</div><div class="stat-note">Reward milestones will be added after the client confirms the reward rules.</div></div>
   </div>
   <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Wallet transaction history</h2><button class="link" type="button" onclick="showWalletHistory('All')">All transactions</button></div><p class="hint" id="walletHistoryMessage">No live transactions are connected yet. After the secure database connection, approved credits and debits will appear here with date, income type, amount and status.</p><div class="tablewrap"><table><thead><tr><th>Date</th><th>Wallet / Income type</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody id="walletTransactionRows"><tr><td colspan="5" style="color:#718078;font-weight:500">Transaction history will appear here after database connection.</td></tr></tbody></table></div></div>
@@ -702,6 +702,26 @@ async function fmLoadRecentActivity(token){
  }catch(e){tbody.innerHTML=`<tr><td colspan="4">Recent activity unavailable: ${shopEsc(e.message||'Please refresh.')}</td></tr>`;}
 }
 
+// Read-only display of this member's Team Purchase Reward Points ledger balance.
+async function fmLoadTeamPurchaseRewardPoints(userId,accessToken){
+ const ids=['walletPoints','fmDashRewardPoints'];
+ try{
+  let uid=userId,token=accessToken;
+  if(!uid||!token){const session=await getMemberSession();uid=session.user.id;token=session.access_token;}
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token};
+  const url=SUPABASE_URL+'/rest/v1/fm_reward_points_ledger?user_id=eq.'+encodeURIComponent(uid)+'&status=eq.completed&select=points_change';
+  const response=await fetch(url,{headers});
+  const payload=await response.json().catch(()=>[]);
+  if(!response.ok)throw new Error(payload?.message||payload?.details||'Reward points lookup failed ('+response.status+').');
+  const total=(Array.isArray(payload)?payload:[]).reduce((sum,row)=>sum+(Number(row.points_change)||0),0);
+  const formatted=Number(total).toLocaleString('en-IN',{maximumFractionDigits:2});
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=formatted;});
+ }catch(error){
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Unavailable';});
+  console.warn('Team Purchase Reward Points could not load:',error.message||error);
+ }
+}
+
 // Read-only display of this member's current binary carry-forward points.
 // Matching credits themselves are processed by the secured database queue worker.
 async function fmLoadBinaryPoints(userId,accessToken){
@@ -740,6 +760,7 @@ async function loadSignedInMember(){
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token};
   fmLoadMemberPlanSplit(session.user.id,session.access_token);
   fmLoadBinaryPoints(session.user.id,session.access_token);
+  fmLoadTeamPurchaseRewardPoints(session.user.id,session.access_token);
   fmLoadRecentActivity(session.access_token);
   fmLoadWalletIncomeBreakdown(session.access_token).catch(incomeError=>{console.warn('Income breakdown lookup:',incomeError);const msg=document.getElementById('walletHistoryMessage');if(msg)msg.textContent='Income breakdown could not load: '+(incomeError.message||'Check transaction table access.');});
   fmLoadWalletBalances(session.access_token).catch(walletError=>{
