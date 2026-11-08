@@ -184,7 +184,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-head">Right Binary Points <span class="stat-icon">➡️</span></div><div class="stat-value" id="walletBinaryRight">—</div><div class="stat-note">Available right-side points carried forward.</div></div>
     <div class="card"><div class="stat-head">Available Matching Points <span class="stat-icon">🔁</span></div><div class="stat-value" id="walletBinaryAvailableMatch">—</div><div class="stat-note">Potential match from current available points; not a cash credit.</div></div>
     <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="walletPoints">—</div><div class="stat-note">Completed points from eligible team product purchases, after reversals.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="fmLoadTeamPurchaseRewardPoints()">Refresh points</button></div>
-    <div class="card"><div class="stat-head">Rewards <span class="stat-icon">🎁</span></div><div class="stat-value">To be configured</div><div class="stat-note">Reward milestones will be added after the client confirms the reward rules.</div></div>
+    <div class="card" id="fmMemberRewardsCard"><div class="stat-head">My Team Business Rewards <span class="stat-icon">🎁</span></div><div class="stat-value" id="fmMemberRewardsValue">—</div><div class="stat-note" id="fmMemberRewardsNote">Loading reward milestones for your active plan…</div><div id="fmMemberRewardsList" style="margin-top:10px;font-size:12px"></div></div>
   </div>
   <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Wallet transaction history</h2><button class="link" type="button" onclick="showWalletHistory('All')">All transactions</button></div><p class="hint" id="walletHistoryMessage">No live transactions are connected yet. After the secure database connection, approved credits and debits will appear here with date, income type, amount and status.</p><div class="tablewrap"><table><thead><tr><th>Date</th><th>Wallet / Income type</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody id="walletTransactionRows"><tr><td colspan="5" style="color:#718078;font-weight:500">Transaction history will appear here after database connection.</td></tr></tbody></table></div></div>
   <p class="hint">Important: This is the updated wallet design. Balances are placeholders until Supabase wallet transactions and approved income rules are connected. No income is being credited by this design alone.</p>
@@ -381,16 +381,30 @@ async function loadMyMatchingSlabs(userId,accessToken){
    rows.innerHTML='<tr><td colspan="5">No active membership plan found.</td></tr>';return;
   }
   const plan=data.plan||{},slabs=Array.isArray(data.slabs)?data.slabs:[],claims=Array.isArray(data.claims)?data.claims:[];
+  const rewardValue=document.getElementById('fmMemberRewardsValue');
+  const rewardNote=document.getElementById('fmMemberRewardsNote');
+  const rewardList=document.getElementById('fmMemberRewardsList');
   badge.textContent=plan.plan_code||'ACTIVE PLAN';
   if(!slabs.length){
    msg.textContent=(plan.plan_name||plan.plan_code||'Your plan')+' · No active matching slabs configured yet.';
-   rows.innerHTML='<tr><td colspan="5">No active slabs for your plan.</td></tr>';return;
+   rows.innerHTML='<tr><td colspan="5">No active slabs for your plan.</td></tr>';
+   if(rewardValue)rewardValue.textContent='No rewards yet';
+   if(rewardNote)rewardNote.textContent='Admin has not configured active reward milestones for this plan.';
+   if(rewardList)rewardList.innerHTML='';
+   return;
   }
   const p=data.progress||{};
   const leftAvailable=Math.max(0,Number(p.left_business_total||0)-Number(p.left_business_consumed||0));
   const rightAvailable=Math.max(0,Number(p.right_business_total||0)-Number(p.right_business_consumed||0));
   const claimMap=new Map(claims.map(c=>[String(c.slab_id),c]));
   msg.textContent=(plan.plan_name||plan.plan_code)+' · Maximum eligible matching levels: '+Number(plan.matching_business_levels||0)+'.';
+  if(rewardValue)rewardValue.textContent=slabs.length+' reward milestone'+(slabs.length===1?'':'s');
+  if(rewardNote)rewardNote.textContent='Plan: '+(plan.plan_name||plan.plan_code||'Active plan')+'. Rewards unlock when the required additional left and right business is completed.';
+  if(rewardList)rewardList.innerHTML=slabs.map(s=>{
+   const c=claimMap.get(String(s.id));
+   const st=c?.reward_status==='credited'?'Achieved':c?.reward_status==='pending'?'Processing':'In progress';
+   return '<div style="padding:8px 0;border-top:1px solid #edf3ee"><b>Slab '+Number(s.slab_order)+'</b> · Left '+fmMatchMoney(s.left_business_required)+' + Right '+fmMatchMoney(s.right_business_required)+'<br><span style="color:#168447;font-weight:800">Reward: '+fmMatchMoney(s.reward_amount)+'</span> · '+st+'</div>';
+  }).join('');
   let priorSlabsComplete=true;
   rows.innerHTML=slabs.map(slab=>{
    const claim=claimMap.get(String(slab.id));
@@ -415,6 +429,10 @@ async function loadMyMatchingSlabs(userId,accessToken){
   badge.textContent='NOT AVAILABLE';
   msg.textContent='Matching rewards could not be loaded: '+(e.message||'Please try again.')+'.';
   rows.innerHTML='<tr><td colspan="5">Matching data is temporarily unavailable. Please contact Fresh-Mart support.</td></tr>';
+  const rewardValue=document.getElementById('fmMemberRewardsValue');
+  const rewardNote=document.getElementById('fmMemberRewardsNote');
+  if(rewardValue)rewardValue.textContent='Unavailable';
+  if(rewardNote)rewardNote.textContent='Could not load reward milestones. Please refresh or contact support.';
  }
 }
 
