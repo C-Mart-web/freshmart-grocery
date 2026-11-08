@@ -68,6 +68,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button class="navbtn" data-page="plans"><span class="ico">💳</span>My Plan & Payment</button>
   <button class="navbtn" data-page="team"><span class="ico">👥</span>My Team</button>
   <button class="navbtn" data-page="wallets"><span class="ico">👛</span>My Wallets</button>
+  <button class="navbtn" data-page="rewards"><span class="ico">🎁</span>My Rewards</button>
   <button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
   <button class="navbtn" data-page="orders"><span class="ico">📦</span>My Orders</button>
   <button class="navbtn" data-page="myoffers"><span class="ico">🎁</span>Coupons & Offers</button>
@@ -89,27 +90,10 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="section-head"><h2>Membership plan</h2><button class="link" data-goto="plans">View plans →</button></div><div class="planbox"><div><h3 id="fmDashboardPlanName">Checking membership…</h3><p id="fmDashboardPlanInfo">Loading approved activation details.</p></div><div class="planprice" id="fmDashboardPlanAmount">—</div></div><p class="hint" id="fmDashboardPlanNote" style="margin:12px 0 0">Membership status will update after secure activation lookup.</p></div>
     <div class="card"><div class="section-head"><h2>Quick actions</h2></div><div class="quicklinks"><button class="quick" data-goto="plans"><span>💳</span><strong>Pay for plan</strong><small>Upload proof</small></button><button class="quick" data-goto="groceries"><span>🥬</span><strong>Shop groceries</strong><small>Browse items</small></button><button class="quick" data-goto="team"><span>🔗</span><strong>Invite friends</strong><small>Referral tools</small></button></div></div>
   </div>
-  <div class="card matching-card" id="myMatchingCard">
-    <div class="section-head"><h2>My Global Team Business Rewards 🎁</h2><span class="badge approved" id="myMatchingPlanBadge">ALL PLANS</span></div>
-    <p class="hint" id="myMatchingMessage">Loading your global Left / Right business…</p>
-    <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 0">
-      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Left Available Business</div><div class="stat-value" id="fmGlobalLeftAvailable">₹0</div></div>
-      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Right Available Business</div><div class="stat-value" id="fmGlobalRightAvailable">₹0</div></div>
-    </div>
-    <div class="tablewrap"><table class="matching-table"><thead><tr><th>Level</th><th>Left Required</th><th>Right Required</th><th>Reward</th><th>Status / Claim</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
-    <p class="hint" style="margin:10px 0 0">All membership plans share these rewards. Only delivered product order values count; delivery charges are excluded. Extra business carries forward to the next level.</p>
+  <div class="card" style="margin-top:14px;cursor:pointer;border:1px solid #cde9d7" role="button" tabindex="0" onclick="showPage('rewards')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('rewards')}">
+    <div class="section-head"><h2>🎁 My Team Business Rewards</h2><span class="badge approved">View Rewards →</span></div>
+    <p class="hint">Tap to view your global reward levels, left/right business and claim status.</p>
   </div>
-  <div class="card matching-card" id="fmBinaryPointsCard">
-    <div class="section-head"><h2>My Binary Points ⚖️</h2><button class="link" type="button" onclick="fmLoadBinaryPoints()">Refresh</button></div>
-    <p class="hint" id="fmBinaryPointsMessage">Loading your left and right carry-forward points…</p>
-    <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:12px 0 0">
-      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Left Carry Forward</div><div class="stat-value" id="fmBinaryLeftPoints">—</div><div class="stat-note">Available left points</div></div>
-      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Right Carry Forward</div><div class="stat-value" id="fmBinaryRightPoints">—</div><div class="stat-note">Available right points</div></div>
-      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Possible Match</div><div class="stat-value" id="fmBinaryPossibleMatch">—</div><div class="stat-note">Minimum of available sides</div></div>
-    </div>
-    <p class="hint" style="margin:10px 0 0">Only the points currently available on both sides are shown as possible matching. Actual matching income is shown separately in your Income Wallet.</p>
-  </div>
-  <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="wallets">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody id="fmRecentActivityRows"><tr><td colspan="4">Loading recent transactions…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="groceries">
   <div class="welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
@@ -152,6 +136,31 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Your referral links will use the username of the account currently logged in.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="Loading account..." maxlength="60" autocomplete="off" readonly></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Checking your signed-in account…</div></div>
   <div class="twocol"><div class="card"><h2 style="font-size:17px;color:#168447">⬅️ Left Referral Link</h2><p class="hint">Members using this link request LEFT placement. Spillover stays inside this left branch.</p><input id="leftReferralLink" readonly aria-label="Left referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('left')">Copy Left Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('left')">WhatsApp Share</button></div></div><div class="card"><h2 style="font-size:17px;color:#168447">➡️ Right Referral Link</h2><p class="hint">Members using this link request RIGHT placement. Spillover stays inside this right branch.</p><input id="rightReferralLink" readonly aria-label="Right referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('right')">Copy Right Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('right')">WhatsApp Share</button></div></div></div>
 </section>
+<section class="page" id="rewards">
+  <div class="welcome"><div><h1>🎁 My Team Business Rewards</h1><p>Global reward milestones for all membership plans. Unused Left / Right business carries forward.</p></div></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><button class="btn btn-outline" type="button" onclick="showPage('wallets')">← My Wallets</button><button class="btn btn-green" type="button" onclick="fmRefreshGlobalRewardsPage()">Refresh Rewards</button></div>
+  <div class="card matching-card" id="myMatchingCard">
+    <div class="section-head"><h2>My Global Team Business Rewards 🎁</h2><span class="badge approved" id="myMatchingPlanBadge">ALL PLANS</span></div>
+    <p class="hint" id="myMatchingMessage">Loading your global Left / Right business…</p>
+    <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 0">
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Left Available Business</div><div class="stat-value" id="fmGlobalLeftAvailable">₹0</div></div>
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Right Available Business</div><div class="stat-value" id="fmGlobalRightAvailable">₹0</div></div>
+    </div>
+    <div class="tablewrap"><table class="matching-table"><thead><tr><th>Level</th><th>Left Required</th><th>Right Required</th><th>Reward</th><th>Status / Claim</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+    <p class="hint" style="margin:10px 0 0">All membership plans share these rewards. Only delivered product order values count; delivery charges are excluded. Extra business carries forward to the next level.</p>
+  </div>
+  <div class="card matching-card" id="fmBinaryPointsCard">
+    <div class="section-head"><h2>My Binary Points ⚖️</h2><button class="link" type="button" onclick="fmLoadBinaryPoints()">Refresh</button></div>
+    <p class="hint" id="fmBinaryPointsMessage">Loading your left and right carry-forward points…</p>
+    <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:12px 0 0">
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Left Carry Forward</div><div class="stat-value" id="fmBinaryLeftPoints">—</div><div class="stat-note">Available left points</div></div>
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Right Carry Forward</div><div class="stat-value" id="fmBinaryRightPoints">—</div><div class="stat-note">Available right points</div></div>
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Possible Match</div><div class="stat-value" id="fmBinaryPossibleMatch">—</div><div class="stat-note">Minimum of available sides</div></div>
+    </div>
+    <p class="hint" style="margin:10px 0 0">Only the points currently available on both sides are shown as possible matching. Actual matching income is shown separately in your Income Wallet.</p>
+  </div>
+  <div class="card"><div class="section-head"><h2>Recent activity</h2><button class="link" data-goto="wallets">View all →</button></div><div class="tablewrap"><table><thead><tr><th>Activity</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody id="fmRecentActivityRows"><tr><td colspan="4">Loading recent transactions…</td></tr></tbody></table></div></div>
+</section>
 <section class="page" id="wallets">
   <div class="welcome"><div><h1>My Wallets 👛</h1><p>Separate balances for shopping, ROI and each eligible income type.</p></div></div>
   <div class="card" id="fmMemberPlanSplitCard" style="margin-bottom:16px;background:linear-gradient(110deg,#167d43,#24a65b);color:#fff;border:0">
@@ -188,7 +197,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="stat-head">Right Binary Points <span class="stat-icon">➡️</span></div><div class="stat-value" id="walletBinaryRight">—</div><div class="stat-note">Available right-side points carried forward.</div></div>
     <div class="card"><div class="stat-head">Available Matching Points <span class="stat-icon">🔁</span></div><div class="stat-value" id="walletBinaryAvailableMatch">—</div><div class="stat-note">Potential match from current available points; not a cash credit.</div></div>
     <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="walletPoints">—</div><div class="stat-note">Completed points from eligible team product purchases, after reversals.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="fmLoadTeamPurchaseRewardPoints()">Refresh points</button></div>
-    <div class="card" id="fmMemberRewardsCard"><div class="stat-head">My Team Business Rewards <span class="stat-icon">🎁</span></div><div class="stat-value" id="fmMemberRewardsValue">—</div><div class="stat-note" id="fmMemberRewardsNote">Loading reward milestones for your active plan…</div><div id="fmMemberRewardsList" style="margin-top:10px;font-size:12px"></div></div>
+    <div class="card" id="fmMemberRewardsCard" role="button" tabindex="0" style="cursor:pointer;border:1px solid #cde9d7" onclick="showPage('rewards')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('rewards')}"><div class="stat-head">My Team Business Rewards <span class="stat-icon">🎁</span></div><div class="stat-value" id="fmMemberRewardsValue">—</div><div class="stat-note" id="fmMemberRewardsNote">Tap to view global reward milestones for all plans.</div><div id="fmMemberRewardsList" style="margin-top:10px;font-size:12px"></div><button class="btn btn-outline" type="button" style="margin-top:12px;width:100%" onclick="event.stopPropagation();showPage('rewards')">View My Rewards →</button></div>
   </div>
   <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Wallet transaction history</h2><button class="link" type="button" onclick="showWalletHistory('All')">All transactions</button></div><p class="hint" id="walletHistoryMessage">No live transactions are connected yet. After the secure database connection, approved credits and debits will appear here with date, income type, amount and status.</p><div class="tablewrap"><table><thead><tr><th>Date</th><th>Wallet / Income type</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody id="walletTransactionRows"><tr><td colspan="5" style="color:#718078;font-weight:500">Transaction history will appear here after database connection.</td></tr></tbody></table></div></div>
   <p class="hint">Important: This is the updated wallet design. Balances are placeholders until Supabase wallet transactions and approved income rules are connected. No income is being credited by this design alone.</p>
@@ -369,6 +378,7 @@ function fmMatchSafe(value){
  return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 let fmGlobalRewardAccessToken='',fmGlobalRewardUserId='';
+function fmRefreshGlobalRewardsPage(){if(fmGlobalRewardUserId&&fmGlobalRewardAccessToken){loadMyMatchingSlabs(fmGlobalRewardUserId,fmGlobalRewardAccessToken);}else{const el=document.getElementById('myMatchingMessage');if(el)el.textContent='Please sign in to load rewards.';}}
 async function loadMyMatchingSlabs(userId,accessToken){
  fmGlobalRewardAccessToken=accessToken||'';fmGlobalRewardUserId=userId||'';
  const msg=document.getElementById('myMatchingMessage'),rows=document.getElementById('myMatchingRows'),badge=document.getElementById('myMatchingPlanBadge');
@@ -1427,6 +1437,7 @@ function fmToggleMobileMenu(open){
 
 function showPage(id,fromHistory=false){
  fmToggleMobileMenu(false);
+ if(id==='rewards' && fmGlobalRewardUserId && fmGlobalRewardAccessToken){loadMyMatchingSlabs(fmGlobalRewardUserId,fmGlobalRewardAccessToken);}
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
  document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
  if(!fromHistory){history.pushState({fmUserPage:id},'', '#'+encodeURIComponent(id));}
