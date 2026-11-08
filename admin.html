@@ -963,14 +963,60 @@ document.addEventListener('DOMContentLoaded',()=>{fmPlanDailyCapLoad();});
 <script>
 function fmGlobalEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmGlobalSlabClear(){['fmGlobalSlabId','fmGlobalSlabOrder','fmGlobalLeftRequired','fmGlobalRightRequired','fmGlobalRewardName','fmGlobalRewardValue','fmGlobalRewardImage','fmGlobalRewardDescription'].forEach(id=>document.getElementById(id).value='');document.getElementById('fmGlobalRewardType').value='cash';document.getElementById('fmGlobalSlabActive').value='true';}
-async function fmGlobalSlabSave(){
- const msg=document.getElementById('fmGlobalSlabMsg'),id=document.getElementById('fmGlobalSlabId').value;
- const order=Number(document.getElementById('fmGlobalSlabOrder').value),left=Number(document.getElementById('fmGlobalLeftRequired').value),right=Number(document.getElementById('fmGlobalRightRequired').value),name=document.getElementById('fmGlobalRewardName').value.trim(),value=document.getElementById('fmGlobalRewardValue').value;
- if(!Number.isInteger(order)||order<1||left<=0||right<=0||!name){msg.textContent='Enter level, positive Left/Right business and reward name.';return;}
- const payload={slab_order:order,left_business_required:left,right_business_required:right,reward_type:document.getElementById('fmGlobalRewardType').value,reward_name:name,reward_value:value===''?null:Number(value),description:document.getElementById('fmGlobalRewardDescription').value.trim()||null,image_url:document.getElementById('fmGlobalRewardImage').value.trim()||null,is_active:document.getElementById('fmGlobalSlabActive').value==='true',updated_at:new Date().toISOString()};
- try{let q=id?fmSupabase.from('fm_global_team_reward_slabs').update(payload).eq('id',id):fmSupabase.from('fm_global_team_reward_slabs').insert(payload);const {error}=await q;if(error)throw error;msg.textContent='Global reward slab saved.';fmGlobalSlabClear();await fmGlobalRewardRefresh();}
- catch(e){msg.textContent='Save failed: '+(e.message||'Check SQL migration and Admin permission.');}
-}
+window.fmGlobalSlabSave = async function fmGlobalSlabSave(){
+ const msg=document.getElementById('fmGlobalSlabMsg');
+ const btn=document.querySelector('button[onclick="fmGlobalSlabSave()"]');
+ if(!msg){alert('Reward form message area is missing.');return;}
+ const setMsg=(t,bad=false)=>{msg.textContent=t;msg.style.color=bad?'#b72e2e':'#168447';};
+ try{
+  const id=document.getElementById('fmGlobalSlabId')?.value||'';
+  const order=Number(document.getElementById('fmGlobalSlabOrder')?.value);
+  const left=Number(document.getElementById('fmGlobalLeftRequired')?.value);
+  const right=Number(document.getElementById('fmGlobalRightRequired')?.value);
+  const name=(document.getElementById('fmGlobalRewardName')?.value||'').trim();
+  const value=document.getElementById('fmGlobalRewardValue')?.value||'';
+  const rewardType=document.getElementById('fmGlobalRewardType')?.value||'cash';
+  const active=document.getElementById('fmGlobalSlabActive')?.value==='true';
+  if(!Number.isInteger(order)||order<1){setMsg('Enter a valid Level Number (1 or greater).',true);return;}
+  if(!Number.isFinite(left)||left<=0){setMsg('Enter a Left Business amount greater than zero.',true);return;}
+  if(!Number.isFinite(right)||right<=0){setMsg('Enter a Right Business amount greater than zero.',true);return;}
+  if(!name){setMsg('Enter the Reward Name.',true);return;}
+  if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<0)){setMsg('Reward Value must be zero or a positive amount.',true);return;}
+  const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!session)throw new Error('Admin session expired. Please sign in again.');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  setMsg('Saving reward slab to Supabase…');
+  const payload={
+   slab_order:order,
+   left_business_required:left,
+   right_business_required:right,
+   reward_type:rewardType,
+   reward_name:name,
+   reward_value:value===''?null:Number(value),
+   description:(document.getElementById('fmGlobalRewardDescription')?.value||'').trim()||null,
+   image_url:(document.getElementById('fmGlobalRewardImage')?.value||'').trim()||null,
+   is_active:active,
+   updated_at:new Date().toISOString()
+  };
+  let result;
+  if(id){
+   result=await fmSupabase.from('fm_global_team_reward_slabs').update(payload).eq('id',id).select('id').maybeSingle();
+  }else{
+   result=await fmSupabase.from('fm_global_team_reward_slabs').insert(payload).select('id').single();
+  }
+  if(result.error)throw result.error;
+  if(!result.data)throw new Error('No slab row was saved. Check Admin role and table permissions.');
+  setMsg('Reward Level '+order+' saved successfully.');
+  fmGlobalSlabClear();
+  await fmGlobalRewardRefresh();
+ }catch(e){
+  console.error('Global reward slab save failed:',e);
+  setMsg('Save failed: '+(e?.message||String(e)),true);
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent='Save Reward Slab';}
+ }
+};
 async function fmGlobalRewardRefresh(){
  const body=document.getElementById('fmGlobalSlabRows');if(!body)return;
  try{const {data,error}=await fmSupabase.from('fm_global_team_reward_slabs').select('*').order('slab_order');if(error)throw error;
