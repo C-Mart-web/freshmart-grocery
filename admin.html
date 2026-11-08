@@ -59,7 +59,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="navlabel">COMMERCE</div>
 <button class="navbtn" data-page="products"><span class="ico">🛍️</span>Products & Categories</button>
 <button class="navbtn" data-page="plans"><span class="ico">💳</span>Plans & Income Rules</button>
-<button class="navbtn" data-page="matching"><span class="ico">⚖️</span>Matching Reward Settings</button>
+<button class="navbtn" data-page="matching"><span class="ico">⚖️</span>Global Team Rewards</button>
 <button class="navbtn" data-page="offers"><span class="ico">🎁</span>Coupons & Offers</button>
 <button class="navbtn" data-page="orders"><span class="ico">📦</span>Orders & Delivery</button>
 <button class="navbtn" data-page="withdrawals"><span class="ico">💸</span>Withdrawals</button>
@@ -131,19 +131,30 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="card" style="margin-top:16px" id="fmIncomeSettingsInfo"><div class="section-head"><h2>Income Settings</h2></div><p class="hint">Daily income ceiling is configured only in <b>Plan-wise Daily Income Ceiling</b> above. Withdrawal charge is managed in the separate <b>Withdrawal Settings</b> section. The existing monthly purchase requirement rule is retained; this panel does not create a duplicate or preview-only setting.</p><p class="hint">Combined daily ceiling applies only to Self Purchase Income, Team Purchase Income and Binary Matching Income. ROI and Referral Income remain outside this ceiling.</p></div>
 </section>
 <section class="page" id="matching">
- <div class="welcome"><div><h1>Matching Reward Settings</h1><p>Configure incremental left/right business slabs for each membership plan.</p></div></div>
- <div class="note"><strong>Incremental rule:</strong> Each slab consumes only its configured additional left and right business once. Rewards are credited to the member Shopping Wallet by the secure backend after an eligible order is processed. Saving here does not credit any wallet.</div>
+ <div class="welcome"><div><h1>Global Team Business Rewards</h1><p>One reward slab configuration shared by every membership plan.</p></div></div>
+ <div class="note"><strong>Carry Forward:</strong> Each slab consumes only its additional Left and Right Business requirement. Any surplus remains available for the next slab. Only Delivered Orders contribute product line totals; delivery charges are excluded.</div>
  <div class="card">
+  <div class="section-head"><h2>Add / Edit Global Reward Slab</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmGlobalRewardRefresh()">Refresh</button></div>
+  <input type="hidden" id="fmGlobalSlabId">
   <div class="formgrid">
-   <div class="field"><label>Membership Plan</label><select id="matchingPlanSelect" onchange="loadMatchingSettings()"><option value="">Select a plan</option></select></div>
-   <div class="field"><label>Maximum eligible matching levels</label><input id="matchingMaxLevels" type="number" min="0" max="100" step="1" value="5"></div>
+   <div class="field"><label>Slab / Level Number</label><input id="fmGlobalSlabOrder" type="number" min="1" step="1" placeholder="1"></div>
+   <div class="field"><label>Reward Type</label><select id="fmGlobalRewardType"><option value="cash">Cash</option><option value="product">Product</option><option value="gift">Gift</option><option value="other">Other</option></select></div>
+   <div class="field"><label>Required Left Business (₹)</label><input id="fmGlobalLeftRequired" type="number" min="0.01" step="0.01" placeholder="100000"></div>
+   <div class="field"><label>Required Right Business (₹)</label><input id="fmGlobalRightRequired" type="number" min="0.01" step="0.01" placeholder="100000"></div>
+   <div class="field"><label>Reward Name</label><input id="fmGlobalRewardName" maxlength="120" placeholder="₹1,000 Cash / Smart Watch"></div>
+   <div class="field"><label>Cash / Reward Value (optional)</label><input id="fmGlobalRewardValue" type="number" min="0" step="0.01" placeholder="1000"></div>
+   <div class="field"><label>Image URL (optional)</label><input id="fmGlobalRewardImage" type="url" placeholder="https://…"></div>
+   <div class="field"><label>Status</label><select id="fmGlobalSlabActive"><option value="true">Active</option><option value="false">Inactive</option></select></div>
   </div>
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" onclick="saveMatchingLevels()">Save Maximum Levels</button><button class="btn btn-outline" onclick="loadMatchingSettings()">Refresh Slabs</button><button class="btn btn-green" onclick="openMatchingSlab()">+ Add Slab</button></div>
-  <p id="matchingStatus" class="hint" aria-live="polite">Select a plan to load its reward slabs.</p>
+  <div class="field" style="margin-top:10px"><label>Description (optional)</label><textarea id="fmGlobalRewardDescription" maxlength="1000" placeholder="Reward details and conditions"></textarea></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" type="button" onclick="fmGlobalSlabSave()">Save Reward Slab</button><button class="btn btn-outline" type="button" onclick="fmGlobalSlabClear()">Clear Form</button></div>
+  <p id="fmGlobalSlabMsg" class="hint" aria-live="polite"></p>
  </div>
- <div class="card" style="margin-top:16px">
-  <div class="section-head"><h2>Incremental Reward Slabs</h2><span class="badge approved">PLAN-WISE</span></div>
-  <div class="tablewrap"><table><thead><tr><th>Slab</th><th>Additional Left Business</th><th>Additional Right Business</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="matchingSlabRows"><tr><td colspan="6" class="empty">Select a membership plan.</td></tr></tbody></table></div>
+ <div class="card" style="margin-top:16px"><div class="section-head"><h2>Global Reward Slabs</h2><span class="badge approved">ALL PLANS</span></div>
+  <div class="tablewrap"><table><thead><tr><th>Level</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmGlobalSlabRows"><tr><td colspan="7" class="empty">Loading global slabs…</td></tr></tbody></table></div>
+ </div>
+ <div class="card" style="margin-top:16px"><div class="section-head"><h2>Member Reward Claims</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmGlobalClaimsLoad()">Refresh Claims</button></div>
+  <div class="tablewrap"><table><thead><tr><th>Member</th><th>Level</th><th>Reward</th><th>Claimed</th><th>Status</th><th>Admin Note</th><th>Action</th></tr></thead><tbody id="fmGlobalClaimRows"><tr><td colspan="7" class="empty">Load claims…</td></tr></tbody></table></div><p id="fmGlobalClaimMsg" class="hint"></p>
  </div>
 </section>
 <section class="page" id="orders">
@@ -945,5 +956,35 @@ async function fmPlanDailyCapSave(){
 }
 document.addEventListener('DOMContentLoaded',()=>{fmPlanDailyCapLoad();});
 </script>
+
+<script>
+function fmGlobalEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmGlobalSlabClear(){['fmGlobalSlabId','fmGlobalSlabOrder','fmGlobalLeftRequired','fmGlobalRightRequired','fmGlobalRewardName','fmGlobalRewardValue','fmGlobalRewardImage','fmGlobalRewardDescription'].forEach(id=>document.getElementById(id).value='');document.getElementById('fmGlobalRewardType').value='cash';document.getElementById('fmGlobalSlabActive').value='true';}
+async function fmGlobalSlabSave(){
+ const msg=document.getElementById('fmGlobalSlabMsg'),id=document.getElementById('fmGlobalSlabId').value;
+ const order=Number(document.getElementById('fmGlobalSlabOrder').value),left=Number(document.getElementById('fmGlobalLeftRequired').value),right=Number(document.getElementById('fmGlobalRightRequired').value),name=document.getElementById('fmGlobalRewardName').value.trim(),value=document.getElementById('fmGlobalRewardValue').value;
+ if(!Number.isInteger(order)||order<1||left<=0||right<=0||!name){msg.textContent='Enter level, positive Left/Right business and reward name.';return;}
+ const payload={slab_order:order,left_business_required:left,right_business_required:right,reward_type:document.getElementById('fmGlobalRewardType').value,reward_name:name,reward_value:value===''?null:Number(value),description:document.getElementById('fmGlobalRewardDescription').value.trim()||null,image_url:document.getElementById('fmGlobalRewardImage').value.trim()||null,is_active:document.getElementById('fmGlobalSlabActive').value==='true',updated_at:new Date().toISOString()};
+ try{let q=id?fmSupabase.from('fm_global_team_reward_slabs').update(payload).eq('id',id):fmSupabase.from('fm_global_team_reward_slabs').insert(payload);const {error}=await q;if(error)throw error;msg.textContent='Global reward slab saved.';fmGlobalSlabClear();await fmGlobalRewardRefresh();}
+ catch(e){msg.textContent='Save failed: '+(e.message||'Check SQL migration and Admin permission.');}
+}
+async function fmGlobalRewardRefresh(){
+ const body=document.getElementById('fmGlobalSlabRows');if(!body)return;
+ try{const {data,error}=await fmSupabase.from('fm_global_team_reward_slabs').select('*').order('slab_order');if(error)throw error;
+ body.innerHTML=(data||[]).map(x=>`<tr><td>${x.slab_order}</td><td>${Number(x.left_business_required).toLocaleString('en-IN',{style:'currency',currency:'INR'})}</td><td>${Number(x.right_business_required).toLocaleString('en-IN',{style:'currency',currency:'INR'})}</td><td>${fmGlobalEsc(x.reward_name)}${x.reward_value!=null?' · ₹'+x.reward_value:''}</td><td>${fmGlobalEsc(x.reward_type)}</td><td><span class="badge ${x.is_active?'approved':'rejected'}">${x.is_active?'ACTIVE':'INACTIVE'}</span></td><td><button class="btn btn-outline btn-sm" onclick="fmGlobalSlabEdit(${JSON.stringify(x.id)})">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No global reward slabs configured.</td></tr>';
+ window.fmGlobalSlabs=data||[];
+ }catch(e){body.innerHTML=`<tr><td colspan="7" class="empty">Could not load: ${fmGlobalEsc(e.message)}</td></tr>`;}
+}
+function fmGlobalSlabEdit(id){const x=(window.fmGlobalSlabs||[]).find(s=>String(s.id)===String(id));if(!x)return;document.getElementById('fmGlobalSlabId').value=x.id;document.getElementById('fmGlobalSlabOrder').value=x.slab_order;document.getElementById('fmGlobalLeftRequired').value=x.left_business_required;document.getElementById('fmGlobalRightRequired').value=x.right_business_required;document.getElementById('fmGlobalRewardType').value=x.reward_type;document.getElementById('fmGlobalRewardName').value=x.reward_name;document.getElementById('fmGlobalRewardValue').value=x.reward_value??'';document.getElementById('fmGlobalRewardImage').value=x.image_url||'';document.getElementById('fmGlobalRewardDescription').value=x.description||'';document.getElementById('fmGlobalSlabActive').value=String(x.is_active);document.getElementById('fmGlobalSlabMsg').textContent='Editing Level '+x.slab_order+'.';}
+async function fmGlobalClaimsLoad(){
+ const body=document.getElementById('fmGlobalClaimRows');if(!body)return;
+ try{const {data,error}=await fmSupabase.from('fm_global_team_reward_claims').select('id,member_id,slab_order,reward_name,claim_status,claimed_at,admin_note').order('created_at',{ascending:false}).limit(250);if(error)throw error;
+ body.innerHTML=(data||[]).map(c=>`<tr><td>${fmGlobalEsc(c.member_id)}</td><td>${c.slab_order}</td><td>${fmGlobalEsc(c.reward_name)}</td><td>${c.claimed_at?new Date(c.claimed_at).toLocaleString():'—'}</td><td>${fmGlobalEsc(c.claim_status)}</td><td><input id="fmGlobalNote${c.id}" value="${fmGlobalEsc(c.admin_note||'')}" placeholder="Note" style="max-width:130px"></td><td><select id="fmGlobalStatus${c.id}"><option ${c.claim_status==='claimed'?'selected':''}>claimed</option><option ${c.claim_status==='approved'?'selected':''}>approved</option><option ${c.claim_status==='fulfilled'?'selected':''}>fulfilled</option><option ${c.claim_status==='rejected'?'selected':''}>rejected</option></select> <button class="btn btn-green btn-sm" onclick="fmGlobalClaimUpdate(${c.id})">Save</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No reward claims yet.</td></tr>';
+ }catch(e){body.innerHTML=`<tr><td colspan="7" class="empty">Could not load claims: ${fmGlobalEsc(e.message)}</td></tr>`;}
+}
+async function fmGlobalClaimUpdate(id){const status=document.getElementById('fmGlobalStatus'+id).value,note=document.getElementById('fmGlobalNote'+id).value;try{const {error}=await fmSupabase.from('fm_global_team_reward_claims').update({claim_status:status,admin_note:note,reviewed_at:new Date().toISOString()}).eq('id',id);if(error)throw error;document.getElementById('fmGlobalClaimMsg').textContent='Claim updated.';await fmGlobalClaimsLoad();}catch(e){document.getElementById('fmGlobalClaimMsg').textContent='Update failed: '+e.message;}}
+document.addEventListener('DOMContentLoaded',()=>{const nav=document.querySelector('[data-page="matching"]');if(nav)nav.addEventListener('click',()=>{fmGlobalRewardRefresh();fmGlobalClaimsLoad();});});
+</script>
+
 </body>
 </html>

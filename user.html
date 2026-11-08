@@ -90,10 +90,14 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div class="card"><div class="section-head"><h2>Quick actions</h2></div><div class="quicklinks"><button class="quick" data-goto="plans"><span>💳</span><strong>Pay for plan</strong><small>Upload proof</small></button><button class="quick" data-goto="groceries"><span>🥬</span><strong>Shop groceries</strong><small>Browse items</small></button><button class="quick" data-goto="team"><span>🔗</span><strong>Invite friends</strong><small>Referral tools</small></button></div></div>
   </div>
   <div class="card matching-card" id="myMatchingCard">
-    <div class="section-head"><h2>My Matching Reward Slabs ⚖️</h2><span class="badge approved" id="myMatchingPlanBadge">PLAN</span></div>
-    <p class="hint" id="myMatchingMessage">Loading matching rewards for your active plan…</p>
-    <div class="tablewrap"><table class="matching-table"><thead><tr><th>Slab</th><th>Left Business</th><th>Right Business</th><th>Reward</th><th>Status</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
-    <p class="hint" style="margin:10px 0 0">Each slab uses only the additional Left and Right Business shown. Eligible matching rewards are credited to your Income Wallet after orders are processed.</p>
+    <div class="section-head"><h2>My Global Team Business Rewards 🎁</h2><span class="badge approved" id="myMatchingPlanBadge">ALL PLANS</span></div>
+    <p class="hint" id="myMatchingMessage">Loading your global Left / Right business…</p>
+    <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 0">
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Left Available Business</div><div class="stat-value" id="fmGlobalLeftAvailable">₹0</div></div>
+      <div class="card" style="box-shadow:none;background:#f5fbf6"><div class="stat-head">Right Available Business</div><div class="stat-value" id="fmGlobalRightAvailable">₹0</div></div>
+    </div>
+    <div class="tablewrap"><table class="matching-table"><thead><tr><th>Level</th><th>Left Required</th><th>Right Required</th><th>Reward</th><th>Status / Claim</th></tr></thead><tbody id="myMatchingRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+    <p class="hint" style="margin:10px 0 0">All membership plans share these rewards. Only delivered product order values count; delivery charges are excluded. Extra business carries forward to the next level.</p>
   </div>
   <div class="card matching-card" id="fmBinaryPointsCard">
     <div class="section-head"><h2>My Binary Points ⚖️</h2><button class="link" type="button" onclick="fmLoadBinaryPoints()">Refresh</button></div>
@@ -364,76 +368,51 @@ function fmMatchMoney(value){
 function fmMatchSafe(value){
  return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+let fmGlobalRewardAccessToken='',fmGlobalRewardUserId='';
 async function loadMyMatchingSlabs(userId,accessToken){
+ fmGlobalRewardAccessToken=accessToken||'';fmGlobalRewardUserId=userId||'';
  const msg=document.getElementById('myMatchingMessage'),rows=document.getElementById('myMatchingRows'),badge=document.getElementById('myMatchingPlanBadge');
  if(!msg||!rows)return;
+ const money=v=>'₹'+(Number(v||0)).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
  try{
-  const response=await fetch(SUPABASE_URL+'/functions/v1/clever-service',{
-   method:'POST',
-   headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+accessToken},
-   body:JSON.stringify({action:'matching_rewards'})
-  });
-  const data=await response.json().catch(()=>({success:false,error:'Unreadable server response.'}));
-  if(!response.ok||!data.success)throw new Error(data.error||'Matching rewards could not be loaded ('+response.status+').');
-  if(!data.has_active_plan){
-   badge.textContent='NO ACTIVE PLAN';
-   msg.textContent=data.message||'Matching slabs will appear after your membership plan is activated by Admin.';
-   rows.innerHTML='<tr><td colspan="5">No active membership plan found.</td></tr>';return;
-  }
-  const plan=data.plan||{},slabs=Array.isArray(data.slabs)?data.slabs:[],claims=Array.isArray(data.claims)?data.claims:[];
-  const rewardValue=document.getElementById('fmMemberRewardsValue');
-  const rewardNote=document.getElementById('fmMemberRewardsNote');
-  const rewardList=document.getElementById('fmMemberRewardsList');
-  badge.textContent=plan.plan_code||'ACTIVE PLAN';
-  if(!slabs.length){
-   msg.textContent=(plan.plan_name||plan.plan_code||'Your plan')+' · No active matching slabs configured yet.';
-   rows.innerHTML='<tr><td colspan="5">No active slabs for your plan.</td></tr>';
-   if(rewardValue)rewardValue.textContent='No rewards yet';
-   if(rewardNote)rewardNote.textContent='Admin has not configured active reward milestones for this plan.';
-   if(rewardList)rewardList.innerHTML='';
-   return;
-  }
-  const p=data.progress||{};
-  const leftAvailable=Math.max(0,Number(p.left_business_total||0)-Number(p.left_business_consumed||0));
-  const rightAvailable=Math.max(0,Number(p.right_business_total||0)-Number(p.right_business_consumed||0));
-  const claimMap=new Map(claims.map(c=>[String(c.slab_id),c]));
-  msg.textContent=(plan.plan_name||plan.plan_code)+' · Maximum eligible matching levels: '+Number(plan.matching_business_levels||0)+'.';
-  if(rewardValue)rewardValue.textContent=slabs.length+' reward milestone'+(slabs.length===1?'':'s');
-  if(rewardNote)rewardNote.textContent='Plan: '+(plan.plan_name||plan.plan_code||'Active plan')+'. Rewards unlock when the required additional left and right business is completed.';
-  if(rewardList)rewardList.innerHTML=slabs.map(s=>{
-   const c=claimMap.get(String(s.id));
-   const st=c?.reward_status==='credited'?'Achieved':c?.reward_status==='pending'?'Processing':'In progress';
-   return '<div style="padding:8px 0;border-top:1px solid #edf3ee"><b>Slab '+Number(s.slab_order)+'</b> · Left '+fmMatchMoney(s.left_business_required)+' + Right '+fmMatchMoney(s.right_business_required)+'<br><span style="color:#168447;font-weight:800">Reward: '+fmMatchMoney(s.reward_amount)+'</span> · '+st+'</div>';
-  }).join('');
-  let priorSlabsComplete=true;
-  rows.innerHTML=slabs.map(slab=>{
-   const claim=claimMap.get(String(slab.id));
-   const credited=claim?.reward_status==='credited';
-   const locked=!priorSlabsComplete&&!claim;
-   const status=credited?'CREDITED':claim?.reward_status==='pending'?'PROCESSING':locked?'LOCKED':'IN PROGRESS';
-   const statusClass=status==='CREDITED'?'credited':status==='PROCESSING'?'processing':status==='LOCKED'?'locked':'';
-   const leftNeed=Number(slab.left_business_required||0),rightNeed=Number(slab.right_business_required||0);
-   const leftPct=credited?100:locked?0:Math.min(100,leftNeed>0?leftAvailable/leftNeed*100:0);
-   const rightPct=credited?100:locked?0:Math.min(100,rightNeed>0?rightAvailable/rightNeed*100:0);
-   const leftText=credited?'Completed':locked?'Complete previous slab first':fmMatchMoney(Math.min(leftAvailable,leftNeed))+' / '+fmMatchMoney(leftNeed);
-   const rightText=credited?'Completed':locked?'Complete previous slab first':fmMatchMoney(Math.min(rightAvailable,rightNeed))+' / '+fmMatchMoney(rightNeed);
-   if(!credited)priorSlabsComplete=false;
-   return '<tr><td>'+Number(slab.slab_order)+'</td>'+
-    '<td>'+fmMatchMoney(leftNeed)+'<span class="match-progress">'+leftText+'</span><span class="match-bar"><span style="width:'+leftPct+'%"></span></span></td>'+
-    '<td>'+fmMatchMoney(rightNeed)+'<span class="match-progress">'+rightText+'</span><span class="match-bar"><span style="width:'+rightPct+'%"></span></span></td>'+
-    '<td>'+fmMatchMoney(slab.reward_amount)+'</td>'+
-    '<td><span class="match-status '+statusClass+'">'+status+'</span></td></tr>';
+  const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+accessToken};
+  const [slabsRes,progressRes,claimsRes]=await Promise.all([
+   fetch(SUPABASE_URL+'/rest/v1/fm_global_team_reward_slabs?is_active=eq.true&select=id,slab_order,left_business_required,right_business_required,reward_type,reward_name,reward_value,description,image_url&order=slab_order.asc',{headers}),
+   fetch(SUPABASE_URL+'/rest/v1/fm_global_team_business_progress?user_id=eq.'+encodeURIComponent(userId)+'&select=left_business_total,right_business_total,left_business_available,right_business_available',{headers}),
+   fetch(SUPABASE_URL+'/rest/v1/fm_global_team_reward_claims?member_id=eq.'+encodeURIComponent(userId)+'&select=id,slab_id,slab_order,reward_type,reward_name,reward_value,claim_status&order=slab_order.asc',{headers})
+  ]);
+  for(const r of [slabsRes,progressRes,claimsRes])if(!r.ok)throw new Error('Global rewards query failed ('+r.status+'). Run the Global Rewards SQL first and check permissions.');
+  const [slabs,progressRows,claims]=await Promise.all([slabsRes.json(),progressRes.json(),claimsRes.json()]);
+  const p=progressRows?.[0]||{},claimMap=new Map((claims||[]).map(c=>[String(c.slab_id),c]));
+  badge.textContent='ALL PLANS';
+  document.getElementById('fmGlobalLeftAvailable').textContent=money(p.left_business_available);
+  document.getElementById('fmGlobalRightAvailable').textContent=money(p.right_business_available);
+  msg.textContent='Total Left: '+money(p.left_business_total)+' · Total Right: '+money(p.right_business_total)+' · Carry Forward enabled.';
+  if(!slabs?.length){rows.innerHTML='<tr><td colspan="5">No active global reward levels configured yet.</td></tr>';return;}
+  rows.innerHTML=slabs.map(s=>{
+   const c=claimMap.get(String(s.id)),status=c?.claim_status||'In progress';
+   const claimButton=status==='eligible'?'<button class="btn btn-green btn-sm" onclick="fmClaimGlobalReward('+Number(c.id)+')">Claim</button>':'';
+   const label=status==='eligible'?'READY TO CLAIM':status.toUpperCase();
+   const reward=String(s.reward_name||'Reward')+(s.reward_value!=null?' · '+money(s.reward_value):'');
+   return '<tr><td>'+Number(s.slab_order)+'</td><td>'+money(s.left_business_required)+'</td><td>'+money(s.right_business_required)+'</td><td><b>'+fmMatchEsc(reward)+'</b><div class="hint">'+fmMatchEsc(s.reward_type)+'</div></td><td><span class="match-status '+(status==='fulfilled'?'credited':status==='claimed'||status==='approved'?'processing':'')+'">'+label+'</span><div style="margin-top:6px">'+claimButton+'</div></td></tr>';
   }).join('');
  }catch(e){
-  console.error('Matching slabs load error',e);
-  badge.textContent='NOT AVAILABLE';
-  msg.textContent='Matching rewards could not be loaded: '+(e.message||'Please try again.')+'.';
-  rows.innerHTML='<tr><td colspan="5">Matching data is temporarily unavailable. Please contact Fresh-Mart support.</td></tr>';
-  const rewardValue=document.getElementById('fmMemberRewardsValue');
-  const rewardNote=document.getElementById('fmMemberRewardsNote');
-  if(rewardValue)rewardValue.textContent='Unavailable';
-  if(rewardNote)rewardNote.textContent='Could not load reward milestones. Please refresh or contact support.';
+  console.error('Global team rewards load error',e);badge.textContent='UNAVAILABLE';
+  msg.textContent='Global rewards unavailable: '+(e.message||'Please refresh.');
+  rows.innerHTML='<tr><td colspan="5">Could not load global reward data.</td></tr>';
  }
+}
+function fmMatchEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function fmClaimGlobalReward(claimId){
+ if(!confirm('Claim this earned reward?'))return;
+ try{
+  if(!fmGlobalRewardAccessToken||!fmGlobalRewardUserId)throw new Error('Please sign in again.');
+  const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_claim_global_team_reward',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+fmGlobalRewardAccessToken,'Content-Type':'application/json'},body:JSON.stringify({p_claim_id:claimId})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.message||result.error||'Claim failed.');
+  alert('Reward claimed. Admin will review it.');
+  await loadMyMatchingSlabs(fmGlobalRewardUserId,fmGlobalRewardAccessToken);
+ }catch(e){alert('Could not claim reward: '+e.message);}
 }
 
 async function fmLoadMemberPlanDiscount(userId,token){
