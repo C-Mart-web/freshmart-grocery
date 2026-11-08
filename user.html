@@ -64,6 +64,19 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .fm-page-banner a{display:block;color:inherit;text-decoration:none}.fm-page-banner img{display:block;width:100%;max-height:230px;min-height:105px;object-fit:cover}
 @media(max-width:680px){.fm-category-strip-wrap{padding:11px 9px 12px;margin-bottom:14px}.fm-category-tile{flex-basis:88px;min-width:88px;min-height:102px;padding:8px 5px}.fm-category-tile .fm-cat-visual{width:54px;height:50px}.fm-page-banner img{max-height:170px;min-height:90px}}
 
+
+.fm-product-gallery{position:relative}.fm-product-gallery-main{width:100%;height:145px;object-fit:contain;background:#f7fbf8;border-radius:10px}.fm-product-thumbs{display:flex;gap:5px;overflow:auto;margin-top:5px}.fm-product-thumbs img{width:34px;height:34px;object-fit:cover;border:1px solid #dce9df;border-radius:6px;cursor:pointer}.fm-variant-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.fm-variant-pill{border:1px solid #dce8df;background:#fff;color:#45594d;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:800}.fm-variant-pill.active{border:2px solid #168447;background:#eaf8ef;color:#126b39}.fm-product-card{border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0}
+@media(max-width:680px){.fm-product-gallery-main{height:125px}}
+
+/* Sticky shopping cart summary */
+.fm-sticky-cart{display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:35;background:linear-gradient(110deg,#126f3b,#168447);color:#fff;border-radius:15px;padding:11px 13px;box-shadow:0 8px 28px rgba(0,0,0,.22);align-items:center;justify-content:space-between;gap:10px}
+.fm-sticky-cart.show{display:flex}
+.fm-sticky-cart .fm-sticky-meta{min-width:0;display:flex;flex-direction:column;gap:3px}
+.fm-sticky-cart .fm-sticky-label{font-size:10px;font-weight:800;letter-spacing:.5px;opacity:.9}
+.fm-sticky-cart .fm-sticky-total{font-size:21px;font-weight:900;line-height:1.1}
+.fm-sticky-cart .fm-sticky-count{font-size:11px;opacity:.9}
+.fm-sticky-cart .fm-sticky-go{border:0;border-radius:10px;background:#fff;color:#126f3b;font-weight:850;padding:12px 13px;white-space:nowrap;display:flex;align-items:center;gap:7px}
+@media(min-width:681px){.fm-sticky-cart{left:auto;right:24px;bottom:24px;width:350px}}
 </style>
 </head>
 <body>
@@ -277,6 +290,14 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping<br>Design preview — not yet connected to live account data.</div>
 <section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">One spin per member when enabled. Rewards are pending Admin fulfilment.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
 </div>
+<div id="fmStickyCartBar" class="fm-sticky-cart" aria-live="polite">
+  <div class="fm-sticky-meta">
+    <span class="fm-sticky-label">CART TOTAL</span>
+    <span id="fmStickyCartTotal" class="fm-sticky-total">₹0.00</span>
+    <span id="fmStickyCartCount" class="fm-sticky-count">0 items</span>
+  </div>
+  <button type="button" class="fm-sticky-go" onclick="fmOpenCheckout()">Proceed to Checkout <span aria-hidden="true">➜</span></button>
+</div>
 <nav class="mobile-nav">
 <button class="active" data-page="dashboard"><span>⌂</span>Home</button>
 <button data-page="groceries"><span>🛍️</span>Shop</button>
@@ -343,52 +364,46 @@ async function fmLoadPageBanners(){
 
 async function loadFreshMartProducts(){
  const msg=document.getElementById('shopProductMsg'),grid=document.getElementById('freshMartProductGrid');if(!msg||!grid||!fmShopClient)return;msg.textContent='Loading live products…';
- try{const {data,error}=await fmShopClient.from('fm_products').select('id,product_code,product_name,description,barcode,unit,image_url,mrp,offer_price,retail_price,wholesale_price,product_visibility,stock_quantity,is_active,subcategory,search_aliases,retail_reward_points,wholesale_reward_points,reward_points,reward_points_condition,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('product_name').limit(300);if(error)throw error;fmShopProducts=data||[];try{const cr=await fmShopClient.from('fm_product_categories').select('id,category_name,icon,is_active').eq('is_active',true).order('category_name');if(!cr.error)fmShopCategories=cr.data||[];}catch(_e){}fmRenderCategoryCards();const cats=[...new Set(fmShopProducts.map(p=>p.fm_product_categories?.category_name).filter(Boolean))].sort();const sel=document.getElementById('shopProductCategory'),old=sel.value;sel.innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+shopEsc(c)+'">'+shopEsc(c)+'</option>').join('');sel.value=old;renderFreshMartProducts();msg.textContent=fmShopProducts.length+' product(s) available.';fmRenderCart();}catch(e){msg.textContent='Products could not load: '+(e.message||'Check Supabase SELECT permissions and run the product stock SQL.');grid.innerHTML='';}}
+ try{const {data,error}=await fmShopClient.from('fm_products').select('id,product_code,product_name,description,barcode,unit,image_url,mrp,offer_price,retail_price,wholesale_price,product_visibility,stock_quantity,is_active,subcategory,search_aliases,retail_reward_points,wholesale_reward_points,reward_points,reward_points_condition,fm_product_categories(category_name)').eq('is_active',true).gt('stock_quantity',0).order('product_name').limit(300);if(error)throw error;fmShopProducts=data||[];if(fmShopProducts.length){const ids=fmShopProducts.map(p=>p.id);const [vr,ir]=await Promise.all([fmShopClient.from('fm_product_variants').select('*').in('product_id',ids).eq('is_active',true).gt('stock_quantity',0).order('sort_order'),fmShopClient.from('fm_product_images').select('*').in('product_id',ids).order('sort_order')]);if(vr.error)throw vr.error;if(ir.error)throw ir.error;const vm=new Map(),im=new Map();(vr.data||[]).forEach(x=>{const k=String(x.product_id);vm.set(k,[...(vm.get(k)||[]),x]);});(ir.data||[]).forEach(x=>{const k=String(x.product_id);im.set(k,[...(im.get(k)||[]),x]);});fmShopProducts.forEach(p=>{p.fm_product_variants=vm.get(String(p.id))||[];p.fm_product_images=im.get(String(p.id))||[];});fmCart.forEach(x=>{if(!x.variant_id){const p=fmShopProducts.find(z=>String(z.id)===String(x.product_id));const dv=p?fmDefaultVariant(p):null;if(dv){x.variant_id=dv.id;x.variant_name=dv.variant_name;x.variant_unit=dv.unit;}}});fmSaveCartLocalOnly();}try{const cr=await fmShopClient.from('fm_product_categories').select('id,category_name,icon,is_active').eq('is_active',true).order('category_name');if(!cr.error)fmShopCategories=cr.data||[];}catch(_e){}fmRenderCategoryCards();const cats=[...new Set(fmShopProducts.map(p=>p.fm_product_categories?.category_name).filter(Boolean))].sort();const sel=document.getElementById('shopProductCategory'),old=sel.value;sel.innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+shopEsc(c)+'">'+shopEsc(c)+'</option>').join('');sel.value=old;renderFreshMartProducts();msg.textContent=fmShopProducts.length+' product(s) available.';fmRenderCart();}catch(e){msg.textContent='Products could not load: '+(e.message||'Check Supabase SELECT permissions and run the product stock SQL.');grid.innerHTML='';}}
 function fmSearchNorm(v){return String(v??'').normalize('NFC').toLocaleLowerCase().replace(/[\u200c\u200d]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
-function fmShopCartQty(id){
- const row=fmCart.find(x=>String(x.product_id)===String(id));
- return Number(row?.quantity||0);
-}
-function fmShopChangeQty(id,delta){
- const p=fmShopProducts.find(x=>String(x.id)===String(id));
- if(!p)return;
- const row=fmCart.find(x=>String(x.product_id)===String(id));
+let fmSelectedVariants=window.fmSelectedVariants||{};
+let fmShopAccountType='retail';
+function fmIsWholesale(){return String(fmShopAccountType||'retail').toLowerCase()==='wholesale';}
+function fmVariantRewardPoints(p,v){return Number(fmIsWholesale()?(v?.wholesale_reward_points??p.wholesale_reward_points??p.reward_points??0):(v?.retail_reward_points??p.retail_reward_points??p.reward_points??0));}
+function fmVariants(p){return Array.isArray(p.fm_product_variants)?p.fm_product_variants:[];}
+function fmDefaultVariant(p){const vs=fmVariants(p);return vs.find(v=>v.is_default)||vs[0]||null;}
+function fmGetSelectedVariant(p){const vs=fmVariants(p);return vs.find(v=>String(v.id)===String(fmSelectedVariants[String(p.id)]))||fmDefaultVariant(p);}
+function fmVariantPrice(p,v){if(!v)return Number(fmIsWholesale()?(p.wholesale_price??p.retail_price??p.offer_price??p.central_price??0):(p.retail_price??p.offer_price??p.central_price??0));return Number(fmIsWholesale()?(v.wholesale_price??v.retail_price??v.offer_price??p.wholesale_price??p.retail_price??p.offer_price??0):(v.retail_price??v.offer_price??p.retail_price??p.offer_price??0));}
+function fmCartRowFor(id,variantId){return fmCart.find(x=>String(x.product_id)===String(id)&&String(x.variant_id||'')===String(variantId||''));}
+function fmShopCartQty(id,variantId){const row=fmCartRowFor(id,variantId);return Number(row?.quantity||0);}
+function fmShopChangeQty(id,delta,variantId){
+ const p=fmShopProducts.find(x=>String(x.id)===String(id));if(!p)return;
+ const v=variantId?fmVariants(p).find(x=>String(x.id)===String(variantId)):fmGetSelectedVariant(p);
+ const vid=v?String(v.id):'';
+ const row=fmCartRowFor(id,vid);
  if(row)row.quantity=Number(row.quantity||0)+delta;
- else if(delta>0)fmCart.push({product_id:String(id),quantity:delta});
- fmCart=fmCart.filter(x=>Number(x.quantity)>0);
- fmSaveCart();
+ else if(delta>0)fmCart.push({product_id:String(id),variant_id:vid||null,variant_name:v?.variant_name||null,variant_unit:v?.unit||null,quantity:delta});
+ fmCart=fmCart.filter(x=>Number(x.quantity)>0);fmSaveCart();
 }
+function fmSelectProductVariant(id,variantId){fmSelectedVariants[String(id)]=String(variantId);renderFreshMartProducts();}
+function fmProductCartQty(p){const vs=fmVariants(p);if(vs.length)return vs.reduce((n,v)=>n+fmShopCartQty(p.id,v.id),0);return fmShopCartQty(p.id,'');}
 function renderFreshMartProducts(){
  const grid=document.getElementById('freshMartProductGrid');if(!grid)return;
- const q=fmSearchNorm(document.getElementById('shopProductSearch')?.value||'');
- const cat=document.getElementById('shopProductCategory')?.value||'';
+ const q=fmSearchNorm(document.getElementById('shopProductSearch')?.value||''),cat=document.getElementById('shopProductCategory')?.value||'';
  const terms=q.split(/\s+/).filter(Boolean);
- const rows=fmShopProducts.map(p=>{
-  const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));
-  const hits=terms.filter(t=>hay.includes(t)).length;
-  return {p,hits,all:terms.length>0&&hits===terms.length};
- }).filter(x=>(!cat||(x.p.fm_product_categories?.category_name||'')===cat)&&(!q||x.hits>0))
-   .sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
+ const rows=fmShopProducts.map(p=>{const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>(!cat||(x.p.fm_product_categories?.category_name||'')===cat)&&(!q||x.hits>0)).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
  grid.innerHTML=rows.map(p=>{
-  const id=String(p.id),offer=Number(p.offer_price??p.retail_price??p.central_price??0);const memberPrice=fmMemberDiscountPrice(offer);
-  const mrp=Number(p.mrp||0),points=Number(p.retail_reward_points??p.reward_points??0);
-  const qty=fmShopCartQty(id);
-  const qtyControl=qty>0
-   ? '<div style="display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid #168447;border-radius:9px;padding:5px;background:#f1faef;color:#168447"><button class="btn btn-green" type="button" style="min-width:34px;padding:5px 10px" data-shop-change="-1" data-product-id="'+shopEsc(id)+'">−</button><b style="min-width:20px;text-align:center">'+qty+'</b><button class="btn btn-green" type="button" style="min-width:34px;padding:5px 10px" data-shop-change="1" data-product-id="'+shopEsc(id)+'">+</button></div>'
-   : '<button class="btn btn-green" type="button" style="width:100%;margin-top:8px" data-shop-change="1" data-product-id="'+shopEsc(id)+'">Add to Cart</button>';
-  return '<article style="border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0">'
-   +(p.image_url?'<img src="'+shopEsc(p.image_url)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy" style="width:100%;height:115px;object-fit:contain;border-radius:9px;background:#f5fbf6">':'<div style="height:115px;display:grid;place-items:center;background:#f5fbf6;border-radius:9px;font-size:34px">🛒</div>')
-   +'<b style="display:block;margin-top:8px;font-size:13px">'+shopEsc(p.product_name)+'</b>'
-   +'<small style="color:#718078">'+shopEsc(p.fm_product_categories?.category_name||'Grocery')+' · '+shopEsc(p.unit||'')+'</small>'
-   +'<div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-top:7px"><b style="font-weight:900;color:#168447;font-size:16px">'+shopMoney(offer)+'</b>'
-   +(mrp>offer?'<small style="text-decoration:line-through;color:#718078">MRP '+shopMoney(mrp)+'</small><small style="background:#e4f5dc;color:#276c35;padding:3px 5px;border-radius:5px;font-weight:800">'+Math.round((mrp-offer)*100/mrp)+'% OFF</small>':'<small style="color:#718078">Selling price</small>')
-   +'</div>'
-   +(fmMemberPlanDiscountPercent>0?'<small style="display:block;margin-top:5px;color:#168447;font-weight:800">Self Purchase Benefit: '+fmMemberPlanDiscountPercent+'% on eligible products after delivery</small>':'')
-   +(points>0?'<small style="display:inline-block;margin-top:6px;background:#fff7d6;color:#946200;padding:4px 6px;border-radius:6px;font-weight:800">⭐ '+points+' reward points / item</small>':'')
-   +'<div style="margin-top:9px">'+qtyControl+'</div></article>';
+  const id=String(p.id),vs=fmVariants(p),v=fmGetSelectedVariant(p),price=fmVariantPrice(p,v),mrp=Number(v?.mrp??p.mrp??0),points=fmVariantRewardPoints(p,v),qty=vs.length?fmProductCartQty(p):fmShopCartQty(id,'');
+  const imgs=(p.fm_product_images||[]).map(x=>x.image_url).filter(Boolean);if(!imgs.length&&p.image_url)imgs.push(p.image_url);
+  const main=imgs[0]||'';
+  const gallery='<div class="fm-product-gallery">'+(main?'<img class="fm-product-gallery-main" data-main-image="'+shopEsc(id)+'" src="'+shopEsc(main)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy">':'<div class="fm-product-gallery-main" style="display:grid;place-items:center;font-size:34px">🛒</div>')+(imgs.length>1?'<div class="fm-product-thumbs">'+imgs.map((url,i)=>'<img src="'+shopEsc(url)+'" data-thumb-product="'+shopEsc(id)+'" data-thumb-url="'+shopEsc(url)+'" alt="Product image '+(i+1)+'">').join('')+'</div>':'')+'</div>';
+  const variantHtml=vs.length?'<div class="fm-variant-list">'+vs.map(x=>'<button type="button" class="fm-variant-pill '+(v&&String(v.id)===String(x.id)?'active':'')+'" data-variant-product="'+shopEsc(id)+'" data-variant-id="'+shopEsc(x.id)+'">'+shopEsc(x.variant_name)+'</button>').join('')+'</div>':'<small class="hint">'+shopEsc(p.unit||'')+'</small>';
+  const qtyControl=qty>0?'<div style="display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid #168447;border-radius:9px;padding:5px;background:#f1faef;color:#168447"><button class="btn btn-green" type="button" style="min-width:34px;padding:5px 10px" data-shop-change="-1" data-product-id="'+shopEsc(id)+'" data-variant-id="'+shopEsc(v?.id||'')+'">−</button><b style="min-width:20px;text-align:center">'+qty+'</b><button class="btn btn-green" type="button" style="min-width:34px;padding:5px 10px" data-shop-change="1" data-product-id="'+shopEsc(id)+'" data-variant-id="'+shopEsc(v?.id||'')+'">+</button></div>':'<button class="btn btn-green" type="button" style="width:100%;margin-top:8px" data-shop-change="1" data-product-id="'+shopEsc(id)+'" data-variant-id="'+shopEsc(v?.id||'')+'">Add to Cart</button>';
+  return '<article class="fm-product-card">'+gallery+'<b style="display:block;margin-top:8px;font-size:13px">'+shopEsc(p.product_name)+'</b><small style="color:#718078">'+shopEsc(p.fm_product_categories?.category_name||'Grocery')+'</small>'+variantHtml+'<div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-top:7px"><b style="font-weight:900;color:#168447;font-size:16px">'+shopMoney(price)+'</b>'+(mrp>price?'<small style="text-decoration:line-through;color:#718078">MRP '+shopMoney(mrp)+'</small><small style="background:#e4f5dc;color:#276c35;padding:3px 5px;border-radius:5px;font-weight:800">'+Math.round((mrp-price)*100/mrp)+'% OFF</small>':'')+'</div>'+(v?'<small class="hint">Selected: '+shopEsc(v.variant_name)+'</small>':'')+(fmMemberPlanDiscountPercent>0?'<small style="display:block;margin-top:5px;color:#168447;font-weight:800">Self Purchase Benefit: '+fmMemberPlanDiscountPercent+'%</small>':'')+(points>0?'<small style="display:inline-block;margin-top:6px;background:#fff7d6;color:#946200;padding:4px 6px;border-radius:6px;font-weight:800">⭐ '+points+' reward points / item</small>':'')+'<div style="margin-top:9px">'+qtyControl+'</div></article>';
  }).join('')||'<p class="hint">No products available in this category right now.</p>';
- if(q){requestAnimationFrame(()=>{const section=grid.closest('.card');section?.scrollIntoView({behavior:'smooth',block:'start'});});}
- grid.querySelectorAll('[data-shop-change]').forEach(btn=>btn.addEventListener('click',()=>fmShopChangeQty(btn.dataset.productId,Number(btn.dataset.shopChange))));
+ grid.querySelectorAll('[data-shop-change]').forEach(btn=>btn.addEventListener('click',()=>fmShopChangeQty(btn.dataset.productId,Number(btn.dataset.shopChange),btn.dataset.variantId||null)));
+ grid.querySelectorAll('[data-variant-product]').forEach(btn=>btn.addEventListener('click',()=>fmSelectProductVariant(btn.dataset.variantProduct,btn.dataset.variantId)));
+ grid.querySelectorAll('[data-thumb-product]').forEach(btn=>btn.addEventListener('click',()=>{const im=grid.querySelector('[data-main-image="'+btn.dataset.thumbProduct+'"]');if(im)im.src=btn.dataset.thumbUrl;}));
 }
 
 async function loadTeamData(accessToken){
@@ -816,9 +831,10 @@ async function loadSignedInMember(){
    });
   });
   loadTeamData(session.access_token);
-  const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status',{headers});
+  const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status,account_type',{headers});
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
   const profiles=await profileRes.json(); const profile=profiles[0];
+  fmShopAccountType=String(profile?.account_type||'retail').toLowerCase();
   if(!profile){document.getElementById('refLinkMessage').textContent='No Fresh-Mart profile was found for this login.';return;}
    fmLoadMemberPlanDiscount(session.user.id,session.access_token);
   const identity=profile.username||profile.user_code;
@@ -853,12 +869,12 @@ async function fmSyncCartForUser(userId){
  if(!fmShopClient||!userId||fmCloudCartBusy)return;fmCloudCartBusy=true;
  try{
   const owner=localStorage.getItem('fm_grocery_cart_owner')||'',local=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]');
-  const {data:remote,error}=await fmShopClient.from('fm_member_cart').select('product_id,quantity').eq('user_id',userId);
+  const {data:remote,error}=await fmShopClient.from('fm_member_cart_items_v2').select('product_id,variant_id,variant_name,variant_unit,quantity').eq('user_id',userId);
   if(error)throw error;
-  const map=new Map();(remote||[]).forEach(x=>map.set(String(x.product_id),Number(x.quantity)||0));
-  if(!owner||owner===userId){local.forEach(x=>{const id=String(x.product_id),q=Number(x.quantity)||0;if(q>0)map.set(id,owner===userId?Math.max(map.get(id)||0,q):(map.get(id)||0)+q);});}
-  fmCart=[...map.entries()].filter(x=>x[1]>0).map(([product_id,quantity])=>({product_id,quantity}));
-  if(fmCart.length){const {error:upErr}=await fmShopClient.from('fm_member_cart').upsert(fmCart.map(x=>({user_id:userId,product_id:x.product_id,quantity:x.quantity,updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id'});if(upErr)throw upErr;}
+  const map=new Map();(remote||[]).forEach(x=>map.set(String(x.product_id)+'|'+String(x.variant_id||''),{...x,quantity:Number(x.quantity)||0}));
+  if(!owner||owner===userId){local.forEach(x=>{const id=String(x.product_id)+'|'+String(x.variant_id||''),q=Number(x.quantity)||0;if(q>0){const old=map.get(id);map.set(id,{...x,quantity:owner===userId?Math.max(old?.quantity||0,q):(old?.quantity||0)+q});}});}
+  fmCart=[...map.values()].filter(x=>x.quantity>0);
+  if(fmCart.length){const {error:upErr}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:userId,product_id:x.product_id,variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:x.quantity,updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});if(upErr)throw upErr;}
   localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));localStorage.setItem('fm_grocery_cart_owner',userId);
   fmRenderCart();renderFreshMartProducts();
  }catch(e){console.warn('Account cart sync failed:',e.message||e);}
@@ -866,26 +882,30 @@ async function fmSyncCartForUser(userId){
 }
 async function fmPushCartToCloud(){
  try{const session=await getMemberSession(),uid=session.user.id;
-  if(fmCart.length){const {error}=await fmShopClient.from('fm_member_cart').upsert(fmCart.map(x=>({user_id:uid,product_id:String(x.product_id),quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id'});if(error)throw error;}
-  else{const {error}=await fmShopClient.from('fm_member_cart').delete().eq('user_id',uid);if(error)throw error;}
+  if(fmCart.length){const {error}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:uid,product_id:String(x.product_id),variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});if(error)throw error;}
+  else{const {error}=await fmShopClient.from('fm_member_cart_items_v2').delete().eq('user_id',uid);if(error)throw error;}
   localStorage.setItem('fm_grocery_cart_owner',uid);
  }catch(e){if(!String(e.message||'').includes('Login session'))console.warn('Account cart save failed:',e.message||e);}
 }
+function fmSaveCartLocalOnly(){localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));}
 function fmSaveCart(){localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));fmRenderCart();renderFreshMartProducts();fmPushCartToCloud();if(document.getElementById('fmCheckoutCard')?.style.display!=='none'&&document.getElementById('fmCheckoutPin')?.value)fmLoadDeliveryChoices();}
 function fmAddToCart(id){const p=fmShopProducts.find(x=>String(x.id)===String(id));if(!p)return;const row=fmCart.find(x=>String(x.product_id)===String(id));if(row)row.quantity++;else fmCart.push({product_id:String(id),quantity:1});fmSaveCart();document.getElementById('fmTopCartCount')&&(document.getElementById('fmTopCartCount').textContent=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0));}
 function fmRenderCart(){
- const box=document.getElementById('fmCartRows');if(!box)return;
- let total=0;
- box.innerHTML=fmCart.map((x,i)=>{
-  const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));if(!p)return '';
-  const price=Number(p.retail_price||p.offer_price||p.central_price||0),line=price*x.quantity;
-  total+=line;
-  return `<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid #edf3ee;padding:9px 0"><div style="flex:1"><b>${shopEsc(p.product_name)}</b><div class="hint">${shopMoney(price)} × ${x.quantity} = ${shopMoney(line)}</div>${fmMemberPlanDiscountPercent>0?`<div class="hint" style="color:#168447">Self Purchase Benefit: ${fmMemberPlanDiscountPercent}% on eligible products after delivery</div>`:''}</div><button class="btn btn-outline" onclick="fmCartQty(${i},-1)">−</button><button class="btn btn-outline" onclick="fmCartQty(${i},1)">+</button><button class="btn btn-outline" onclick="fmRemoveCart(${i})">×</button></div>`;
- }).join('')||'Your cart is empty.';
- document.getElementById('fmCartSubtotal').textContent=shopMoney(total);
- const ct=document.getElementById('fmCheckoutTotal');
- if(ct){if(typeof fmUpdateCouponTotal==='function')fmUpdateCouponTotal();else ct.textContent=shopMoney(total+(Number(fmCheckoutArea?.delivery_charge)||0));}
- const cc=document.getElementById('fmTopCartCount');if(cc)cc.textContent=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0);
+ const box=document.getElementById('fmCartRows');if(!box)return;let total=0;
+ box.innerHTML=fmCart.map((x,i)=>{const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));if(!p)return '';const v=fmVariants(p).find(z=>String(z.id)===String(x.variant_id));const price=fmVariantPrice(p,v),rp=fmVariantRewardPoints(p,v),label=v?.variant_name||x.variant_name||p.unit||'',line=price*x.quantity;total+=line;return `<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid #edf3ee;padding:9px 0"><div style="flex:1"><b>${shopEsc(p.product_name)}</b><div class="hint">${shopEsc(label)} · ${shopMoney(price)} × ${x.quantity} = ${shopMoney(line)}${rp>0?' · ⭐ '+rp+' RP/item':''}</div>${fmMemberPlanDiscountPercent>0?`<div class="hint" style="color:#168447">Self Purchase Benefit: ${fmMemberPlanDiscountPercent}% on eligible products after delivery</div>`:''}</div><button class="btn btn-outline" onclick="fmCartQty(${i},-1)">−</button><button class="btn btn-outline" onclick="fmCartQty(${i},1)">+</button><button class="btn btn-outline" onclick="fmRemoveCart(${i})">×</button></div>`;}).join('')||'Your cart is empty.';
+ document.getElementById('fmCartSubtotal').textContent=shopMoney(total);const ct=document.getElementById('fmCheckoutTotal');if(ct){if(typeof fmUpdateCouponTotal==='function')fmUpdateCouponTotal();else ct.textContent=shopMoney(total+(Number(fmCheckoutArea?.delivery_charge)||0));}
+ const itemCount=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0);
+ const cc=document.getElementById('fmTopCartCount');if(cc)cc.textContent=itemCount;
+ const sticky=document.getElementById('fmStickyCartBar');
+ const stickyTotal=document.getElementById('fmStickyCartTotal');
+ const stickyCount=document.getElementById('fmStickyCartCount');
+ if(sticky){
+   const activePage=document.querySelector('.page.active')?.id||'';
+   const showSticky=itemCount>0 && activePage!=='cart' && activePage!=='checkout';
+   sticky.classList.toggle('show',showSticky);
+   if(stickyTotal)stickyTotal.textContent=shopMoney(total);
+   if(stickyCount)stickyCount.textContent=itemCount+' item'+(itemCount===1?'':'s');
+ }
 }
 function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].quantity<=0)fmCart.splice(i,1);fmSaveCart();}
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
@@ -919,7 +939,7 @@ async function fmLoadDeliveryChoices(){
  fmCheckoutArea=null;fmCheckoutSlots=[];
  if(!/^\d{6}$/.test(pin)){box.textContent='Enter a valid 6-digit pincode.';return;}
  const address=fmAddresses.find(a=>String(a.id)===document.getElementById('fmCheckoutAddress').value);
- const subtotal=fmCart.reduce((t,x)=>{const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));return t+(p?Number(p.retail_price||p.offer_price||p.central_price||0)*Number(x.quantity||0):0)},0);
+ const subtotal=fmCart.reduce((t,x)=>{const p=fmShopProducts.find(y=>String(y.id)===String(x.product_id));const v=p?fmVariants(p).find(z=>String(z.id)===String(x.variant_id)):null;return t+(p?fmVariantPrice(p,v)*Number(x.quantity||0):0)},0);
  box.textContent='Checking delivery dates and available slots…';
  try{
   const {data:area,error}=await fmShopClient.from('fm_delivery_areas').select('*').eq('pincode',pin).maybeSingle();
@@ -982,9 +1002,10 @@ let fmCouponDiscount = 0;
 
 function fmCheckoutSubtotal(){
  return fmCart.reduce((total,item)=>{
-  const p=fmShopProducts.find(x=>String(x.id)===String(item.product_id));
-  if(!p)return total;
-  return total+Number(p.retail_price||p.offer_price||p.central_price||0)*Number(item.quantity||0);
+  const p=fmShopProducts.find(x=>String(x.id)===String(item.product_id));if(!p)return total;
+  const v=fmVariants(p).find(z=>String(z.id)===String(item.variant_id));
+  const price=fmVariantPrice(p,v);
+  return total+price*Number(item.quantity||0);
  },0);
 }
 function fmUpdateCouponTotal(){
