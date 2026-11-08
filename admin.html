@@ -118,6 +118,35 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="products">
 <div class="welcome"><div><h1>Products & Categories</h1><p>Manage grocery catalogue, prices and offers.</p></div><button class="btn btn-green" onclick="openModal('productModal')">+ Add Product</button></div>
+
+<div class="card" id="fmBulkProductUploadCard" style="margin-bottom:16px;border:1px solid #bfe4ca">
+ <div class="section-head"><h2>📥 Bulk Product Upload (Excel)</h2><span class="badge approved">XLSX</span></div>
+ <p class="hint">Fresh-Mart template Excel file select చేసి ఒకేసారి Products, Retail/Wholesale prices, Reward Points, Variants మరియు image URLs upload చేయండి.</p>
+ <div class="field"><label>Excel File (.xlsx)</label><input id="fmBulkProductFile" type="file" accept=".xlsx,.xls"></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+  <button class="btn btn-outline" type="button" onclick="fmBulkDownloadTemplate()">⬇ Download Excel Template</button>
+  <button class="btn btn-outline" type="button" onclick="fmBulkPreview()">Preview Excel</button>
+  <button class="btn btn-green" type="button" id="fmBulkUploadBtn" onclick="fmBulkUpload()">Upload Products</button>
+ </div>
+ <p id="fmBulkProductMsg" class="hint" aria-live="polite">Select the Fresh-Mart Bulk Product Upload Template. Category names must already exist in Admin.</p>
+ <div id="fmBulkPreview" class="tablewrap" style="margin-top:10px"></div>
+</div>
+<div class="card" id="fmProductImageLibraryCard" style="margin-bottom:16px;border:1px solid #bfe4ca">
+ <div class="section-head"><h2>🖼 Product Images Library</h2><span class="badge approved">ADMIN ONLY</span></div>
+ <p class="hint">Images ni ikkada upload chesi code assign cheyyandi. Excel lo image_code = 1, extra_image_code_1 = 1.1, extra_image_code_2 = 1.2 ila enter cheyyandi.</p>
+ <div class="formgrid">
+  <div class="field"><label>Image Code *</label><input id="fmLibImageCode" placeholder="1 or 1.1 or 2.1" maxlength="30"></div>
+  <div class="field"><label>Image Label</label><input id="fmLibImageLabel" placeholder="Main image / Second image"></div>
+  <div class="field"><label>Choose Image *</label><input id="fmLibImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+ </div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+  <button class="btn btn-green" type="button" id="fmLibUploadBtn" onclick="fmImageLibraryUpload()">Upload Image</button>
+  <button class="btn btn-outline" type="button" onclick="fmImageLibraryLoad()">Refresh Library</button>
+  <button class="btn btn-outline" type="button" onclick="fmImageLibraryDownloadExcel()">Download Image Codes Excel</button>
+ </div>
+ <p id="fmImageLibraryMsg" class="hint" aria-live="polite"></p>
+ <div class="tablewrap"><table><thead><tr><th>Preview</th><th>Code</th><th>Label</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmImageLibraryRows"><tr><td colspan="5" class="empty">Loading image library…</td></tr></tbody></table></div>
+</div>
 <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Category & Subcategory Manager</h2><button class="btn btn-outline btn-sm" onclick="fmLoadCategories()">Refresh</button></div><div class="formgrid"><div class="field"><label>New Category</label><input id="fmNewCategory" placeholder="e.g. Grocery"></div><div class="field"><label>Category Icon / Emoji</label><input id="fmNewCategoryIcon" placeholder="🛒" maxlength="8"></div><div class="field"><label>Subcategory under</label><select id="fmSubCategoryParent"><option value="">Select category</option></select></div><div class="field"><label>New Subcategory</label><input id="fmNewSubcategory" placeholder="e.g. Cooking Oil"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" onclick="fmAddCategory()">Add Category</button><button class="btn btn-outline" onclick="fmAddSubcategory()">Add Subcategory</button></div><p id="fmCategoryMsg" class="hint" aria-live="polite"></p><div class="tablewrap"><table><thead><tr><th>Category</th><th>Subcategories</th><th>Status</th></tr></thead><tbody id="fmCategoryRows"><tr><td colspan="3" class="empty">Load categories after SQL setup.</td></tr></tbody></table></div></div>
 <div class="card"><div class="searchrow"><input id="productSearch" placeholder="Search product name or SKU" oninput="renderAdminProducts()"><select id="productCategoryFilter" onchange="renderAdminProducts()"><option value="">All categories</option></select><button class="btn btn-outline" onclick="loadAdminProducts()">Refresh</button></div><p id="productListMsg" class="hint" aria-live="polite">Loading products…</p><div class="tablewrap"><table><thead><tr><th>Image</th><th>Product</th><th>Category</th><th>SKU / Barcode</th><th>Retail / Wholesale</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminProductRows"><tr><td colspan="8" class="empty">Loading products…</td></tr></tbody></table></div></div>
 </section>
@@ -286,6 +315,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('matching')?.classList.contains('active')){fmGlobalRewardRefresh();fmGlobalClaimsLoad();}});
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const FM_SUPABASE_URL = 'https://wmquhgmrvdlcxmgarxqp.supabase.co';
 const FM_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
@@ -792,6 +822,173 @@ async function toggleMatchingSlab(id,active){
 }
 
 calculatePlanPreview();
+
+// Fresh-Mart XLSX bulk product uploader. Uses the same columns and tables as the manual product form.
+let fmBulkRowsCache=[];
+function fmBulkCell(v){return v===undefined||v===null?'':String(v).trim();}
+function fmBulkNum(v,def=0){if(v===''||v===null||v===undefined)return def;const n=Number(v);if(!Number.isFinite(n))throw new Error('Invalid numeric value: '+v);return n;}
+function fmBulkBool(v,def=true){if(v===''||v===null||v===undefined)return def;return ['true','1','yes','active'].includes(String(v).trim().toLowerCase());}
+async function fmBulkReadFile(){
+ const file=document.getElementById('fmBulkProductFile')?.files?.[0];
+ if(!file)throw new Error('Please select an Excel file.');
+ if(!window.XLSX)throw new Error('Excel reader library did not load. Refresh the page and try again.');
+ const data=new Uint8Array(await file.arrayBuffer());
+ const wb=XLSX.read(data,{type:'array'});
+ const sheet=wb.Sheets['Products']||wb.Sheets[wb.SheetNames[0]];
+ if(!sheet)throw new Error('Products sheet not found.');
+ const rows=XLSX.utils.sheet_to_json(sheet,{defval:'',raw:false});
+ return rows.filter(r=>fmBulkCell(r.product_name));
+}
+async function fmBulkPreview(){
+ const msg=document.getElementById('fmBulkProductMsg'),host=document.getElementById('fmBulkPreview');
+ try{
+  fmBulkRowsCache=await fmBulkReadFile();
+  if(!fmBulkRowsCache.length)throw new Error('No product rows found. Fill the Products sheet first.');
+  const sample=fmBulkRowsCache.slice(0,12);
+  host.innerHTML='<table style="min-width:650px"><thead><tr><th>Product</th><th>Category</th><th>Retail</th><th>Wholesale</th><th>Retail RP</th><th>Wholesale RP</th><th>Variants</th></tr></thead><tbody>'+
+   sample.map(r=>{const n=[1,2,3].filter(i=>fmBulkCell(r['variant_'+i+'_name'])).length;return '<tr><td>'+escapeHtml(fmBulkCell(r.product_name))+'</td><td>'+escapeHtml(fmBulkCell(r.category_name))+'</td><td>₹'+escapeHtml(fmBulkCell(r.retail_price))+'</td><td>₹'+escapeHtml(fmBulkCell(r.wholesale_price))+'</td><td>'+escapeHtml(fmBulkCell(r.retail_reward_points))+' RP</td><td>'+escapeHtml(fmBulkCell(r.wholesale_reward_points))+' RP</td><td>'+n+'</td></tr>';}).join('')+'</tbody></table>';
+  msg.textContent=fmBulkRowsCache.length+' product row(s) found. Preview first '+sample.length+'. Press Upload Products to save.';
+ }catch(e){host.innerHTML='';msg.textContent='Excel preview failed: '+e.message;}
+}
+async function fmBulkUpload(){
+ const msg=document.getElementById('fmBulkProductMsg'),btn=document.getElementById('fmBulkUploadBtn'),host=document.getElementById('fmBulkPreview');
+ btn.disabled=true;let success=0,failed=[];
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Please sign in as Super Admin.');
+  const rows=fmBulkRowsCache.length?fmBulkRowsCache:await fmBulkReadFile();
+  if(!rows.length)throw new Error('No product rows found.');
+  if(!fmAdminCats.length)await fmLoadCategories();
+  const catMap=new Map((fmAdminCats||[]).map(c=>[String(c.category_name||'').trim().toLowerCase(),c]));
+  const subMap=new Map((fmAdminSubcats||[]).map(x=>[String(x.category_id)+'|'+String(x.subcategory_name||'').trim().toLowerCase(),x]));
+  const report=[];
+  for(let ix=0;ix<rows.length;ix++){
+   const r=rows[ix],rowNo=ix+2;
+   try{
+    const name=fmBulkCell(r.product_name),catName=fmBulkCell(r.category_name),cat=catMap.get(catName.toLowerCase());
+    if(!name)throw new Error('Product name missing.');
+    if(!cat)throw new Error('Category "'+catName+'" not found. Add it in Category Manager first.');
+    const sub=fmBulkCell(r.subcategory_name);
+    if(sub&&!subMap.has(String(cat.id)+'|'+sub.toLowerCase()))throw new Error('Subcategory "'+sub+'" not found under '+catName+'.');
+    const mrp=fmBulkNum(r.mrp),offer=fmBulkNum(r.offer_price),retail=fmBulkNum(r.retail_price),wholesale=fmBulkNum(r.wholesale_price);
+    if(mrp<=0||offer<=0||retail<=0||wholesale<=0||offer>mrp)throw new Error('MRP, Offer, Retail and Wholesale prices must be positive; Offer must not exceed MRP.');
+    const stock=fmBulkNum(r.stock_quantity),low=fmBulkNum(r.low_stock_threshold,5),minW=fmBulkNum(r.min_wholesale_qty,1);
+    const rpR=fmBulkNum(r.retail_reward_points),rpW=fmBulkNum(r.wholesale_reward_points);
+    if(![stock,low,minW,rpR,rpW].every(Number.isFinite)||stock<0||low<0||minW<1||rpR<0||rpW<0||!Number.isInteger(stock)||!Number.isInteger(low)||!Number.isInteger(minW))throw new Error('Stock, minimum wholesale quantity and points are invalid.');
+    const imageUrls=await fmBulkResolveImages(r);
+    for(const url of imageUrls){if(!/^https?:\/\/\S+$/i.test(url))throw new Error('Image URL must start with https:// or http://');}
+    const variants=[];
+    for(let i=1;i<=3;i++){
+     const vn=fmBulkCell(r['variant_'+i+'_name']);if(!vn)continue;
+     const vmrp=fmBulkNum(r['variant_'+i+'_mrp']),voffer=fmBulkNum(r['variant_'+i+'_offer_price']),vret=fmBulkNum(r['variant_'+i+'_retail_price']),vwh=fmBulkNum(r['variant_'+i+'_wholesale_price']);
+     const vrp=fmBulkNum(r['variant_'+i+'_retail_rp']),vwrp=fmBulkNum(r['variant_'+i+'_wholesale_rp']),vstock=fmBulkNum(r['variant_'+i+'_stock']);
+     if([vmrp,voffer,vret,vwh].some(n=>n<=0)||voffer>vmrp||![vrp,vwrp,vstock].every(n=>Number.isInteger(n)&&n>=0))throw new Error('Variant '+i+' has invalid price, reward points or stock.');
+     variants.push({variant_name:vn,unit:fmBulkCell(r['variant_'+i+'_unit'])||vn,mrp:vmrp,offer_price:voffer,retail_price:vret,wholesale_price:vwh,retail_reward_points:vrp,wholesale_reward_points:vwrp,stock_quantity:vstock,is_default:fmBulkBool(r['variant_'+i+'_default'],i===1),sort_order:i,is_active:true});
+    }
+    if(variants.length){const defaults=variants.filter(v=>v.is_default);if(defaults.length>1)throw new Error('Only one variant can be default.');if(!defaults.length)variants[0].is_default=true;}
+    const visibility=fmBulkCell(r.product_visibility)||'both';
+    if(!['both','retail_only','wholesale_only'].includes(visibility))throw new Error('product_visibility must be both, retail_only or wholesale_only.');
+    const code=fmBulkCell(r.product_code)||fmBulkCell(r.barcode)||('FM-'+Date.now().toString(36).toUpperCase()+'-'+rowNo);
+    const aliases=fmBulkCell(r.search_aliases).split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);
+    const payload={product_code:code,product_name:name,category_id:cat.id,subcategory:sub||null,search_aliases:aliases,barcode:fmBulkCell(r.barcode)||null,unit:fmBulkCell(r.unit)||'piece',central_price:offer,mrp,offer_price:offer,retail_price:retail,wholesale_price:wholesale,product_visibility:visibility,min_wholesale_qty:minW,retail_reward_points:rpR,wholesale_reward_points:rpW,reward_points:Math.max(rpR,rpW),reward_points_condition:fmBulkCell(r.reward_points_condition)||'delivered_paid',discount_percent:Number(((mrp-offer)/mrp*100).toFixed(2)),stock_quantity:variants.length?variants.reduce((a,v)=>a+v.stock_quantity,0):stock,low_stock_threshold:low,image_url:imageUrls[0]||null,is_active:fmBulkBool(r.is_active,true)};
+    const ins=await fmSupabase.from('fm_products').insert(payload).select('id,product_name').single();if(ins.error)throw ins.error;
+    const pid=ins.data.id;
+    if(variants.length){const vr=await fmSupabase.from('fm_product_variants').insert(variants.map(v=>({...v,product_id:pid})));if(vr.error)throw vr.error;}
+    if(imageUrls.length>1){const ir=await fmSupabase.from('fm_product_images').insert(imageUrls.map((url,i)=>({product_id:pid,image_url:url,sort_order:i+1})));if(ir.error)throw ir.error;}
+    else if(imageUrls.length===1){const ir=await fmSupabase.from('fm_product_images').insert({product_id:pid,image_url:imageUrls[0],sort_order:1});if(ir.error)throw ir.error;}
+    success++;report.push({row:rowNo,name,status:'Uploaded'});
+   }catch(e){failed.push({row:rowNo,name:fmBulkCell(r.product_name),error:e.message||String(e)});report.push({row:rowNo,name:fmBulkCell(r.product_name),status:'Failed: '+(e.message||String(e))});}
+   msg.textContent='Uploading… '+(ix+1)+' / '+rows.length+' processed. Success: '+success+' · Failed: '+failed.length;
+  }
+  host.innerHTML='<table style="min-width:600px"><thead><tr><th>Excel Row</th><th>Product</th><th>Result</th></tr></thead><tbody>'+report.map(x=>'<tr><td>'+x.row+'</td><td>'+escapeHtml(x.name)+'</td><td>'+escapeHtml(x.status)+'</td></tr>').join('')+'</tbody></table>';
+  msg.textContent='Bulk upload finished. Success: '+success+' · Failed: '+failed.length+'. '+(failed.length?'Fix failed rows and upload them again.':'All products uploaded successfully.');
+  await loadAdminProducts();
+ }catch(e){msg.textContent='Bulk upload stopped: '+e.message;}
+ finally{btn.disabled=false;}
+}
+
+
+// Product Images Library uses the SQL table public.fm_product_image_library
+// and the existing Storage bucket fm-product-images.
+let fmImageLibraryCache=[];
+let fmImageLibraryByCode=new Map();
+function fmImageCodeValid(code){return /^[0-9]+(?:\.[0-9]+)*$/.test(String(code||'').trim());}
+function fmImageLibraryRender(){
+ const host=document.getElementById('fmImageLibraryRows');if(!host)return;
+ if(!fmImageLibraryCache.length){host.innerHTML='<tr><td colspan="5" class="empty">No images in library yet.</td></tr>';return;}
+ host.innerHTML=fmImageLibraryCache.map(x=>`<tr><td><img src="${escapeHtml(x.image_url||'')}" style="width:54px;height:54px;object-fit:contain;border-radius:8px"></td><td><b>${escapeHtml(x.image_code)}</b></td><td>${escapeHtml(x.image_label||'')}</td><td><span class="badge ${x.is_active?'approved':'rejected'}">${x.is_active?'Active':'Inactive'}</span></td><td><button class="btn btn-outline btn-sm" onclick="fmImageLibraryToggle(${Number(x.id)},${!x.is_active})">${x.is_active?'Disable':'Enable'}</button></td></tr>`).join('');
+}
+async function fmImageLibraryLoad(){
+ const msg=document.getElementById('fmImageLibraryMsg');
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;
+  if(!session)throw new Error('Admin sign-in required.');
+  const {data,error}=await fmSupabase.from('fm_product_image_library').select('id,image_code,image_label,image_url,storage_path,is_active,created_at').order('image_code',{ascending:true});
+  if(error)throw error;
+  fmImageLibraryCache=data||[];
+  fmImageLibraryByCode=new Map(fmImageLibraryCache.filter(x=>x.is_active).map(x=>[String(x.image_code).trim(),x]));
+  fmImageLibraryRender();if(msg)msg.textContent='Image Library loaded: '+fmImageLibraryCache.length+' image(s).';
+ }catch(e){if(msg)msg.textContent='Image Library error: '+(e.message||String(e))+' — verify table/RLS and Storage permissions.';}
+}
+async function fmImageLibraryUpload(){
+ const msg=document.getElementById('fmImageLibraryMsg'),btn=document.getElementById('fmLibUploadBtn');
+ const code=document.getElementById('fmLibImageCode').value.trim(),label=document.getElementById('fmLibImageLabel').value.trim(),file=document.getElementById('fmLibImageFile').files[0];
+ btn.disabled=true;
+ try{
+  if(!fmImageCodeValid(code))throw new Error('Use numeric image code such as 1, 1.1 or 2.1.');
+  if(!file)throw new Error('Choose an image file.');
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Only JPG, PNG or WEBP images are allowed.');
+  if(file.size>3*1024*1024)throw new Error('Image must be 3 MB or smaller.');
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Admin sign-in required.');
+  const {data:existing,error:ce}=await fmSupabase.from('fm_product_image_library').select('id').eq('image_code',code).maybeSingle();
+  if(ce)throw ce;if(existing)throw new Error('This image code already exists. Choose a different code.');
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path='product-library/'+code.replace(/\./g,'-')+'-'+Date.now()+'.'+ext;
+  const {data:stored,error:ue}=await fmSupabase.storage.from('fm-product-images').upload(path,file,{contentType:file.type,upsert:false});
+  if(ue)throw ue;
+  const url=fmSupabase.storage.from('fm-product-images').getPublicUrl(stored.path).data.publicUrl;
+  const {error:ie}=await fmSupabase.from('fm_product_image_library').insert({image_code:code,image_label:label||null,image_url:url,storage_path:stored.path,is_active:true,created_by:session.user.id});
+  if(ie){await fmSupabase.storage.from('fm-product-images').remove([stored.path]);throw ie;}
+  document.getElementById('fmLibImageCode').value='';document.getElementById('fmLibImageLabel').value='';document.getElementById('fmLibImageFile').value='';
+  if(msg)msg.textContent='Image uploaded successfully.';await fmImageLibraryLoad();
+ }catch(e){if(msg)msg.textContent='Upload failed: '+(e.message||String(e));}
+ finally{btn.disabled=false;}
+}
+async function fmImageLibraryToggle(id,active){
+ const msg=document.getElementById('fmImageLibraryMsg');
+ try{const {error}=await fmSupabase.from('fm_product_image_library').update({is_active:active}).eq('id',id);if(error)throw error;await fmImageLibraryLoad();}
+ catch(e){if(msg)msg.textContent='Update failed: '+(e.message||String(e));}
+}
+async function fmImageLibraryDownloadExcel(){
+ try{
+  if(!window.XLSX)throw new Error('Excel library not loaded.');
+  if(!fmImageLibraryCache.length)await fmImageLibraryLoad();
+  const rows=[['image_code','image_label','image_url','is_active'],...fmImageLibraryCache.map(x=>[x.image_code,x.image_label||'',x.image_url||'',x.is_active?'TRUE':'FALSE'])];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Image Codes');
+  XLSX.writeFile(wb,'FreshMart_Image_Codes.xlsx');
+ }catch(e){const m=document.getElementById('fmImageLibraryMsg');if(m)m.textContent='Excel download failed: '+(e.message||String(e));}
+}
+function fmBulkDownloadTemplate(){
+ if(!window.XLSX){alert('Excel library did not load. Refresh and try again.');return;}
+ const headers=['product_name','category_name','subcategory_name','product_code','barcode','unit','mrp','offer_price','retail_price','wholesale_price','retail_reward_points','wholesale_reward_points','reward_points_condition','stock_quantity','low_stock_threshold','min_wholesale_qty','product_visibility','search_aliases','is_active','image_code','extra_image_code_1','extra_image_code_2','extra_image_code_3','extra_image_code_4','extra_image_code_5','image_url','extra_image_url_1','extra_image_url_2','extra_image_url_3','extra_image_url_4','extra_image_url_5','variant_1_name','variant_1_unit','variant_1_mrp','variant_1_offer_price','variant_1_retail_price','variant_1_wholesale_price','variant_1_retail_rp','variant_1_wholesale_rp','variant_1_stock','variant_1_default','variant_2_name','variant_2_unit','variant_2_mrp','variant_2_offer_price','variant_2_retail_price','variant_2_wholesale_price','variant_2_retail_rp','variant_2_wholesale_rp','variant_2_stock','variant_2_default','variant_3_name','variant_3_unit','variant_3_mrp','variant_3_offer_price','variant_3_retail_price','variant_3_wholesale_price','variant_3_retail_rp','variant_3_wholesale_rp','variant_3_stock','variant_3_default'];
+ const sample=['Example Product','Grocery','','FM-EXAMPLE','','kg',100,90,90,85,1,1,'delivered_paid',20,5,1,'both','Telugu name, Hindi name','TRUE','1','1.1','1.2','','','','','','','','','','500 g','500 g',50,45,45,42,1,1,10,'TRUE','1 kg','1 kg',100,90,90,85,2,2,10,'FALSE'];
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([headers,sample]),'Products');
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Image Code','Purpose'],['1','Main product image'],['1.1','Second image'],['1.2','Third image'],['2','Another product main image']]),'Image Code Help');
+ XLSX.writeFile(wb,'FreshMart_Bulk_Product_Template.xlsx');
+}
+async function fmBulkResolveImages(r){
+ const codes=[r.image_code,...[1,2,3,4,5].map(i=>r['extra_image_code_'+i])].map(fmBulkCell);
+ const urls=[r.image_url,...[1,2,3,4,5].map(i=>r['extra_image_url_'+i])].map(fmBulkCell);
+ if(codes.some(Boolean)){
+  if(!fmImageLibraryCache.length)await fmImageLibraryLoad();
+  const result=[];
+  for(const code of codes){if(!code)continue;if(!fmImageCodeValid(code))throw new Error('Invalid image code: '+code);const item=fmImageLibraryByCode.get(code);if(!item)throw new Error('Image code '+code+' not found or inactive in Product Images Library.');result.push(item.image_url);}
+  return [...result,...urls.filter(Boolean)];
+ }
+ return urls.filter(Boolean);
+}
+document.addEventListener('DOMContentLoaded',()=>{fmImageLibraryLoad();});
+
 </script>
 
 <script>
