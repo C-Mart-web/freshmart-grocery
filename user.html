@@ -1111,7 +1111,6 @@ function fmRemoveCheckoutCoupon(){
 
 async function fmPlaceOrder(){
  const msg=document.getElementById('fmCheckoutMsg'),btn=document.getElementById('fmPlaceOrderBtn');
- let orderPlaced=false,placedResult=null;
  try{
   if(!fmCart.length)throw new Error('Cart is empty.');
   const session=await getMemberSession();
@@ -1126,11 +1125,7 @@ async function fmPlaceOrder(){
   if(mode==='slot'&&!slotId)throw new Error('Please choose a delivery date and slot.');
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
-  if(method==='upi'){
-   const {data:gw,error:gwErr}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification,upi_id,payee_name').eq('id',1).maybeSingle();
-   if(gwErr)throw gwErr;
-   if(!(gw?.upi_enabled===true&&gw?.manual_verification===true&&gw?.upi_id&&gw?.payee_name))throw new Error('Dynamic UPI QR is unavailable. Please choose another payment method.');
-  }
+   // Self Purchase Discount is applied and verified securely by the checkout SQL function.
   btn.disabled=true;msg.textContent='Checking stock and placing order…';
   const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{
    p_items:fmCart,p_address:address,p_pincode:pin,p_delivery_mode:mode,
@@ -1140,29 +1135,16 @@ async function fmPlaceOrder(){
   if(error)throw error;
   const result=Array.isArray(data)?data[0]:data;
   if(!result?.success)throw new Error(result?.message||'Order could not be placed.');
-  orderPlaced=true;placedResult=result;
   fmCart=[];fmSaveCart();
   fmAppliedCoupon=null;fmCouponDiscount=0;
   const discount=Number(result.coupon_discount||0);
   msg.style.color='#168447';
   msg.textContent=`Order ${result.order_number} placed. Discount ${shopMoney(discount)}. Total ${shopMoney(result.grand_total)}. Payment status: ${result.payment_status}.`;
-  if(method==='upi'){
-   // The order now exists with its server-calculated total. Prepare QR against that order UUID.
-   document.getElementById('fmUpiType').value='grocery';
-   document.getElementById('fmUpiSource').value=String(result.order_id);
-   await fmUpiUserOpen();
-   const fab=document.getElementById('fmUpiUserFab');
-   if(fab?.hidden)throw new Error('Order placed, but Dynamic UPI is now disabled. Open My Orders and retry payment after Admin enables it.');
-   await fmUpiMakeQR();
-   const upiMsg=document.getElementById('fmUpiUserMsg');
-   if(!fmUpiCurrentTxn?.id)throw new Error('Order placed, but QR preparation failed: '+(upiMsg?.textContent||'Unknown gateway error')+'. You can retry from My Orders.');
-   msg.textContent=`Order ${result.order_number} placed. Exact amount ₹${Number(fmUpiCurrentTxn.amount).toFixed(2)} is ready in the UPI QR window. Pay and submit UTR + screenshot.`;
-  }else{
-   alert('Order placed: '+result.order_number+'\nCoupon Discount: '+shopMoney(discount)+'\nTotal: '+shopMoney(result.grand_total));
-  }
- }catch(e){msg.style.color='#b72e2e';msg.textContent=(orderPlaced?'Order '+(placedResult?.order_number||'')+' was placed, but payment setup needs attention: ':'')+(e.message||'Checkout failed.');}
+  alert('Order placed: '+result.order_number+'\nCoupon Discount: '+shopMoney(discount)+'\nTotal: '+shopMoney(result.grand_total));
+ }catch(e){msg.style.color='#b72e2e';msg.textContent=e.message||'Checkout failed.';}
  finally{btn.disabled=false;}
 }
+
 // Delivery address management. Requires the fm_member_addresses table and its RLS policies.
 let fmAddressSession=null, fmAddresses=[], fmAddressCoords=null, fmPostalLookupTimer=null, fmPostalLookupSeq=0;
 async function getMemberSession(){
@@ -1573,6 +1555,19 @@ function showPage(id,fromHistory=false){
  history.replaceState({fmUserPage:initial,fmRoot:true},'',cleanUrl);
  history.pushState({fmUserPage:initial,fmRoot:true},'',cleanUrl);
  window.addEventListener('popstate',e=>{
+   const upiModal=document.getElementById('fmUpiUserModal');
+   if(upiModal && upiModal.style.display==='block'){
+     const proceed=confirm('Are you sure you want to close the payment without proceeding?');
+     if(!proceed){
+       history.pushState({fmUpiModal:true},'',location.pathname+location.search+'#upi-payment');
+       return;
+     }
+     upiModal.style.display='none';
+     fmUpiModalHistoryActive=false;
+     showPage('checkout',true);
+     history.replaceState({fmUserPage:'checkout'},'',location.pathname+location.search+'#checkout');
+     return;
+   }
    if(e.state?.fmRoot){
      if(confirm('Are you sure you want to exit this page?')){
        signOut();
@@ -1700,11 +1695,31 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 </div></div>
 <script>
 let fmUpiCurrentTxn=null;
+let fmUpiLastContext=null;
+let fmUpiModalHistoryActive=false;
 function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function fmRefreshUpiVisibility(){const fab=document.getElementById('fmUpiUserFab');if(!fab)return;fab.hidden=true;try{if(!fmShopClient)return;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;fab.hidden=!(data?.upi_enabled===true&&data?.manual_verification===true);}catch(e){fab.hidden=true;console.warn('UPI visibility check failed; keeping UPI hidden.',e);}}
-async function fmUpiUserOpen(){await fmRefreshUpiVisibility();const fab=document.getElementById('fmUpiUserFab');if(fab?.hidden){alert('UPI QR payments are currently disabled. Please choose another payment method.');return;}document.getElementById('fmUpiUserModal').style.display='block';fmUpiMyPayments();}
-async function fmUpiUserOpenFor(type,sourceId){await fmUpiUserOpen();document.getElementById('fmUpiType').value=type;document.getElementById('fmUpiSource').value=sourceId;await fmUpiMakeQR();}
-function fmUpiUserClose(){document.getElementById('fmUpiUserModal').style.display='none';}
+async function fmUpiUserOpen(){
+ await fmRefreshUpiVisibility();
+ const fab=document.getElementById('fmUpiUserFab');
+ if(fab?.hidden){alert('UPI QR payments are currently disabled. Please choose another payment method.');return;}
+ const modal=document.getElementById('fmUpiUserModal'); modal.style.display='block';
+ if(!fmUpiModalHistoryActive){history.pushState({fmUpiModal:true},'',location.pathname+location.search+'#upi-payment');fmUpiModalHistoryActive=true;}
+ fmUpiMyPayments();
+ if(fmUpiLastContext){document.getElementById('fmUpiType').value=fmUpiLastContext.type;document.getElementById('fmUpiSource').value=fmUpiLastContext.sourceId;await fmUpiMakeQR();}
+}
+async function fmUpiUserOpenFor(type,sourceId){
+ fmUpiLastContext={type:String(type),sourceId:String(sourceId)};
+ document.getElementById('fmUpiType').value=fmUpiLastContext.type;
+ document.getElementById('fmUpiSource').value=fmUpiLastContext.sourceId;
+ await fmUpiUserOpen();
+}
+
+function fmUpiUserClose(){
+ const modal=document.getElementById('fmUpiUserModal');if(!modal||modal.style.display!=='block')return;
+ if(!confirm('Are you sure you want to close the payment without proceeding?'))return;
+ modal.style.display='none';fmUpiModalHistoryActive=false;showPage('checkout',true);history.replaceState({fmUserPage:'checkout'},'',location.pathname+location.search+'#checkout');
+}
 async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:String(sourceId)});if(error)throw error;
  if(!data?.id||!Number(data.amount)||!data.upi_id||!data.payee_name)throw new Error('Payment preparation returned incomplete gateway details.');
@@ -1722,8 +1737,8 @@ async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  }
  return data;
 }
-async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='';area.innerHTML='';try{const type=document.getElementById('fmUpiType').value,source=document.getElementById('fmUpiSource').value.trim();if(!source)throw new Error('Enter an existing pending Order / Request ID.');const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:source});if(error)throw error;if(!data?.id||!Number.isFinite(Number(data.amount))||Number(data.amount)<=0||!data.upi_id||!data.payee_name)throw new Error('Payment preparation returned incomplete gateway details.');fmUpiCurrentTxn=data;const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Fresh Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);area.innerHTML=`<b>Pay exactly ₹${Number(data.amount).toFixed(2)}</b><br><img src="${qr}" alt="UPI QR" width="260" height="260" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(data.payee_name)}</b><br>${fmUpiEsc(data.upi_id)}</p><p>Reference: ${fmUpiEsc(data.txn_ref)}</p><a href="${uri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='Pay first, then enter UTR and upload screenshot.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to prepare payment: '+e.message;}}
-async function fmUpiSubmitProof(){const msg=document.getElementById('fmUpiUserMsg');try{if(!fmUpiCurrentTxn?.id)throw new Error('Generate QR first.');const utr=document.getElementById('fmUpiUtr').value.trim(),file=document.getElementById('fmUpiProofFile').files[0];if(!utr||!file)throw new Error('UTR and screenshot are required.');if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');const session=await getMemberSession();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;msg.textContent='Uploading screenshot…';const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(ue)throw ue;const {data,error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});if(error)throw error;msg.textContent='Payment submitted. Admin verification is pending.';document.getElementById('fmUpiProofArea').style.display='none';document.getElementById('fmUpiQrArea').innerHTML='';document.getElementById('fmUpiUtr').value='';document.getElementById('fmUpiProofFile').value='';fmUpiCurrentTxn=null;await fmUpiMyPayments();}catch(e){msg.textContent='Submit failed: '+e.message;}}
+async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='';area.innerHTML='';try{const type=document.getElementById('fmUpiType').value,source=document.getElementById('fmUpiSource').value.trim();if(!source)throw new Error('Enter an existing pending Order / Request ID.');fmUpiLastContext={type,sourceId:source};const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:source});if(error)throw error;if(!data?.id)throw new Error('Payment preparation failed.');fmUpiCurrentTxn=data;const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Fresh Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);area.innerHTML=`<b>Pay exactly ₹${Number(data.amount).toFixed(2)}</b><br><img src="${qr}" alt="UPI QR" width="260" height="260" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(data.payee_name)}</b><br>${fmUpiEsc(data.upi_id)}</p><p>Reference: ${fmUpiEsc(data.txn_ref)}</p><a href="${uri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='Pay first, then enter UTR and upload screenshot.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to prepare payment: '+e.message;}}
+async function fmUpiSubmitProof(){const msg=document.getElementById('fmUpiUserMsg');try{if(!fmUpiCurrentTxn?.id)throw new Error('Generate QR first.');const utr=document.getElementById('fmUpiUtr').value.trim(),file=document.getElementById('fmUpiProofFile').files[0];if(!utr||!file)throw new Error('UTR and screenshot are required.');if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');const session=await getMemberSession();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;msg.textContent='Uploading screenshot…';const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(ue)throw ue;const {data,error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});if(error)throw error;msg.textContent='Payment submitted. Admin verification is pending.';document.getElementById('fmUpiProofArea').style.display='none';document.getElementById('fmUpiQrArea').innerHTML='';document.getElementById('fmUpiUtr').value='';document.getElementById('fmUpiProofFile').value='';fmUpiCurrentTxn=null;fmUpiLastContext=null;await fmUpiMyPayments();}catch(e){msg.textContent='Submit failed: '+e.message;}}
 async function fmUpiMyPayments(){const el=document.getElementById('fmUpiMyRows');if(!el)return;try{const {data:{session}}=await fmShopClient.auth.getSession();if(!session){el.textContent='Login required';return;}const {data,error}=await fmShopClient.from('fm_common_payment_transactions').select('txn_ref,payment_type,amount,status,utr_number,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;el.innerHTML=(data||[]).map(x=>`<div style="padding:8px;border:1px solid #e2e9e4;border-radius:8px;margin:6px 0">₹${Number(x.amount).toFixed(2)} · ${fmUpiEsc(x.payment_type)}<br>Ref: ${fmUpiEsc(x.txn_ref)} · ${fmUpiEsc(x.status)}</div>`).join('')||'No payment requests yet.';}catch(e){el.textContent='Could not load payments: '+e.message;}}
 </script>
 <script>
