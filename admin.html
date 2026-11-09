@@ -1368,5 +1368,42 @@ async function fmDFLoadRequests(){const body=document.getElementById('fmDFReques
 async function fmDFReview(id,decision){const note=prompt('Admin note (optional):')||'';if(decision==='approved'&&!confirm('Verify received payment and activate Daily Fresh subscription?'))return;try{const {data,error}=await fmSupabase.rpc('fm_daily_fresh_admin_review',{p_request_id:id,p_decision:decision,p_note:note});if(error)throw error;if(data?.success===false)throw new Error(data.message||'Review failed');document.getElementById('fmDFRequestMsg').textContent='Request '+decision+'.';await fmDFLoadRequests();}catch(e){alert('Review failed: '+e.message);}}
 document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('dailyfresh')?.classList.contains('active'))fmDFLoadAll();});
 </script>
+
+<style>
+#fmUpiAdminFab{position:fixed;right:16px;bottom:22px;z-index:9998;background:#116b43;color:#fff;border:0;border-radius:28px;padding:13px 17px;font-weight:800;box-shadow:0 5px 20px #0003}
+#fmUpiAdminModal,#fmUpiUserModal{display:none;position:fixed;inset:0;z-index:9999;background:#0008;overflow:auto;padding:18px}
+.fm-upi-box{max-width:760px;margin:24px auto;background:#fff;border-radius:16px;padding:18px;color:#183328;box-shadow:0 10px 40px #0004}
+.fm-upi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.fm-upi-box input,.fm-upi-box select{width:100%;padding:11px;border:1px solid #ccd9d1;border-radius:9px;margin:5px 0 12px}
+.fm-upi-box button{padding:10px 14px;border:0;border-radius:9px;background:#176c45;color:#fff;font-weight:700;margin:4px}
+.fm-upi-muted{font-size:12px;color:#64756b}.fm-upi-row{padding:12px;border:1px solid #e0e9e3;border-radius:10px;margin:8px 0;overflow-wrap:anywhere}
+</style>
+<button id="fmUpiAdminFab" type="button" onclick="fmUpiAdminOpen()">UPI Payments</button>
+<div id="fmUpiAdminModal">
+ <div class="fm-upi-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">Dynamic UPI Payment Settings</h2><button onclick="fmUpiAdminClose()">Close</button></div>
+  <p class="fm-upi-muted">Set the UPI ID and payee name. User QR codes will include the exact transaction amount and reference.</p>
+  <div class="fm-upi-grid">
+   <label><input id="fmUpiEnabled" type="checkbox"> Enable UPI QR payments</label>
+   <label><input id="fmUpiManual" type="checkbox" checked> Require manual admin verification</label>
+   <label>UPI ID<input id="fmUpiId" placeholder="yourname@upi"></label>
+   <label>Payee Name<input id="fmUpiPayee" placeholder="Fresh Mart"></label>
+   <label>Payment note<input id="fmUpiNote" placeholder="Fresh Mart Payment"></label>
+  </div>
+  <button onclick="fmUpiAdminSave()">Save UPI Settings</button><span id="fmUpiAdminMsg" class="fm-upi-muted"></span>
+  <hr><h3>Payment Requests</h3><button onclick="fmUpiAdminLoad()">Refresh Requests</button>
+  <div id="fmUpiAdminRows" class="fm-upi-muted">Loading…</div>
+ </div>
+</div>
+<script>
+async function fmUpiAdminOpen(){document.getElementById('fmUpiAdminModal').style.display='block';await fmUpiAdminLoadSettings();await fmUpiAdminLoad();}
+function fmUpiAdminClose(){document.getElementById('fmUpiAdminModal').style.display='none';}
+async function fmUpiAdminLoadSettings(){const m=document.getElementById('fmUpiAdminMsg');try{const {data,error}=await fmSupabase.from('fm_payment_gateway_settings').select('*').eq('id',1).maybeSingle();if(error)throw error;document.getElementById('fmUpiEnabled').checked=!!data?.upi_enabled;document.getElementById('fmUpiManual').checked=data?.manual_verification!==false;document.getElementById('fmUpiId').value=data?.upi_id||'';document.getElementById('fmUpiPayee').value=data?.payee_name||'';document.getElementById('fmUpiNote').value=data?.upi_note||'Fresh Mart Payment';}catch(e){m.textContent='Load error: '+e.message;}}
+async function fmUpiAdminSave(){const m=document.getElementById('fmUpiAdminMsg');m.textContent='Saving…';try{const {data:{session}}=await fmSupabase.auth.getSession();if(!session)throw new Error('Admin login required');const payload={id:1,upi_enabled:document.getElementById('fmUpiEnabled').checked,manual_verification:document.getElementById('fmUpiManual').checked,upi_id:document.getElementById('fmUpiId').value.trim(),payee_name:document.getElementById('fmUpiPayee').value.trim(),upi_note:document.getElementById('fmUpiNote').value.trim(),updated_at:new Date().toISOString()};if(payload.upi_enabled&&(!payload.upi_id||!payload.payee_name))throw new Error('UPI ID and Payee Name are required');const {error}=await fmSupabase.from('fm_payment_gateway_settings').upsert(payload,{onConflict:'id'});if(error)throw error;m.textContent='Saved successfully.';}catch(e){m.textContent='Save failed: '+e.message;}}
+async function fmUpiAdminLoad(){const el=document.getElementById('fmUpiAdminRows');if(!el)return;el.textContent='Loading…';try{const {data,error}=await fmSupabase.from('fm_common_payment_transactions').select('*').order('created_at',{ascending:false}).limit(100);if(error)throw error;el.innerHTML=(data||[]).map(x=>`<div class="fm-upi-row"><b>${x.payment_type} · ₹${Number(x.amount).toFixed(2)}</b><br>Ref: ${fmUpiEsc(x.txn_ref)}<br>User: ${fmUpiEsc(x.user_id)}<br>Status: ${fmUpiEsc(x.status)}<br>UTR: ${fmUpiEsc(x.utr_number||'Not submitted')}<br>${x.screenshot_path?`<a href="${fmUpiEsc(x.screenshot_path)}" target="_blank" rel="noopener">View proof</a><br>`:''}${x.status==='submitted'?`<button onclick="fmUpiAdminReview('${x.id}','paid')">Approve</button><button onclick="fmUpiAdminReview('${x.id}','rejected')">Reject</button>`:''}</div>`).join('')||'No payment requests found.';}catch(e){el.textContent='Load error: '+e.message;}}
+async function fmUpiAdminReview(id,status){if(!confirm('Mark this payment as '+status+'? Verify bank/UPI statement before approval.'))return;try{const {data:{session}}=await fmSupabase.auth.getSession();const {error}=await fmSupabase.from('fm_common_payment_transactions').update({status,verified_by:session.user.id,verified_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id).eq('status','submitted');if(error)throw error;await fmUpiAdminLoad();alert('Payment status updated.');}catch(e){alert('Review failed: '+e.message);}}
+function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script>
+
 </body>
 </html>

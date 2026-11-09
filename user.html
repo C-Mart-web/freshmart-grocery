@@ -1654,6 +1654,41 @@ const {error}=await fmShopClient.from('fm_daily_fresh_payment_requests').insert(
 document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));document.querySelectorAll('[data-page="plans"]').forEach(b=>b.addEventListener('click',()=>setTimeout(fmDFUserLoad,300)));
 </script>
 </body>
+
+<style>
+#fmUpiUserFab{position:fixed;right:16px;bottom:22px;z-index:9998;background:#176c45;color:#fff;border:0;border-radius:28px;padding:13px 17px;font-weight:800;box-shadow:0 5px 20px #0003}
+#fmUpiUserModal{display:none;position:fixed;inset:0;z-index:9999;background:#0008;overflow:auto;padding:14px}
+.fm-upi-userbox{max-width:540px;margin:18px auto;background:#fff;border-radius:16px;padding:18px;color:#183328;box-shadow:0 10px 40px #0004}
+.fm-upi-userbox input,.fm-upi-userbox select{width:100%;padding:11px;border:1px solid #ccd9d1;border-radius:9px;margin:5px 0 12px}
+.fm-upi-userbox button{padding:10px 14px;border:0;border-radius:9px;background:#176c45;color:#fff;font-weight:700;margin:4px}
+</style>
+<button id="fmUpiUserFab" type="button" onclick="fmUpiUserOpen()">Pay by UPI QR</button>
+<div id="fmUpiUserModal"><div class="fm-upi-userbox">
+ <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">UPI QR Payment</h2><button onclick="fmUpiUserClose()">Close</button></div>
+ <p style="font-size:12px;color:#64756b">Choose payment purpose and enter the exact payable amount. Scan QR with any UPI app. Submit UTR after paying.</p>
+ <label>Payment purpose<select id="fmUpiType"><option value="grocery">Grocery</option><option value="membership">Membership</option><option value="daily_fresh">Daily Fresh</option></select></label>
+ <label>Amount (₹)<input id="fmUpiAmount" type="number" min="1" step="0.01" placeholder="Enter payable amount"></label>
+ <label>Related Order / Plan Reference (optional)<input id="fmUpiSource" placeholder="Order ID or Plan ID"></label>
+ <button onclick="fmUpiMakeQR()">Generate Dynamic QR</button>
+ <div id="fmUpiQrArea" style="text-align:center;margin:12px 0"></div>
+ <div id="fmUpiProofArea" style="display:none">
+  <label>UPI UTR / Transaction ID<input id="fmUpiUtr" maxlength="80" placeholder="Enter UTR after payment"></label>
+  <label>Payment screenshot URL (optional)<input id="fmUpiProof" placeholder="Upload to approved storage and paste URL"></label>
+  <button onclick="fmUpiSubmitProof()">Submit Payment Details</button>
+ </div>
+ <p id="fmUpiUserMsg" style="font-size:13px" aria-live="polite"></p>
+ <hr><h3>My UPI Payment Requests</h3><button onclick="fmUpiMyPayments()">Refresh</button><div id="fmUpiMyRows"></div>
+</div></div>
+<script>
+let fmUpiCurrentTxn=null,fmUpiCurrentUri='';
+function fmUpiUserOpen(){document.getElementById('fmUpiUserModal').style.display='block';fmUpiMyPayments();}
+function fmUpiUserClose(){document.getElementById('fmUpiUserModal').style.display='none';}
+function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='Preparing payment…';area.innerHTML='';try{const {data:{session}}=await fmShopClient.auth.getSession();if(!session)throw new Error('Please login first');const amount=Number(document.getElementById('fmUpiAmount').value);if(!Number.isFinite(amount)||amount<=0)throw new Error('Enter a valid amount');const {data:cfg,error:ce}=await fmShopClient.from('fm_payment_gateway_settings').select('*').eq('id',1).maybeSingle();if(ce)throw ce;if(!cfg?.upi_enabled||!cfg.upi_id||!cfg.payee_name)throw new Error('UPI QR payments are currently unavailable');const ref='FM'+Date.now()+Math.random().toString(36).slice(2,7).toUpperCase();const type=document.getElementById('fmUpiType').value;const payload={txn_ref:ref,user_id:session.user.id,payment_type:type,source_id:document.getElementById('fmUpiSource').value.trim()||null,amount,currency:'INR',payment_method:'upi_qr',status:'submitted',upi_id:cfg.upi_id,payee_name:cfg.payee_name};const {data:txn,error}=await fmShopClient.from('fm_common_payment_transactions').insert(payload).select('*').single();if(error)throw error;fmUpiCurrentTxn=txn;const params=new URLSearchParams({pa:cfg.upi_id,pn:cfg.payee_name,am:amount.toFixed(2),cu:'INR',tn:(cfg.upi_note||'Fresh Mart')+' '+ref,tr:ref});fmUpiCurrentUri='upi://pay?'+params.toString();const qr='https://api.qrserver.com/v1/create-qr-code/?size=240x240&data='+encodeURIComponent(fmUpiCurrentUri);area.innerHTML=`<p><b>Pay ₹${amount.toFixed(2)}</b></p><img src="${qr}" alt="Dynamic UPI QR" width="240" height="240" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(cfg.payee_name)}</b><br>${fmUpiEsc(cfg.upi_id)}</p><p>Reference: ${fmUpiEsc(ref)}</p><a href="${fmUpiCurrentUri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='QR generated. Complete payment, then enter UTR.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to create QR: '+e.message;}}
+async function fmUpiSubmitProof(){const msg=document.getElementById('fmUpiUserMsg');try{if(!fmUpiCurrentTxn)throw new Error('Generate QR first');const utr=document.getElementById('fmUpiUtr').value.trim();if(!utr)throw new Error('Enter UTR after payment');const {error}=await fmShopClient.from('fm_common_payment_transactions').update({utr_number:utr,screenshot_path:document.getElementById('fmUpiProof').value.trim()||null,updated_at:new Date().toISOString()}).eq('id',fmUpiCurrentTxn.id).eq('user_id',fmUpiCurrentTxn.user_id).eq('status','submitted');if(error)throw error;msg.textContent='Payment details submitted. Admin verification is pending.';await fmUpiMyPayments();}catch(e){msg.textContent='Submit failed: '+e.message;}}
+async function fmUpiMyPayments(){const el=document.getElementById('fmUpiMyRows');if(!el)return;try{const {data:{session}}=await fmShopClient.auth.getSession();if(!session){el.textContent='Login required';return;}const {data,error}=await fmShopClient.from('fm_common_payment_transactions').select('txn_ref,payment_type,amount,status,utr_number,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;el.innerHTML=(data||[]).map(x=>`<div style="padding:8px;border:1px solid #e2e9e4;border-radius:8px;margin:6px 0">₹${Number(x.amount).toFixed(2)} · ${fmUpiEsc(x.payment_type)}<br>Ref: ${fmUpiEsc(x.txn_ref)} · ${fmUpiEsc(x.status)}</div>`).join('')||'No payment requests yet.';}catch(e){el.textContent='Could not load payments: '+e.message;}}
+</script>
+
 </html>
 <script>
 (async function fmBindLiveMembershipPlans(){try{const {data,error}=await fmShopClient.from('fm_membership_plans').select('id,plan_amount,plan_name,is_active').eq('is_active',true).order('plan_amount');if(error)throw error;const wrap=document.querySelector('.planchoices');if(wrap&&data?.length){wrap.innerHTML=data.map((p,i)=>`<button type="button" class="planchoice ${i===0?'selected':''}" data-plan="${Number(p.plan_amount)}" data-plan-id="${p.id}" onclick="selectPlan(this)"><h3>${shopEsc(p.plan_name||p.plan_code||'Membership')}</h3><div class="amount">₹${Number(p.plan_amount).toLocaleString('en-IN')}</div><p>Membership benefits as per current plan rules.</p></button>`).join('');if(data[0])document.getElementById('payAmount').value=data[0].plan_amount;}await fmLoadMembershipPayments();}catch(e){console.warn('Membership plans:',e.message)}})();
