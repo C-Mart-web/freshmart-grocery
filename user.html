@@ -135,7 +135,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   
 </section>
 <section class="page" id="cart"><div class="welcome"><div><h1>My Cart 🛒</h1><p>Review items and quantities before checkout.</p></div><button class="btn btn-outline" onclick="fmRenderCart()">Refresh</button></div><div class="card"><div id="fmCartRows" class="hint">Your cart is empty.</div><div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:850"><span>Subtotal</span><span id="fmCartSubtotal">₹0.00</span></div><button class="btn btn-green" style="margin-top:14px;width:100%" onclick="fmOpenCheckout()">Proceed to Checkout</button><button class="btn btn-outline" style="margin-top:9px;width:100%" onclick="showPage('groceries')">Continue Shopping</button></div></section>
-<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Benefit (after delivery)</span><b id="fmCheckoutSelfDiscount">Credited after delivery</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Confirm & Place Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
+<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment" onchange="fmUpdateCheckoutButton()"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Benefit (after delivery)</span><b id="fmCheckoutSelfDiscount">Credited after delivery</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Place an Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
 <section class="page" id="plans"><div class="fm-page-banner" id="fmBannerPlans" style="display:none"></div>
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
 
@@ -952,8 +952,27 @@ function fmRenderCart(){
 }
 function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].quantity<=0)fmCart.splice(i,1);fmSaveCart();}
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
-async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;if(!dateInput.value||dateInput.value<today)dateInput.value=today;}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
+async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;if(!dateInput.value||dateInput.value<today)dateInput.value=today;}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmUpdateCheckoutButton();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
 function fmGoAddDeliveryAddress(){showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
+async function fmRestoreCheckoutAfterRefresh(){
+ const checkout=document.getElementById('checkout');if(!checkout||!checkout.classList.contains('active'))return;
+ try{
+  const card=document.getElementById('fmCheckoutCard');if(card)card.style.display='block';
+  await loadDeliveryAddresses();
+  const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');
+  if(!fmAddresses.length){if(wrap)wrap.style.display='none';if(addBtn)addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}
+  else{
+   if(wrap)wrap.style.display='block';if(addBtn)addBtn.style.display='inline-flex';
+   sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');
+   let savedId=localStorage.getItem('fm_checkout_address_id');let chosen=fmAddresses.find(a=>String(a.id)===String(savedId))||fmAddresses.find(a=>a.is_default)||fmAddresses[0];
+   if(chosen){sel.value=String(chosen.id);document.getElementById('fmCheckoutPin').value=chosen.pincode;}
+   const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;const savedDate=localStorage.getItem('fm_checkout_delivery_date');dateInput.value=savedDate&&savedDate>=today?savedDate:today;}
+   await fmLoadDeliveryChoices();
+  }
+  await fmLoadCheckoutPayments();fmUpdateCheckoutButton();fmRenderCart();fmUpdateCouponTotal();
+  if(!fmCart.length){const pending=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');const m=document.getElementById('fmCheckoutMsg');if(m)m.textContent=pending?'Your UPI order is saved. Continue payment from My Orders → Pay this order by UPI QR.':'Your cart is empty. Add products to continue shopping.';}
+ }catch(e){console.warn('Checkout restore failed:',e);const m=document.getElementById('fmCheckoutMsg');if(m)m.textContent='Checkout details could not reload: '+e.message;}
+}
 async function fmLoadCheckoutPayments(){
  const sel=document.getElementById('fmCheckoutPayment');
  try{
@@ -971,6 +990,7 @@ async function fmLoadCheckoutPayments(){
   opts.push('<option value="cod">Cash on Delivery</option>');
   sel.innerHTML=opts.join('');
   if(balance<=0)sel.options[0].text+=' (Insufficient balance)';
+  fmUpdateCheckoutButton();
  }catch(e){
   sel.innerHTML='<option value="">Payment settings unavailable</option>';
   document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;
@@ -1037,7 +1057,9 @@ async function fmLoadDeliveryChoices(){
   if(typeof fmUpdateCouponTotal==='function')fmUpdateCouponTotal();else document.getElementById('fmCheckoutTotal').textContent=shopMoney(subtotal+fee);
  }catch(e){box.textContent='Delivery options could not load: '+(e.message||'Please try again.');}
 }
-document.getElementById('fmCheckoutAddress')?.addEventListener('change',async e=>{const a=fmAddresses.find(x=>String(x.id)===e.target.value);if(a){document.getElementById('fmCheckoutPin').value=a.pincode;await fmLoadDeliveryChoices();}});
+document.getElementById('fmCheckoutAddress')?.addEventListener('change',async e=>{const a=fmAddresses.find(x=>String(x.id)===e.target.value);if(a){localStorage.setItem('fm_checkout_address_id',String(a.id));document.getElementById('fmCheckoutPin').value=a.pincode;localStorage.setItem('fm_checkout_pincode',a.pincode);await fmLoadDeliveryChoices();}});
+document.getElementById('fmCheckoutPin')?.addEventListener('change',e=>localStorage.setItem('fm_checkout_pincode',e.target.value.trim()));
+document.getElementById('fmCheckoutDeliveryDate')?.addEventListener('change',e=>localStorage.setItem('fm_checkout_delivery_date',e.target.value));
 // FRESH-MART CHECKOUT COUPON SUPPORT
 let fmAppliedCoupon = null;
 let fmCouponDiscount = 0;
@@ -1109,6 +1131,12 @@ function fmRemoveCheckoutCoupon(){
  fmUpdateCouponTotal();
 }
 
+function fmUpdateCheckoutButton(){
+ const method=String(document.getElementById('fmCheckoutPayment')?.value||'').toLowerCase();
+ const btn=document.getElementById('fmPlaceOrderBtn');if(!btn)return;
+ btn.textContent=method==='upi'?'Pay Now':'Place an Order';
+ btn.disabled=!method;
+}
 async function fmPlaceOrder(){
  const msg=document.getElementById('fmCheckoutMsg'),btn=document.getElementById('fmPlaceOrderBtn');
  try{
@@ -1125,6 +1153,17 @@ async function fmPlaceOrder(){
   if(mode==='slot'&&!slotId)throw new Error('Please choose a delivery date and slot.');
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
+  if(String(method).toLowerCase()==='upi'){
+   let savedPending=null;try{savedPending=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}
+   if(savedPending?.sourceId){
+    const {data:existing,error:existingError}=await fmShopClient.from('fm_grocery_orders').select('id,payment_status,order_status').eq('id',savedPending.sourceId).eq('user_id',session.user.id).maybeSingle();
+    if(existingError)throw existingError;
+    if(existing&&String(existing.payment_status).toLowerCase()!=='paid'&&String(existing.order_status).toLowerCase()!=='cancelled'){
+     await fmUpiUserOpenFor('grocery',String(existing.id));return;
+    }
+    localStorage.removeItem('fm_pending_upi_grocery');
+   }
+  }
    // Self Purchase Discount is applied and verified securely by the checkout SQL function.
   btn.disabled=true;msg.textContent='Checking stock and placing order…';
   const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{
@@ -1135,15 +1174,23 @@ async function fmPlaceOrder(){
   if(error)throw error;
   const result=Array.isArray(data)?data[0]:data;
   if(!result?.success)throw new Error(result?.message||'Order could not be placed.');
-  const orderId=result.order_id||result.id||result.grocery_order_id;
   if(String(method).toLowerCase()==='upi'){
-   if(!orderId)throw new Error('Order was created but the server did not return its Order ID. Contact support before retrying to avoid a duplicate order.');
-   const pending={type:'grocery',sourceId:String(orderId),orderNumber:String(result.order_number||'')};
-   localStorage.setItem('fm_pending_upi_grocery',JSON.stringify(pending));
-   fmCart=[];fmSaveCart();
-   fmAppliedCoupon=null;fmCouponDiscount=0;
-   msg.style.color='#176c45';
-   msg.textContent='Order reserved. Opening secure UPI QR payment…';
+   let orderId=result.order_id||result.id||result.grocery_order_id||null;
+   if(!orderId && result.order_number){
+    const {data:found,error:findError}=await fmShopClient.from('fm_grocery_orders').select('id').eq('user_id',session.user.id).eq('order_number',String(result.order_number)).maybeSingle();
+    if(findError)throw findError;orderId=found?.id||null;
+   }
+   if(!orderId)throw new Error('Order was created, but its ID was not returned. Open My Orders and use Pay this order by UPI QR. Do not place the same order again.');
+   fmCart=[];fmSaveCart();fmAppliedCoupon=null;fmCouponDiscount=0;
+   localStorage.setItem('fm_pending_upi_grocery',JSON.stringify({type:'grocery',sourceId:String(orderId),orderNumber:String(result.order_number||'')}));
+   const savedAddress= document.getElementById('fmCheckoutAddress')?.value||'';
+   if(savedAddress)localStorage.setItem('fm_checkout_address_id',savedAddress);
+   const savedPin=document.getElementById('fmCheckoutPin')?.value||'';
+   if(savedPin)localStorage.setItem('fm_checkout_pincode',savedPin);
+   const savedDate=document.getElementById('fmCheckoutDeliveryDate')?.value||'';
+   if(savedDate)localStorage.setItem('fm_checkout_delivery_date',savedDate);
+   msg.style.color='#176c45';msg.textContent='Your order is saved as pending payment. Opening its UPI QR…';
+   await loadMyGroceryOrders();
    await fmUpiUserOpenFor('grocery',String(orderId));
    return;
   }
@@ -1153,6 +1200,7 @@ async function fmPlaceOrder(){
   msg.style.color='#168447';
   msg.textContent=`Order ${result.order_number} placed. Discount ${shopMoney(discount)}. Total ${shopMoney(result.grand_total)}. Payment status: ${result.payment_status}.`;
   alert('Order placed: '+result.order_number+'\nCoupon Discount: '+shopMoney(discount)+'\nTotal: '+shopMoney(result.grand_total));
+  showPage('orders');await loadMyGroceryOrders();
  }catch(e){msg.style.color='#b72e2e';msg.textContent=e.message||'Checkout failed.';}
  finally{btn.disabled=false;}
 }
@@ -1522,7 +1570,7 @@ async function fmSavePayoutDetails(){
   if(btn){btn.disabled=false;btn.textContent='Save All Bank Details';}
  }
 }
-async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;const visibleOrders=(orders||[]).filter(o=>!(String(o.payment_method||'').toLowerCase()==='upi'&&String(o.payment_status||'').toLowerCase()!=='paid'));badge.textContent=visibleOrders.length+' ORDERS';if(!visibleOrders.length){box.textContent='No paid or confirmed orders yet. Pending UPI payments can be continued from Checkout.';return;}box.innerHTML=visibleOrders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div>${o.payment_method==='upi'&&o.payment_status==='pending'&&o.order_status!=='cancelled'?`<button type="button" class="btn btn-green" style="margin-top:10px" onclick="fmUpiUserOpenFor('grocery','${o.id}')">Pay this order by UPI QR</button>`:''}</article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
+async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;let pendingMarker=null;try{pendingMarker=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}const newlyPaid=pendingMarker?(orders||[]).find(o=>String(o.id)===String(pendingMarker.sourceId)&&String(o.payment_status).toLowerCase()==='paid'):null;if(newlyPaid){localStorage.removeItem('fm_pending_upi_grocery');alert('Payment confirmed. Order placed: '+(newlyPaid.order_number||''));showPage('orders');}badge.textContent=(orders||[]).length+' ORDERS';if(!orders?.length){box.textContent='No orders yet. Your placed orders will appear here.';return;}box.innerHTML=orders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div>${o.payment_method==='upi'&&o.payment_status==='pending'&&o.order_status!=='cancelled'?`<button type="button" class="btn btn-green" style="margin-top:10px" onclick="fmUpiUserOpenFor('grocery','${o.id}')">Pay this order by UPI QR</button>`:''}</article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
 async function signOut(){
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
   if(authKey){
@@ -1710,12 +1758,11 @@ let fmUpiCurrentTxn=null;
 let fmUpiLastContext=null;
 let fmUpiModalHistoryActive=false;
 function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-async function fmRefreshUpiVisibility(){const fab=document.getElementById('fmUpiUserFab');if(!fab)return;fab.hidden=true;try{if(!fmShopClient)return;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;fab.hidden=!(data?.upi_enabled===true&&data?.manual_verification===true);}catch(e){fab.hidden=true;console.warn('UPI visibility check failed; keeping UPI hidden.',e);}}
+async function fmRefreshUpiVisibility(){const fab=document.getElementById('fmUpiUserFab');if(fab)fab.hidden=true;try{if(!fmShopClient)return false;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;return data?.upi_enabled===true&&data?.manual_verification===true;}catch(e){console.warn('UPI visibility check failed; keeping UPI hidden.',e);return false;}}
 async function fmUpiUserOpen(){
- if(!fmUpiLastContext){try{const saved=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');if(saved?.type&&saved?.sourceId)fmUpiLastContext=saved;}catch(_){}}
- await fmRefreshUpiVisibility();
- const fab=document.getElementById('fmUpiUserFab');
- if(fab?.hidden){alert('UPI QR payments are currently disabled. Please choose another payment method.');return;}
+ const enabled=await fmRefreshUpiVisibility();
+ if(!enabled){alert('UPI QR payments are currently disabled. Please choose another payment method.');return;}
+ if(!fmUpiLastContext?.type||!fmUpiLastContext?.sourceId){alert('To pay by UPI QR, open My Orders and tap Pay this order by UPI QR on the pending order.');return;}
  const modal=document.getElementById('fmUpiUserModal'); modal.style.display='block';
  if(!fmUpiModalHistoryActive){history.pushState({fmUpiModal:true},'',location.pathname+location.search+'#upi-payment');fmUpiModalHistoryActive=true;}
  fmUpiMyPayments();
@@ -1752,11 +1799,12 @@ async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  return data;
 }
 async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='';area.innerHTML='';try{const type=document.getElementById('fmUpiType').value,source=document.getElementById('fmUpiSource').value.trim();if(!source)throw new Error('Enter an existing pending Order / Request ID.');fmUpiLastContext={type,sourceId:source};const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:source});if(error)throw error;if(!data?.id)throw new Error('Payment preparation failed.');fmUpiCurrentTxn=data;const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Fresh Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);area.innerHTML=`<b>Pay exactly ₹${Number(data.amount).toFixed(2)}</b><br><img src="${qr}" alt="UPI QR" width="260" height="260" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(data.payee_name)}</b><br>${fmUpiEsc(data.upi_id)}</p><p>Reference: ${fmUpiEsc(data.txn_ref)}</p><a href="${uri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='Pay first, then enter UTR and upload screenshot.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to prepare payment: '+e.message;}}
-async function fmUpiSubmitProof(){const msg=document.getElementById('fmUpiUserMsg');try{if(!fmUpiCurrentTxn?.id)throw new Error('Generate QR first.');const utr=document.getElementById('fmUpiUtr').value.trim(),file=document.getElementById('fmUpiProofFile').files[0];if(!utr||!file)throw new Error('UTR and screenshot are required.');if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');const session=await getMemberSession();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;msg.textContent='Uploading screenshot…';const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(ue)throw ue;const {data,error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});if(error)throw error;msg.textContent='Payment submitted. Admin verification is pending.';document.getElementById('fmUpiProofArea').style.display='none';document.getElementById('fmUpiQrArea').innerHTML='';document.getElementById('fmUpiUtr').value='';document.getElementById('fmUpiProofFile').value='';fmUpiCurrentTxn=null;fmUpiLastContext=null;localStorage.removeItem('fm_pending_upi_grocery');await fmUpiMyPayments();}catch(e){msg.textContent='Submit failed: '+e.message;}}
+async function fmUpiSubmitProof(){const msg=document.getElementById('fmUpiUserMsg');try{if(!fmUpiCurrentTxn?.id)throw new Error('Generate QR first.');const utr=document.getElementById('fmUpiUtr').value.trim(),file=document.getElementById('fmUpiProofFile').files[0];if(!utr||!file)throw new Error('UTR and screenshot are required.');if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');const session=await getMemberSession();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;msg.textContent='Uploading screenshot…';const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(ue)throw ue;const {data,error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});if(error)throw error;msg.textContent='Payment submitted. Admin verification is pending.';document.getElementById('fmUpiProofArea').style.display='none';document.getElementById('fmUpiQrArea').innerHTML='';document.getElementById('fmUpiUtr').value='';document.getElementById('fmUpiProofFile').value='';fmUpiCurrentTxn=null;fmUpiLastContext=null;await fmUpiMyPayments();await loadMyGroceryOrders();}catch(e){msg.textContent='Submit failed: '+e.message;}}
 async function fmUpiMyPayments(){const el=document.getElementById('fmUpiMyRows');if(!el)return;try{const {data:{session}}=await fmShopClient.auth.getSession();if(!session){el.textContent='Login required';return;}const {data,error}=await fmShopClient.from('fm_common_payment_transactions').select('txn_ref,payment_type,amount,status,utr_number,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;el.innerHTML=(data||[]).map(x=>`<div style="padding:8px;border:1px solid #e2e9e4;border-radius:8px;margin:6px 0">₹${Number(x.amount).toFixed(2)} · ${fmUpiEsc(x.payment_type)}<br>Ref: ${fmUpiEsc(x.txn_ref)} · ${fmUpiEsc(x.status)}</div>`).join('')||'No payment requests yet.';}catch(e){el.textContent='Could not load payments: '+e.message;}}
 </script>
 <script>
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(fmRefreshUpiVisibility,900);});
+document.addEventListener('DOMContentLoaded',()=>{setTimeout(fmRefreshUpiVisibility,900);setTimeout(fmRestoreCheckoutAfterRefresh,1200);});
+window.addEventListener('pageshow',()=>{if(location.hash==='#checkout')setTimeout(fmRestoreCheckoutAfterRefresh,500);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(fmRefreshUpiVisibility,200);});
 </script>
 </body>
