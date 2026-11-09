@@ -259,7 +259,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <button class="btn btn-green" style="margin-top:10px" onclick="fmSaveDeliverySlab()">Add / Save Slab</button><p id="fmSlabMsg" class="hint"></p>
 <div class="tablewrap"><table><thead><tr><th>Bill Range</th><th>Delivery Charge</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmSlabRows"><tr><td colspan="4" class="empty">Loading slabs…</td></tr></tbody></table></div>
 <p class="hint">Example: ₹1,000–₹1,999 = ₹75; ₹2,000–₹2,999 = ₹50; ₹3,000+ = Free. Change these values as needed.</p></div>
-<div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Delivery Slot Manager</h2></div><p class="hint">Add as many time slots as needed for each pincode and delivery date. Example: 11:00–13:00 and 17:00–19:00. Booking closes 1 hour before each slot starts.</p><div class="formgrid"><div class="field"><label>Delivery Date</label><input id="fmSlotDate" type="date" required><small class="hint">Choose the date on which customers can book this slot.</small></div><div class="field"><label>Apply to Pincode (blank = all areas)</label><input id="fmSlotPin" maxlength="6" placeholder="Optional pincode"></div><div class="field"><label>Slot Label</label><input id="fmSlotLabel" placeholder="Afternoon 2 PM – 5 PM"></div><div class="field"><label>Start</label><input id="fmSlotStart" type="time" value="08:00"></div><div class="field"><label>End</label><input id="fmSlotEnd" type="time" value="10:00"></div><div class="field"><label>Maximum Orders</label><input id="fmSlotCapacity" type="number" min="1" value="20"></div></div><button class="btn btn-green" style="margin-top:12px" onclick="fmAddSlot()">Add Delivery Slot</button><p id="fmSlotMsg" class="hint"></p><div class="tablewrap"><table><thead><tr><th>Date</th><th>Area</th><th>Slot</th><th>Capacity</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmSlotRows"><tr><td colspan="6" class="empty">No slots loaded.</td></tr></tbody></table></div></div>
+<div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Daily Delivery Slot Manager</h2></div><p class="hint">Set your regular delivery slots only once. These slots repeat automatically every day. Booking closes 1 hour before each slot starts. Capacity is counted separately for each delivery date.</p><div class="formgrid"><div class="field"><label>Apply to Pincode (blank = all areas)</label><input id="fmSlotPin" maxlength="6" inputmode="numeric" placeholder="Optional 6-digit pincode"></div><div class="field"><label>Slot Label</label><input id="fmSlotLabel" placeholder="Morning Delivery"></div><div class="field"><label>Start</label><input id="fmSlotStart" type="time" value="08:00"></div><div class="field"><label>End</label><input id="fmSlotEnd" type="time" value="10:00"></div><div class="field"><label>Maximum Orders per Day</label><input id="fmSlotCapacity" type="number" min="1" value="20"></div></div><button class="btn btn-green" style="margin-top:12px" onclick="fmAddSlot()">＋ Add Daily Slot</button><p id="fmSlotMsg" class="hint"></p><div class="tablewrap"><table><thead><tr><th>Area</th><th>Daily Slot</th><th>Daily Capacity</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmSlotRows"><tr><td colspan="5" class="empty">Loading daily slots…</td></tr></tbody></table></div></div>
 <div class="card"><div class="formgrid"><div class="field"><label>Portal name</label><input value="Fresh-Mart" readonly></div><div class="field"><label>Primary theme</label><select><option>Green & White</option><option>Blue & White</option></select></div><div class="field"><label>Support email</label><input type="email" placeholder="Support email"></div><div class="field"><label>Support mobile</label><input type="tel" placeholder="Support mobile"></div><div class="field"><label>Payment instructions</label><textarea placeholder="Enter company-approved payment instructions"></textarea></div><div class="field"><label>Maintenance notice</label><textarea placeholder="Optional site notice"></textarea></div></div></div>
 </section>
 <div class="small" id="dbStatus" style="text-align:center;padding:12px 0 5px">Connecting securely to Fresh-Mart database…</div><div class="small" style="text-align:center;padding:0 0 5px">Fresh-Mart Admin</div>
@@ -637,7 +637,7 @@ function fmRenderOrders(){const body=document.getElementById('fmOrdersRows');if(
 async function fmUpdateOrderStatus(id,status){if(!status)return;const current=fmOrdersCache.find(o=>String(o.id)===String(id));if(current?.order_status==='delivered'){alert('This order is already Delivered and locked.');await fmLoadOrders();return;}if(!['placed','confirmed','packing','ready','out_for_delivery','delivered','cancelled'].includes(status)){alert('Invalid order status.');await fmLoadOrders();return;}if(status==='delivered'&&!confirm('Mark this order as Delivered? This is a final status and cannot be changed from the Admin Panel.')){await fmLoadOrders();return;}try{const {error}=await fmSupabase.from('fm_grocery_orders').update({order_status:status,updated_at:new Date().toISOString()}).eq('id',id).neq('order_status','delivered');if(error)throw error;await fmLoadOrders();}catch(e){alert('Order update failed: '+e.message);await fmLoadOrders();}}
 
 let fmAdminCats=[],fmAdminSubcats=[],fmAdminAreas=[],fmAdminSlots=[];
-(function fmInitSlotDate(){const el=document.getElementById('fmSlotDate');if(el){const d=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());el.min=d;el.value=d;}})();
+
 let fmPendingProductCategory='',fmPendingProductSubcategory='';
 function fmFillProductCategorySelect(selectedName='',selectedSubcategory=''){
  const catSel=document.getElementById('productCategory'),subSel=document.getElementById('productSubcategory');if(!catSel||!subSel)return;
@@ -744,9 +744,34 @@ async function fmLoadDeliverySlabs(){
 }
 function fmEditSlab(id,min,max,charge){let h=document.getElementById('fmSlabId');if(!h){h=document.createElement('input');h.type='hidden';h.id='fmSlabId';document.getElementById('fmSlabMin').parentElement.parentElement.appendChild(h);}h.value=id;fmSlabMin.value=min;fmSlabMax.value=max??'';fmSlabCharge.value=charge;fmSlabMsg.textContent='Editing selected slab. Save to update.';}
 async function fmToggleSlab(id,active){const {error}=await fmSupabase.from('fm_delivery_charge_slabs').update({is_active:active}).eq('id',id);if(error)fmSlabMsg.textContent=error.message;else await fmLoadDeliverySlabs();}
-async function fmLoadSlots(){const {data,error}=await fmSupabase.from('fm_delivery_slots').select('*').order('delivery_date').order('start_time');if(error)throw error;fmAdminSlots=data||[];document.getElementById('fmSlotRows').innerHTML=fmAdminSlots.map(s=>`<tr><td>${s.delivery_date||'Date not set'}</td><td>${s.pincode||'All areas'}</td><td>${escapeHtml(s.slot_label)} (${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)})</td><td>${s.max_orders}</td><td>${s.is_active?'Active':'Off'}</td><td><button class="btn btn-outline btn-sm" onclick="fmToggleSlot('${s.id}',${!s.is_active})">${s.is_active?'Turn OFF':'Turn ON'}</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No delivery slots created.</td></tr>';}
-async function fmAddSlot(){const msg=fmSlotMsg;try{const pin=fmSlotPin.value.trim()||null,date=fmSlotDate.value;if(!date)throw new Error('Select a delivery date.');if(date<new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date()))throw new Error('Past delivery dates are not allowed.');if(pin&&!/^\d{6}$/.test(pin))throw new Error('Pincode must be 6 digits.');if(!fmSlotLabel.value.trim()||!fmSlotStart.value||!fmSlotEnd.value||fmSlotEnd.value<=fmSlotStart.value)throw new Error('Enter a label and valid start/end times.');const {error}=await fmSupabase.from('fm_delivery_slots').insert({delivery_date:date,pincode:pin,slot_label:fmSlotLabel.value.trim(),start_time:fmSlotStart.value,end_time:fmSlotEnd.value,max_orders:Number(fmSlotCapacity.value),is_active:true});if(error)throw error;msg.textContent='Delivery slot added for '+date+'.';await fmLoadSlots();}catch(e){msg.textContent='Could not add slot: '+e.message;}}
-async function fmToggleSlot(id,active){try{const {error}=await fmSupabase.from('fm_delivery_slots').update({is_active:active}).eq('id',id);if(error)throw error;await fmLoadSlots();}catch(e){fmSlotMsg.textContent='Could not update slot: '+e.message;}}
+async function fmLoadSlots(){
+ const {data,error}=await fmSupabase.from('fm_delivery_slot_templates').select('*').order('start_time');
+ if(error)throw error;
+ fmAdminSlots=data||[];
+ document.getElementById('fmSlotRows').innerHTML=fmAdminSlots.map(s=>`<tr><td>${s.pincode||'All areas'}</td><td>${escapeHtml(s.slot_label)} (${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)})</td><td>${s.max_orders}</td><td>${s.is_active?'Active':'Off'}</td><td><button class="btn btn-outline btn-sm" onclick="fmToggleSlot('${s.id}',${!s.is_active})">${s.is_active?'Turn OFF':'Turn ON'}</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">No daily slots created.</td></tr>';
+}
+async function fmAddSlot(){
+ const msg=document.getElementById('fmSlotMsg');
+ try{
+  const pin=document.getElementById('fmSlotPin').value.trim()||null;
+  const label=document.getElementById('fmSlotLabel').value.trim();
+  const start=document.getElementById('fmSlotStart').value;
+  const end=document.getElementById('fmSlotEnd').value;
+  const capacity=Number(document.getElementById('fmSlotCapacity').value);
+  if(pin&&!/^\d{6}$/.test(pin))throw new Error('Pincode must be 6 digits.');
+  if(!label||!start||!end||end<=start)throw new Error('Enter a label and valid start/end times.');
+  if(!Number.isInteger(capacity)||capacity<1)throw new Error('Maximum orders must be at least 1.');
+  const {error}=await fmSupabase.from('fm_delivery_slot_templates').insert({pincode:pin,slot_label:label,start_time:start,end_time:end,max_orders:capacity,is_active:true});
+  if(error)throw error;
+  msg.textContent='Daily slot saved. It will repeat automatically for upcoming days.';
+  document.getElementById('fmSlotLabel').value='';
+  await fmLoadSlots();
+ }catch(e){msg.textContent='Could not add daily slot: '+e.message;}
+}
+async function fmToggleSlot(id,active){
+ try{const {error}=await fmSupabase.from('fm_delivery_slot_templates').update({is_active:active}).eq('id',id);if(error)throw error;await fmLoadSlots();}
+ catch(e){document.getElementById('fmSlotMsg').textContent='Could not update slot: '+e.message;}
+}
 
 // Membership plan allocation settings. Uses the existing fm_membership_plans table.
 let fmPlanRows=[];

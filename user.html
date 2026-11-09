@@ -1112,8 +1112,8 @@ async function fmLoadDeliveryChoices(){
     if(slots.length){
       html+=`<b>Available delivery slots for ${selectedDate}</b>`;
       html+=slots.map((s,i)=>`<label class="card" style="padding:10px"><input type="radio" name="fmDeliveryMode" value="slot" data-slot="${s.id}" ${i===0&&!hasExpress?'checked':''}> ${shopEsc(s.slot_label)} · ${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)}</label>`).join('');
-      if(autoMovedToNextDate)html+='<p class="hint">Today’s booking window is closed. The next available delivery date is selected automatically. You can choose another future date above.</p>';
-    }else html+=`<p class="hint">No delivery slots are available for ${selectedDate}. Choose another date or ask the store to add slots in Admin Panel.</p>`;
+      if(autoMovedToNextDate)html+='<p class="hint">Today’s booking window is closed. The next available daily slot has been selected automatically. You can choose another future date above.</p>';
+    }else html+=`<p class="hint">No delivery slots are available for ${selectedDate}. Please choose another date or contact the store.</p>`;
   }
   html+='</div>';
   const fee=Number(quote.delivery_charge||0),threshold=quote.free_delivery_threshold;
