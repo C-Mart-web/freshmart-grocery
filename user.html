@@ -952,7 +952,7 @@ function fmRenderCart(){
 }
 function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].quantity<=0)fmCart.splice(i,1);fmSaveCart();}
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
-async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;if(!dateInput.value||dateInput.value<today)dateInput.value=today;}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value='';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const def=fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);document.getElementById('fmCheckoutPin').value=def.pincode;await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmUpdateCheckoutButton();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
+async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;const savedDate=localStorage.getItem('fm_checkout_delivery_date');if(savedDate&&savedDate>=today)dateInput.value=savedDate;if(!dateInput.value||dateInput.value<today)dateInput.value=today;localStorage.setItem('fm_checkout_delivery_date',dateInput.value);}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value=localStorage.getItem('fm_checkout_pincode')||'';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const savedId=localStorage.getItem('fm_checkout_address_id');const def=fmAddresses.find(a=>String(a.id)===String(savedId))||fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);localStorage.setItem('fm_checkout_address_id',String(def.id));document.getElementById('fmCheckoutPin').value=def.pincode;localStorage.setItem('fm_checkout_pincode',String(def.pincode||''));await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmUpdateCheckoutButton();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
 function fmGoAddDeliveryAddress(){showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),100);}
 async function fmRestoreCheckoutAfterRefresh(){
  const checkout=document.getElementById('checkout');if(!checkout||!checkout.classList.contains('active'))return;
@@ -1153,17 +1153,8 @@ async function fmPlaceOrder(){
   if(mode==='slot'&&!slotId)throw new Error('Please choose a delivery date and slot.');
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
-  if(String(method).toLowerCase()==='upi'){
-   let savedPending=null;try{savedPending=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}
-   if(savedPending?.sourceId){
-    const {data:existing,error:existingError}=await fmShopClient.from('fm_grocery_orders').select('id,payment_status,order_status').eq('id',savedPending.sourceId).eq('user_id',session.user.id).maybeSingle();
-    if(existingError)throw existingError;
-    if(existing&&String(existing.payment_status).toLowerCase()!=='paid'&&String(existing.order_status).toLowerCase()!=='cancelled'){
-     await fmUpiUserOpenFor('grocery',String(existing.id));return;
-    }
-    localStorage.removeItem('fm_pending_upi_grocery');
-   }
-  }
+  // A non-empty cart is a new checkout: never reuse a previous pending order ID here.
+  // Existing pending UPI orders are resumed only from their own My Orders payment button.
    // Self Purchase Discount is applied and verified securely by the checkout SQL function.
   btn.disabled=true;msg.textContent='Checking stock and placing order…';
   const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{
@@ -1731,14 +1722,12 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 </body>
 
 <style>
-#fmUpiUserFab[hidden]{display:none!important}
-#fmUpiUserFab{position:fixed;right:16px;bottom:22px;z-index:9998;background:#176c45;color:#fff;border:0;border-radius:28px;padding:13px 17px;font-weight:800;box-shadow:0 5px 20px #0003}
 #fmUpiUserModal{display:none;position:fixed;inset:0;z-index:9999;background:#0008;overflow:auto;padding:14px}
 .fm-upi-userbox{max-width:540px;margin:18px auto;background:#fff;border-radius:16px;padding:18px;color:#183328;box-shadow:0 10px 40px #0004}
 .fm-upi-userbox input,.fm-upi-userbox select{width:100%;padding:11px;border:1px solid #ccd9d1;border-radius:9px;margin:5px 0 12px;box-sizing:border-box}
 .fm-upi-userbox button{padding:10px 14px;border:0;border-radius:9px;background:#176c45;color:#fff;font-weight:700;margin:4px}
 </style>
-<button id="fmUpiUserFab" type="button" onclick="fmUpiUserOpen()">Pay by UPI QR</button>
+
 <div id="fmUpiUserModal"><div class="fm-upi-userbox">
  <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">UPI QR Payment</h2><button type="button" onclick="fmUpiUserClose()">Close</button></div>
  <p style="font-size:12px;color:#64756b">Select the payment type and enter the existing pending Order / Membership / Daily Fresh request ID. Amount is fetched securely from the server; you cannot edit it here.</p>
@@ -1758,7 +1747,7 @@ let fmUpiCurrentTxn=null;
 let fmUpiLastContext=null;
 let fmUpiModalHistoryActive=false;
 function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-async function fmRefreshUpiVisibility(){const fab=document.getElementById('fmUpiUserFab');if(fab)fab.hidden=true;try{if(!fmShopClient)return false;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;return data?.upi_enabled===true&&data?.manual_verification===true;}catch(e){console.warn('UPI visibility check failed; keeping UPI hidden.',e);return false;}}
+async function fmRefreshUpiVisibility(){try{if(!fmShopClient)return false;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;return data?.upi_enabled===true&&data?.manual_verification===true;}catch(e){console.warn('UPI visibility check failed; keeping UPI hidden.',e);return false;}}
 async function fmUpiUserOpen(){
  const enabled=await fmRefreshUpiVisibility();
  if(!enabled){alert('UPI QR payments are currently disabled. Please choose another payment method.');return;}
