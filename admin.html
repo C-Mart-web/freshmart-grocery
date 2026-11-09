@@ -576,26 +576,26 @@ async function saveProductRewardPoints(){
   const imageUrls=await fmAdminUploadMany(document.getElementById('productImageFiles').files,session);
   const variantRows=[...document.querySelectorAll('#fmAdminVariantRows .fm-admin-variant-row')].map((r,i)=>({variant_name:r.querySelector('[data-v="name"]').value.trim(),mrp:Number(r.querySelector('[data-v="mrp"]').value),offer_price:Number(r.querySelector('[data-v="offer"]').value),retail_price:Number(r.querySelector('[data-v="retail"]').value),wholesale_price:Number(r.querySelector('[data-v="wholesale"]').value),retail_reward_points:Number(r.querySelector('[data-v="retailrp"]').value||0),wholesale_reward_points:Number(r.querySelector('[data-v="wholesalerp"]').value||0),stock_quantity:Number(r.querySelector('[data-v="stock"]').value),is_default:r.querySelector('[data-v="default"]').checked,sort_order:i+1,is_active:true,is_base_product:false,unit:r.querySelector('[data-v="name"]').value.trim()})).filter(v=>v.variant_name);
   for(const v of variantRows){if(![v.mrp,v.offer_price,v.retail_price,v.wholesale_price].every(n=>Number.isFinite(n)&&n>0)||![v.retail_reward_points,v.wholesale_reward_points].every(n=>Number.isInteger(n)&&n>=0)||v.offer_price>v.mrp||!Number.isInteger(v.stock_quantity)||v.stock_quantity<0)throw new Error('Variant '+(v.variant_name||'')+': enter MRP, Offer, Retail and Wholesale prices (all above 0); Offer must be ≤ MRP; stock must be a whole number.');}
-  if(variantRows.length){if(!variantRows.some(v=>v.is_default))variantRows[0].is_default=true;let seen=false;variantRows.forEach(v=>{if(v.is_default){if(seen)v.is_default=false;seen=true;}});}
+  if(variantRows.length){let seen=false;variantRows.forEach(v=>{if(v.is_default){if(seen)v.is_default=false;seen=true;}});}
 
   const payload={product_code:code,product_name:name,category_id:categoryId,subcategory:subcategory||null,search_aliases:searchAliases,barcode:barcode||null,unit:productUnit,central_price:offer,mrp:mrp,offer_price:offer,retail_price:retail,wholesale_price:wholesale,product_visibility:visibility,min_wholesale_qty:minWholesale,retail_reward_points:retailPoints,wholesale_reward_points:wholesalePoints,discount_percent:Number(((mrp-offer)/mrp*100).toFixed(2)),reward_points:Math.max(retailPoints,wholesalePoints),reward_points_condition:condition,self_purchase_discount_mode:selfDiscountMode,self_purchase_discount_percent:selfDiscountMode==='fixed'?selfDiscountPercent:0,stock_quantity:stock,low_stock_threshold:lowStock,image_url:imageUrl||null,is_active:true};
   const editId=document.getElementById('editProductId').value;
-  const result=editId?await fmSupabase.from('fm_products').update(payload).eq('id',editId).select('id,product_name').single():await fmSupabase.from('fm_products').insert(payload).select('id,product_name').single();if(result.error)throw result.error;
+  const result=editId?await fmSupabase.from('fm_products').update(payload).eq('id',editId).select('id,product_name').maybeSingle():await fmSupabase.from('fm_products').insert(payload).select('id,product_name').single();if(result.error)throw result.error;if(!result.data)throw new Error('Product was not returned after saving. Check fm_products UPDATE/INSERT permission and RLS policy.');
   const savedProductId=result.data.id;
   if(variantRows.length){
     const existing=JSON.parse(document.getElementById('fmAdminVariantRows').dataset.existing||'[]');
     const existingBase=JSON.parse(document.getElementById('fmAdminVariantRows').dataset.baseExisting||'null');
     const used=[];
-    for(const v of variantRows){const match=existing.find(x=>x.variant_name.toLowerCase()===v.variant_name.toLowerCase());let q;if(match){q=await fmSupabase.from('fm_product_variants').update(v).eq('id',match.id).select('id').single();used.push(match.id);}else{q=await fmSupabase.from('fm_product_variants').insert({...v,product_id:savedProductId}).select('id').single();used.push(q.data?.id);}if(q.error)throw q.error;}
+    for(const v of variantRows){const match=existing.find(x=>x.variant_name.toLowerCase()===v.variant_name.toLowerCase());let q;if(match){q=await fmSupabase.from('fm_product_variants').update(v).eq('id',match.id).select('id').maybeSingle();if(q.error)throw q.error;if(!q.data)throw new Error('Could not update variant '+v.variant_name+'. Check fm_product_variants UPDATE permission/RLS.');used.push(match.id);}else{q=await fmSupabase.from('fm_product_variants').insert({...v,product_id:savedProductId}).select('id').maybeSingle();if(q.error)throw q.error;if(!q.data)throw new Error('Could not create variant '+v.variant_name+'. Check fm_product_variants INSERT permission/RLS.');used.push(q.data.id);}}
     if(existing.length){const obsolete=existing.filter(x=>!used.includes(x.id)).map(x=>x.id);if(obsolete.length){const q=await fmSupabase.from('fm_product_variants').delete().in('id',obsolete);if(q.error)throw q.error;}}
     let baseStock=0;
     const hasBasePack=!!productUnit && productUnit.toLowerCase()!=='piece';
     if(hasBasePack){
-      const basePayload={product_id:savedProductId,variant_name:productUnit,unit:productUnit,mrp,offer_price:offer,retail_price:retail,wholesale_price:wholesale,retail_reward_points:retailPoints,wholesale_reward_points:wholesalePoints,stock_quantity:stock,is_default:false,sort_order:0,is_active:true,is_base_product:true};
+      const basePayload={product_id:savedProductId,variant_name:productUnit,unit:productUnit,mrp,offer_price:offer,retail_price:retail,wholesale_price:wholesale,retail_reward_points:retailPoints,wholesale_reward_points:wholesalePoints,stock_quantity:stock,is_default:!variantRows.some(v=>v.is_default),sort_order:0,is_active:true,is_base_product:true};
       const baseResult=existingBase
-        ?await fmSupabase.from('fm_product_variants').update(basePayload).eq('id',existingBase.id).select('id').single()
-        :await fmSupabase.from('fm_product_variants').insert(basePayload).select('id').single();
-      if(baseResult.error)throw baseResult.error;
+        ?await fmSupabase.from('fm_product_variants').update(basePayload).eq('id',existingBase.id).select('id').maybeSingle()
+        :await fmSupabase.from('fm_product_variants').insert(basePayload).select('id').maybeSingle();
+      if(baseResult.error)throw baseResult.error;if(!baseResult.data)throw new Error('Could not save the Main Product Size variant. Check fm_product_variants INSERT/UPDATE permission and RLS.');
       baseStock=stock;
     }else if(existingBase){
       const removeBase=await fmSupabase.from('fm_product_variants').delete().eq('id',existingBase.id);
