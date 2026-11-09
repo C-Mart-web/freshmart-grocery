@@ -362,13 +362,13 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
 <div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping<br>Design preview — not yet connected to live account data.</div>
-<section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">One spin per member when enabled. Rewards are pending Admin fulfilment.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
+<section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">Admin నిర్ణయించిన Spin Limit వరకు ప్రయత్నించవచ్చు. No Prize / Try Again వస్తే మిగిలిన attempts ఉంటే మళ్లీ Spin చేయవచ్చు. Wallet prize నేరుగా Shopping Walletలో చేరుతుంది.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
 </div>
 
 <div id="fmSpinWelcomeModal" role="dialog" aria-modal="true" aria-labelledby="fmSpinWelcomeTitle">
  <div class="fm-spin-welcome-box">
   <button id="fmSpinWelcomeClose" type="button" aria-label="Close spin wheel" onclick="fmCloseWelcomeSpin()">×</button>
-  <div id="fmSpinResultPopup" class="fm-spin-result-pop" aria-live="assertive"><div class="fm-win-icon">🏆</div><h2>Congratulations!</h2><p>You won</p><div class="fm-win-prize" id="fmSpinWonPrize">Special Reward</div><p id="fmSpinWonDetails">Your reward has been added to Coupons &amp; Offers.</p><button type="button" class="btn btn-green" onclick="fmCloseWelcomeSpin()">View My Coupons</button></div>
+  <div id="fmSpinResultPopup" class="fm-spin-result-pop" aria-live="assertive"><div class="fm-win-icon">🏆</div><h2>Congratulations!</h2><p>You won</p><div class="fm-win-prize" id="fmSpinWonPrize">Special Reward</div><p id="fmSpinWonDetails">Your reward has been added to Coupons &amp; Offers.</p><button type="button" class="btn btn-green" id="fmSpinResultAction" onclick="fmSpinResultContinue()">View My Coupons</button></div>
   <div style="font-size:34px">🎉</div>
   <h2 id="fmSpinWelcomeTitle" style="margin:4px 0;color:#126b3b">Welcome to Fresh-Mart!</h2>
   <p class="hint" style="margin:0">Your welcome reward is waiting. Tap SPIN to try your luck!</p>
@@ -1761,7 +1761,7 @@ async function fmLoadMyOffers(){
  offerBox.textContent='Loading offers…';couponBox.textContent='Loading coupons…';scratchBox.textContent='Loading scratch cards…';
  try{
   const now=new Date().toISOString();
-  const [offers,cfg]=await Promise.all([fmShopClient.from('fm_offer_campaigns').select('*').eq('is_active',true).order('sort_order').limit(50),fmShopClient.from('fm_spin_settings').select('is_enabled,one_spin_per_user,slots').eq('id',true).maybeSingle()]);
+  const [offers,cfg]=await Promise.all([fmShopClient.from('fm_offer_campaigns').select('*').eq('is_active',true).order('sort_order').limit(50),fmShopClient.from('fm_spin_settings').select('is_enabled,one_spin_per_user,max_spins_per_user,slots').eq('id',true).maybeSingle()]);
   if(offers.error)throw offers.error;
   const live=(offers.data||[]).filter(x=>(!x.starts_at||x.starts_at<=now)&&(!x.ends_at||x.ends_at>=now));
   offerBox.innerHTML=live.length?live.map(x=>`<article style="padding:13px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.badge_text||'SPECIAL OFFER')} · ${fmOfferEsc(x.title)}</b><p class="hint">${fmOfferEsc(x.description||'')}</p>${x.discount_value>0?`<strong style="color:#168447">${x.discount_type==='percent'?Number(x.discount_value)+'% OFF':fmOfferMoney(x.discount_value)+' OFF'}</strong>`:''}</article>`).join(''):'No active offers right now.';
@@ -1772,18 +1772,24 @@ async function fmLoadMyOffers(){
   document.getElementById('fmMyCouponCount').textContent=usable.length+' AVAILABLE';
   couponBox.innerHTML=(coupons||[]).length?(coupons||[]).map(x=>{const c=x.fm_coupons||{};return `<article style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><div><b>${fmOfferEsc(c.title||'Coupon')}</b><div class="hint">${fmOfferEsc(c.description||'')} · Code: <strong>${fmOfferEsc(c.code||'')}</strong></div><small class="hint">${c.discount_type==='percent'?Number(c.discount_value)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':'Free Delivery'} · Min order ${fmOfferMoney(c.min_order_amount)}</small></div><div><span class="badge ${x.status==='available'?'approved':x.status==='redeemed'?'rejected':'pending'}">${fmOfferEsc(x.status.toUpperCase())}</span>${x.status==='available'?`<button class="btn btn-outline" style="display:block;margin-top:7px" onclick="navigator.clipboard?.writeText('${fmOfferEsc(c.code||'')}').then(()=>alert('Coupon code copied'))">Copy Code</button>`:''}</div></article>`}).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?'Spin Now':'Spin Wheel Coming Soon';
-  const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('reward_label,reward_type,status,played_at').eq('user_id',session.user.id).maybeSingle();if(pe)throw pe;
+  const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true});if(pe)throw pe;
   window.fmWelcomeSpinConfig=cfg.data||null;
+  window.fmMemberSpinPlays=plays||[];
+  const maxSpins=Math.max(1,Number(cfg.data?.max_spins_per_user||1));
+  const spinCount=(plays||[]).length, lastPlay=(plays||[])[spinCount-1]||null;
+  const canRetry=!!lastPlay&&String(lastPlay.reward_type||'none')==='none'&&spinCount<maxSpins;
+  const canStart=!lastPlay;
+  const canSpin=!!cfg.data?.is_enabled&&(canStart||canRetry)&&spinCount<maxSpins;
   const welcomeDismissKey='fm_spin_welcome_dismissed_'+session.user.id;
-  if(plays){
-   spinBtn.disabled=true;spinBtn.textContent='Spin Already Used';
-   document.getElementById('fmSpinResult').textContent='Your result: '+plays.reward_label+' ('+plays.status+').';
+  if(lastPlay){
+   spinBtn.disabled=!canSpin;spinBtn.textContent=canSpin?'Spin Again ('+(maxSpins-spinCount)+' left)':'Spin Limit Reached';
+   document.getElementById('fmSpinResult').textContent='Your result: '+lastPlay.reward_label+' ('+lastPlay.status+'). '+(canRetry?'You can spin again.':'');
    const welcomeModal=document.getElementById('fmSpinWelcomeModal');if(welcomeModal&&!document.getElementById('fmSpinResultPopup')?.classList.contains('show'))welcomeModal.classList.remove('open');
-  }else if(cfg.data?.is_enabled&&Array.isArray(cfg.data.slots)&&cfg.data.slots.some(x=>x.enabled!==false)){
+   if(canRetry&&!sessionStorage.getItem(welcomeDismissKey))setTimeout(()=>fmOpenWelcomeSpin(cfg.data.slots),450);
+  }else if(canSpin&&Array.isArray(cfg.data.slots)&&cfg.data.slots.some(x=>x.enabled!==false)){
    spinBtn.disabled=false;spinBtn.textContent='Spin Now';
-   // Show once for this member's current browser session if they have not spun.
    if(!sessionStorage.getItem(welcomeDismissKey))setTimeout(()=>fmOpenWelcomeSpin(cfg.data.slots),450);
-  }
+  }else{spinBtn.disabled=true;spinBtn.textContent=cfg.data?.is_enabled?'Spin Limit Reached':'Spin Wheel Coming Soon';}
   const {data:scratch,error:se}=await fmShopClient.from('fm_scratch_cards').select('id,title,reward_label,status').eq('user_id',session.user.id).order('created_at',{ascending:false});if(se)throw se;
   scratchBox.innerHTML=(scratch||[]).length?(scratch||[]).map(x=>`<article style="padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.title)}</b><p class="hint">${x.status==='available'?'Tap to reveal your reward.':fmOfferEsc(x.reward_label)+' · '+fmOfferEsc(x.status)}</p>${x.status==='available'?`<button class="btn btn-green" onclick="fmRevealScratch('${x.id}')">Scratch & Reveal</button>`:''}</article>`).join(''):'No scratch cards assigned yet.';
  }catch(e){offerBox.textContent='Could not load offers: '+e.message;couponBox.textContent='Please sign in and try again.';scratchBox.textContent='Scratch cards unavailable: '+e.message;}
@@ -1798,7 +1804,7 @@ function fmOpenWelcomeSpin(slots){
  wheel.innerHTML=fmWelcomeSpinSlots.map((x,i)=>`<div class="fm-spin-wheel-label ${x.enabled===false?'disabled':''}" style="--slot:${i}">${fmOfferEsc(x.enabled===false?'Not Active':x.label||('Prize '+(i+1)))}</div>`).join('');
  wheel.style.transition='none';wheel.style.transform='rotate(0deg)';void wheel.offsetWidth;wheel.style.transition='transform 5.2s cubic-bezier(.12,.72,.08,1)';
  document.getElementById('fmWelcomeSpinMessage').textContent='Only Admin-enabled rewards can be selected.';
- document.getElementById('fmWelcomeSpinAction').disabled=false;document.getElementById('fmWelcomeSpinAction').textContent='SPIN';
+ document.getElementById('fmWelcomeSpinAction').disabled=false;document.getElementById('fmWelcomeSpinAction').textContent='SPIN';const resultAction=document.getElementById('fmSpinResultAction');if(resultAction){resultAction.textContent='View My Coupons';resultAction.onclick=fmCloseWelcomeSpin;}
  modal.classList.add('open');
 }
 function fmCloseWelcomeSpin(){
@@ -1824,19 +1830,29 @@ async function fmPlayWelcomeSpin(){
   await new Promise(resolve=>setTimeout(resolve,5400));
   msg.textContent='🎉 Congratulations! Your wheel has stopped.';
   btn.textContent='DONE';btn.disabled=true;
-  if(cardBtn){cardBtn.disabled=true;cardBtn.textContent='Spin Already Used';}
   if(out)out.textContent='🎉 '+data.reward_label;
   const resultPop=document.getElementById('fmSpinResultPopup');
   const spinBox=document.querySelector('.fm-spin-welcome-box');
   const prize=document.getElementById('fmSpinWonPrize');
   const details=document.getElementById('fmSpinWonDetails');
   if(prize)prize.textContent=data.reward_label||'Special Reward';
-  if(details)details.textContent=data.reward_type==='coupon'?'Your coupon has been saved in Coupons & Offers → My Coupons. Use it before expiry.':data.reward_type==='none'?'Better luck next time!':'Your reward has been recorded. Check Coupons & Offers for its status.';
+  window.fmMemberSpinPlays=[...(window.fmMemberSpinPlays||[]),{reward_type:data.reward_type,reward_label:data.reward_label,status:data.reward_type==='none'?'no_prize':'fulfilled',played_at:new Date().toISOString()}];
+  const usedCount=window.fmMemberSpinPlays.length;
+  const maxCount=Math.max(1,Number(window.fmWelcomeSpinConfig?.max_spins_per_user||1));
+  const retryAvailable=data.reward_type==='none'&&usedCount<maxCount;
+  if(details)details.textContent=data.reward_type==='coupon'?'Your coupon has been saved in Coupons & Offers → My Coupons. Use it before expiry.':data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your reward has been recorded. Check Coupons & Offers for its status.';
+  const resultAction=document.getElementById('fmSpinResultAction');
+  if(resultAction){if(retryAvailable){resultAction.textContent='SPIN AGAIN';resultAction.onclick=fmSpinResultContinue;}else{resultAction.textContent=data.reward_type==='none'?'Close':'View My Coupons';resultAction.onclick=fmCloseWelcomeSpin;}}
+  if(cardBtn){cardBtn.disabled=!retryAvailable;cardBtn.textContent=retryAvailable?'Spin Again ('+(maxCount-usedCount)+' left)':usedCount>=maxCount?'Spin Limit Reached':'Spin Already Used';}
   if(spinBox)spinBox.classList.add('has-result');
   if(resultPop)resultPop.classList.add('show');
   sessionStorage.setItem('fm_spin_welcome_dismissed_'+(window.fmCurrentSpinMemberId||''),'1');
   await fmLoadMyOffers();
  }catch(e){msg.textContent=e.message||String(e);btn.disabled=false;btn.textContent='SPIN';if(cardBtn)cardBtn.disabled=false;}
+}
+async function fmSpinResultContinue(){
+ const cfg=window.fmWelcomeSpinConfig;
+ if(cfg?.is_enabled){fmOpenWelcomeSpin(cfg.slots||[]);}
 }
 async function fmPlaySpin(){
  const modal=document.getElementById('fmSpinWelcomeModal');
