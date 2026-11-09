@@ -101,6 +101,18 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .fm-spin-wheel-center{position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;border:5px solid #fff;background:#0f6b38;color:#fff;font-size:15px;font-weight:950;box-shadow:0 2px 12px #0004}
 .fm-spin-wheel-center:disabled{opacity:.7}
 #fmSpinWelcomeClose{position:absolute;right:12px;top:10px;border:0;background:#eef5ef;border-radius:50%;width:34px;height:34px;font-size:20px;color:#31533d}
+.fm-spin-result-pop{display:none;position:absolute;inset:0;z-index:12;border-radius:22px;background:radial-gradient(circle at 50% 25%,#fff9d9,#fff 62%);padding:28px 18px;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+.fm-spin-result-pop.show{display:flex;animation:fmSpinPopIn .45s cubic-bezier(.18,.9,.25,1.25) both}
+.fm-spin-result-pop .fm-win-icon{font-size:62px;filter:drop-shadow(0 5px 8px #dcae3655);animation:fmWinBounce .8s ease-in-out infinite alternate}
+.fm-spin-result-pop h2{font-size:25px;color:#126b3b;margin:8px 0}
+.fm-spin-result-pop .fm-win-prize{font-size:clamp(24px,7vw,36px);font-weight:950;color:#bd6a00;margin:12px 0;padding:13px 16px;border:2px dashed #e7bd48;border-radius:16px;background:#fff8d9;max-width:100%;overflow-wrap:anywhere;box-shadow:0 8px 25px #c9972633}
+.fm-spin-result-pop p{font-size:13px;line-height:1.55;color:#53665a}
+.fm-spin-result-pop button{margin-top:12px;min-width:150px}
+@keyframes fmSpinPopIn{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+@keyframes fmWinBounce{from{transform:scale(1) rotate(-5deg)}to{transform:scale(1.18) rotate(5deg)}}
+.fm-spin-welcome-box{overflow:hidden}
+.fm-spin-welcome-box.has-result #fmSpinWelcomeClose{z-index:15}
+
 @media(max-width:360px){.fm-spin-wheel-label{font-size:8px}.fm-spin-wheel-label:nth-child(n){transform-origin:center}.fm-spin-wheel-label:nth-child(1){transform:rotate(0deg) translateY(-88px)}.fm-spin-wheel-label:nth-child(2){transform:rotate(60deg) translateY(-88px) rotate(-60deg)}.fm-spin-wheel-label:nth-child(3){transform:rotate(120deg) translateY(-88px) rotate(-120deg)}.fm-spin-wheel-label:nth-child(4){transform:rotate(180deg) translateY(-88px) rotate(-180deg)}.fm-spin-wheel-label:nth-child(5){transform:rotate(240deg) translateY(-88px) rotate(-240deg)}.fm-spin-wheel-label:nth-child(6){transform:rotate(300deg) translateY(-88px) rotate(-300deg)}}
 </style>
 </head>
@@ -356,6 +368,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <div id="fmSpinWelcomeModal" role="dialog" aria-modal="true" aria-labelledby="fmSpinWelcomeTitle">
  <div class="fm-spin-welcome-box">
   <button id="fmSpinWelcomeClose" type="button" aria-label="Close spin wheel" onclick="fmCloseWelcomeSpin()">×</button>
+  <div id="fmSpinResultPopup" class="fm-spin-result-pop" aria-live="assertive"><div class="fm-win-icon">🏆</div><h2>Congratulations!</h2><p>You won</p><div class="fm-win-prize" id="fmSpinWonPrize">Special Reward</div><p id="fmSpinWonDetails">Your reward has been added to Coupons &amp; Offers.</p><button type="button" class="btn btn-green" onclick="fmCloseWelcomeSpin()">View My Coupons</button></div>
   <div style="font-size:34px">🎉</div>
   <h2 id="fmSpinWelcomeTitle" style="margin:4px 0;color:#126b3b">Welcome to Fresh-Mart!</h2>
   <p class="hint" style="margin:0">Your welcome reward is waiting. Tap SPIN to try your luck!</p>
@@ -1757,7 +1770,7 @@ async function fmLoadMyOffers(){
   const {data:coupons,error:ce}=await fmShopClient.from('fm_user_coupons').select('id,status,assigned_at,redeemed_at,fm_coupons(code,title,description,discount_type,discount_value,min_order_amount,ends_at,is_active)').eq('user_id',session.user.id).order('assigned_at',{ascending:false});if(ce)throw ce;
   const usable=(coupons||[]).filter(x=>x.status==='available'&&x.fm_coupons?.is_active);
   document.getElementById('fmMyCouponCount').textContent=usable.length+' AVAILABLE';
-  couponBox.innerHTML=(coupons||[]).length?(coupons||[]).map(x=>{const c=x.fm_coupons||{};return `<article style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><div><b>${fmOfferEsc(c.title||'Coupon')}</b><div class="hint">${fmOfferEsc(c.description||'')} · Code: <strong>${fmOfferEsc(c.code||'')}</strong></div><small class="hint">${c.discount_type==='percent'?Number(c.discount_value)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':'Free Delivery'} · Min order ${fmOfferMoney(c.min_order_amount)}</small></div><div><span class="badge ${x.status==='available'?'approved':'pending'}">${fmOfferEsc(x.status.toUpperCase())}</span><button class="btn btn-outline" style="display:block;margin-top:7px" onclick="navigator.clipboard?.writeText('${fmOfferEsc(c.code||'')}').then(()=>alert('Coupon code copied'))">Copy Code</button></div></article>`}).join(''):'No coupons assigned to your account yet.';
+  couponBox.innerHTML=(coupons||[]).length?(coupons||[]).map(x=>{const c=x.fm_coupons||{};return `<article style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><div><b>${fmOfferEsc(c.title||'Coupon')}</b><div class="hint">${fmOfferEsc(c.description||'')} · Code: <strong>${fmOfferEsc(c.code||'')}</strong></div><small class="hint">${c.discount_type==='percent'?Number(c.discount_value)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':'Free Delivery'} · Min order ${fmOfferMoney(c.min_order_amount)}</small></div><div><span class="badge ${x.status==='available'?'approved':x.status==='redeemed'?'rejected':'pending'}">${fmOfferEsc(x.status.toUpperCase())}</span>${x.status==='available'?`<button class="btn btn-outline" style="display:block;margin-top:7px" onclick="navigator.clipboard?.writeText('${fmOfferEsc(c.code||'')}').then(()=>alert('Coupon code copied'))">Copy Code</button>`:''}</div></article>`}).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?'Spin Now':'Spin Wheel Coming Soon';
   const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('reward_label,reward_type,status,played_at').eq('user_id',session.user.id).maybeSingle();if(pe)throw pe;
   window.fmWelcomeSpinConfig=cfg.data||null;
@@ -1765,7 +1778,7 @@ async function fmLoadMyOffers(){
   if(plays){
    spinBtn.disabled=true;spinBtn.textContent='Spin Already Used';
    document.getElementById('fmSpinResult').textContent='Your result: '+plays.reward_label+' ('+plays.status+').';
-   const welcomeModal=document.getElementById('fmSpinWelcomeModal');if(welcomeModal)welcomeModal.classList.remove('open');
+   const welcomeModal=document.getElementById('fmSpinWelcomeModal');if(welcomeModal&&!document.getElementById('fmSpinResultPopup')?.classList.contains('show'))welcomeModal.classList.remove('open');
   }else if(cfg.data?.is_enabled&&Array.isArray(cfg.data.slots)&&cfg.data.slots.some(x=>x.enabled!==false)){
    spinBtn.disabled=false;spinBtn.textContent='Spin Now';
    // Show once for this member's current browser session if they have not spun.
@@ -1780,6 +1793,7 @@ let fmWelcomeSpinSlots=[];
 function fmOpenWelcomeSpin(slots){
  const modal=document.getElementById('fmSpinWelcomeModal'),wheel=document.getElementById('fmWelcomeSpinWheel');if(!modal||!wheel)return;
  fmWelcomeSpinSlots=(Array.isArray(slots)?slots:[]).slice(0,6);
+ const resultPop=document.getElementById('fmSpinResultPopup');if(resultPop)resultPop.classList.remove('show');const spinBox=modal.querySelector('.fm-spin-welcome-box');if(spinBox)spinBox.classList.remove('has-result');
  while(fmWelcomeSpinSlots.length<6)fmWelcomeSpinSlots.push({label:'Not Active',enabled:false,reward_type:'none'});
  wheel.innerHTML=fmWelcomeSpinSlots.map((x,i)=>`<div class="fm-spin-wheel-label ${x.enabled===false?'disabled':''}" style="--slot:${i}">${fmOfferEsc(x.enabled===false?'Not Active':x.label||('Prize '+(i+1)))}</div>`).join('');
  wheel.style.transition='none';wheel.style.transform='rotate(0deg)';void wheel.offsetWidth;wheel.style.transition='transform 5.2s cubic-bezier(.12,.72,.08,1)';
@@ -1808,10 +1822,18 @@ async function fmPlayWelcomeSpin(){
   const target=eligible[idx].index,center=target*60;
   wheel.style.transform=`rotate(${360*6+(360-center)}deg)`;
   await new Promise(resolve=>setTimeout(resolve,5400));
-  msg.textContent='🎉 Congratulations! You won: '+data.reward_label+' · '+(data.reward_type==='none'?'No prize':'Pending Admin fulfilment');
+  msg.textContent='🎉 Congratulations! Your wheel has stopped.';
   btn.textContent='DONE';btn.disabled=true;
   if(cardBtn){cardBtn.disabled=true;cardBtn.textContent='Spin Already Used';}
-  if(out)out.textContent='🎉 '+data.reward_label+' · Status: '+(data.reward_type==='none'?'No prize':'Pending Admin fulfilment');
+  if(out)out.textContent='🎉 '+data.reward_label;
+  const resultPop=document.getElementById('fmSpinResultPopup');
+  const spinBox=document.querySelector('.fm-spin-welcome-box');
+  const prize=document.getElementById('fmSpinWonPrize');
+  const details=document.getElementById('fmSpinWonDetails');
+  if(prize)prize.textContent=data.reward_label||'Special Reward';
+  if(details)details.textContent=data.reward_type==='coupon'?'Your coupon has been saved in Coupons & Offers → My Coupons. Use it before expiry.':data.reward_type==='none'?'Better luck next time!':'Your reward has been recorded. Check Coupons & Offers for its status.';
+  if(spinBox)spinBox.classList.add('has-result');
+  if(resultPop)resultPop.classList.add('show');
   sessionStorage.setItem('fm_spin_welcome_dismissed_'+(window.fmCurrentSpinMemberId||''),'1');
   await fmLoadMyOffers();
  }catch(e){msg.textContent=e.message||String(e);btn.disabled=false;btn.textContent='SPIN';if(cardBtn)cardBtn.disabled=false;}
