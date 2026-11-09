@@ -267,8 +267,26 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="field"><label>Start Date (optional)</label><input id="fmCouponStart" type="date"><small class="hint">Coupon becomes valid from this date. Leave blank to start immediately.</small></div>
 <div class="field"><label>End Date (optional)</label><input id="fmCouponEnd" type="date"><small class="hint">Last valid date. Leave blank for no expiry.</small></div></div><input id="fmCouponDesc" placeholder="Description" style="width:100%;padding:11px;margin-top:10px;border:1px solid #dbe8de;border-radius:10px"><div class="field" style="margin-top:10px"><label>Coupon Terms & Conditions</label><textarea id="fmCouponTerms" placeholder="Usage rules, eligible products, exclusions, validity and other conditions"></textarea></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateCoupon()">Create Coupon</button><p id="fmCouponMsg" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Create Offer Campaign</h2><div class="formgrid"><div class="field"><label>Title</label><input id="fmOfferTitle"></div><div class="field"><label>Type</label><select id="fmOfferType"><option value="banner">Home Banner</option><option value="category">Special Category</option><option value="product">Product Offer</option><option value="deal">Offer Zone Deal</option></select></div><div class="field"><label>Badge</label><input id="fmOfferBadge" placeholder="UP TO 50% OFF"></div><div class="field"><label>Category Name</label><input id="fmOfferCategory"></div><div class="field"><label>Product ID</label><input id="fmOfferProduct" type="number"></div><div class="field"><label>Discount Type</label><select id="fmOfferDiscountType"><option value="percent">Percentage</option><option value="fixed">Fixed</option></select></div><div class="field"><label>Discount Value</label><input id="fmOfferDiscount" type="number" min="0" value="0"></div><div class="field"><label>Sort Order</label><input id="fmOfferOrder" type="number" value="100"><small class="hint">Smaller numbers appear earlier in the offers list.</small></div>
 <div class="field"><label>Start Date (optional)</label><input id="fmOfferStart" type="date"><small class="hint">Offer starts on this date. Blank means immediately.</small></div>
-<div class="field"><label>End Date (optional)</label><input id="fmOfferEnd" type="date"><small class="hint">Offer ends on this date. Blank means no expiry.</small></div></div><textarea id="fmOfferDescription" placeholder="Offer description" style="width:100%;margin-top:10px;padding:11px;border:1px solid #dbe8de;border-radius:10px"></textarea><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateOffer()">Publish Offer</button><p id="fmOfferMsg" class="hint"></p></div><div class="card" style="margin-top:14px" id="fmGiftCatalogCard"><h2>🎁 Gift Product Management</h2><p class="hint">Create gift products here and use the exact Gift Name as the Spin Wheel reward value. Set gift stock, image and member terms.</p><div class="formgrid"><div class="field"><label>Gift Product Name *</label><input id="fmGiftName" placeholder="Example: 3L Cooker"></div><div class="field"><label>Gift Image URL (optional)</label><input id="fmGiftImage" placeholder="https://..."></div><div class="field"><label>Available Stock</label><input id="fmGiftStock" type="number" min="0" value="0"></div><div class="field"><label>Gift Status</label><select id="fmGiftActive"><option value="true">Active</option><option value="false">Inactive</option></select></div></div><div class="field" style="margin-top:10px"><label>Description</label><textarea id="fmGiftDescription" placeholder="Describe the gift product"></textarea></div><div class="field" style="margin-top:10px"><label>Gift Terms & Conditions</label><textarea id="fmGiftTerms" placeholder="Eligibility, delivery/pickup, claim deadline, stock limits and other conditions"></textarea></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateGift()">Save Gift Product</button><p id="fmGiftMsg" class="hint"></p><div id="fmGiftList" class="hint">Loading gift products…</div></div><div class="card" style="margin-top:14px"><h2>Spin Wheel Settings (6 Slots)</h2><label style="display:flex;gap:9px;align-items:center;margin:12px 0"><input type="checkbox" id="fmSpinEnabled"> Enable Spin Wheel for members</label><div class="field" style="max-width:320px;margin:12px 0"><label>Maximum Spins per Member</label><input id="fmSpinMaxPerUser" type="number" min="1" max="100" step="1" value="1"><small class="hint">Every attempt counts. If a member gets No Prize / Try Again, they can spin again until this limit. A real reward ends their spin attempts.</small></div>
-<p class="hint">Set each of the six wheel slots below. Wallet rewards are credited automatically to the member’s Shopping Wallet. Coupon rewards must use an existing coupon code.</p>
+<div class="field"><label>End Date (optional)</label><input id="fmOfferEnd" type="date"><small class="hint">Offer ends on this date. Blank means no expiry.</small></div></div><textarea id="fmOfferDescription" placeholder="Offer description" style="width:100%;margin-top:10px;padding:11px;border:1px solid #dbe8de;border-radius:10px"></textarea><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateOffer()">Publish Offer</button><p id="fmOfferMsg" class="hint"></p></div><div class="card" style="margin-top:14px" id="fmBulkCouponPoolCard">
+<h2>🎟️ Bulk Coupon Generator (Spin Wheel)</h2>
+<p class="hint">Generate unique random 5%–10% coupons in bulk. Spin Wheel lo Coupon reward vasthe pool nundi one-time coupon assign avutundi. 50 available ki taggagane next batch auto-generate avutundi.</p>
+<div class="formgrid">
+ <div class="field"><label>Minimum Discount (%)</label><input id="fmPoolMinDiscount" type="number" min="1" max="100" value="5"></div>
+ <div class="field"><label>Maximum Discount (%)</label><input id="fmPoolMaxDiscount" type="number" min="1" max="100" value="10"></div>
+ <div class="field"><label>Coupon Validity (Hours)</label><input id="fmPoolValidityHours" type="number" min="1" max="8760" value="72"></div>
+ <div class="field"><label>Auto Refill Threshold</label><input id="fmPoolThreshold" type="number" min="0" max="100000" value="50"></div>
+ <div class="field"><label>Generate Quantity / Refill Quantity</label><input id="fmPoolBatchSize" type="number" min="1" max="100000" value="1000"></div>
+ <div class="field"><label>Minimum Order Amount (₹)</label><input id="fmPoolMinOrder" type="number" min="0" value="0"></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+ <button class="btn btn-green" type="button" onclick="fmAdminSaveCouponPoolSettings()">Save Coupon Settings</button>
+ <button class="btn btn-outline" type="button" onclick="fmAdminGenerateCouponBatch()">Generate Coupon Batch Now</button>
+ <button class="btn btn-outline" type="button" onclick="fmAdminLoadCouponPool()">Refresh Stock</button>
+</div>
+<div id="fmCouponPoolStats" class="hint" style="margin-top:12px">Loading coupon pool…</div>
+<p id="fmCouponPoolMsg" class="hint" aria-live="polite"></p>
+</div><div class="card" style="margin-top:14px" id="fmGiftCatalogCard"><h2>🎁 Gift Product Management</h2><p class="hint">Create gift products here and use the exact Gift Name as the Spin Wheel reward value. Set gift stock, image and member terms.</p><div class="formgrid"><div class="field"><label>Gift Product Name *</label><input id="fmGiftName" placeholder="Example: 3L Cooker"></div><div class="field"><label>Gift Image URL (optional)</label><input id="fmGiftImage" placeholder="https://..."></div><div class="field"><label>Available Stock</label><input id="fmGiftStock" type="number" min="0" value="0"></div><div class="field"><label>Gift Status</label><select id="fmGiftActive"><option value="true">Active</option><option value="false">Inactive</option></select></div></div><div class="field" style="margin-top:10px"><label>Description</label><textarea id="fmGiftDescription" placeholder="Describe the gift product"></textarea></div><div class="field" style="margin-top:10px"><label>Gift Terms & Conditions</label><textarea id="fmGiftTerms" placeholder="Eligibility, delivery/pickup, claim deadline, stock limits and other conditions"></textarea></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateGift()">Save Gift Product</button><p id="fmGiftMsg" class="hint"></p><div id="fmGiftList" class="hint">Loading gift products…</div></div><div class="card" style="margin-top:14px"><h2>Spin Wheel Settings (6 Slots)</h2><label style="display:flex;gap:9px;align-items:center;margin:12px 0"><input type="checkbox" id="fmSpinEnabled"> Enable Spin Wheel for members</label><div class="field" style="max-width:320px;margin:12px 0"><label>Maximum Spins per Member</label><input id="fmSpinMaxPerUser" type="number" min="1" max="100" step="1" value="1"><small class="hint">Every attempt counts. If a member gets No Prize / Try Again, they can spin again until this limit. A real reward ends their spin attempts.</small></div>
+<p class="hint">Set each of the six wheel slots below. Wallet rewards are credited automatically to the member’s Shopping Wallet. Coupon reward slots automatically use the Bulk Coupon Pool (AUTO_POOL).</p>
 <div id="fmSpinSlotEditor" style="display:grid;gap:12px;margin-top:12px"></div>
 <button class="btn btn-green" style="margin-top:14px" onclick="fmAdminSaveSpin()">Save Spin Settings</button><p id="fmSpinAdminMsg" class="hint"></p><div id="fmSpinPlays" class="hint"></div></div><div class="card" style="margin-top:14px"><h2>Assign Coupon to Member</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmAssignCouponUser" placeholder="Enter member username or FM User ID"><small class="hint">Searches the member profile. Auth UUID is fetched automatically.</small></div><div class="field"><label>Coupon Code</label><input id="fmAssignCouponCode"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignCoupon()">Assign Coupon</button><p id="fmAssignCouponMsg" class="hint"></p><hr><h2>Assign Scratch Card</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmScratchUser" placeholder="Enter member username or FM User ID"><small class="hint">Auth UUID is fetched automatically from the member profile.</small></div><div class="field"><label>Reward Type</label><select id="fmScratchType"><option value="wallet">Wallet Amount</option><option value="coupon">Coupon</option><option value="product">Product</option><option value="none">No Prize</option></select></div><div class="field"><label>Reward Value</label><input id="fmScratchValue"></div><div class="field"><label>Reward Label</label><input id="fmScratchLabel"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignScratch()">Assign Scratch Card</button><p id="fmScratchAdminMsg" class="hint"></p><hr><h2>Coupons & Offers List</h2><div id="fmAdminOffersList" class="hint">Loading…</div></div></section></main>
 </div>
@@ -1090,12 +1108,15 @@ function fmRenderSpinSlots(slots){
  </div></div>`).join('');
 }
 function fmCollectSpinSlots(){
- return Array.from({length:6},(_,i)=>({
-  label:document.querySelector(`[data-spin-label="${i}"]`)?.value.trim()||'',
-  reward_type:document.querySelector(`[data-spin-type="${i}"]`)?.value||'none',
-  reward_value:document.querySelector(`[data-spin-value="${i}"]`)?.value.trim()||'',
-  enabled:!!document.querySelector(`[data-spin-enabled="${i}"]`)?.checked
- }));
+ return Array.from({length:6},(_,i)=>{
+  const type=document.querySelector(`[data-spin-type="${i}"]`)?.value||'none';
+  return {
+   label:document.querySelector(`[data-spin-label="${i}"]`)?.value.trim()||'',
+   reward_type:type,
+   reward_value:type==='coupon'?'AUTO_POOL':(document.querySelector(`[data-spin-value="${i}"]`)?.value.trim()||''),
+   enabled:!!document.querySelector(`[data-spin-enabled="${i}"]`)?.checked
+  };
+ });
 }
 async function fmAdminCreateGift(){
  const msg=document.getElementById('fmGiftMsg');
@@ -1152,6 +1173,37 @@ async function fmAdminCreateCoupon(){
   m.textContent='Coupon created successfully.';await fmAdminLoadOffers();
  }catch(e){m.textContent='Could not create coupon: '+(e.message||String(e));}
 }
+async function fmAdminLoadCouponPool(){
+ const box=document.getElementById('fmCouponPoolStats');if(!box||!fmSupabase)return;
+ try{
+  const {data,error}=await fmSupabase.from('fm_spin_coupon_pool_settings').select('*').eq('id',true).maybeSingle();if(error)throw error;
+  if(data){
+   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+   set('fmPoolMinDiscount',data.min_discount);set('fmPoolMaxDiscount',data.max_discount);set('fmPoolValidityHours',data.validity_hours);set('fmPoolThreshold',data.refill_threshold);set('fmPoolBatchSize',data.batch_size);set('fmPoolMinOrder',data.min_order_amount);
+  }
+  const {data:stats,error:se}=await fmSupabase.rpc('fm_admin_coupon_pool_stats');if(se)throw se;
+  const s=Array.isArray(stats)?stats[0]:stats;
+  box.innerHTML=`<b>Coupon Pool Stock</b><br>Available: <b>${Number(s?.available_count||0)}</b> · Assigned: ${Number(s?.assigned_count||0)} · Used: ${Number(s?.used_count||0)} · Expired: ${Number(s?.expired_count||0)}`;
+ }catch(e){box.textContent='Coupon pool status: '+(e.message||String(e))+' — Run the Bulk Coupon SQL first.';}
+}
+async function fmAdminSaveCouponPoolSettings(){
+ const msg=document.getElementById('fmCouponPoolMsg');try{
+  const n=id=>Number(document.getElementById(id)?.value);
+  const payload={id:true,min_discount:n('fmPoolMinDiscount'),max_discount:n('fmPoolMaxDiscount'),validity_hours:n('fmPoolValidityHours'),refill_threshold:n('fmPoolThreshold'),batch_size:n('fmPoolBatchSize'),min_order_amount:n('fmPoolMinOrder'),updated_at:new Date().toISOString()};
+  if(!Number.isInteger(payload.min_discount)||!Number.isInteger(payload.max_discount)||payload.min_discount<1||payload.max_discount>payload.max_discount||payload.max_discount>100)throw new Error('Discount range must be valid (1–100).');
+  if(payload.min_discount>payload.max_discount)throw new Error('Minimum discount cannot exceed maximum discount.');
+  if(!Number.isInteger(payload.validity_hours)||payload.validity_hours<1||payload.validity_hours>8760)throw new Error('Validity must be 1–8760 hours.');
+  if(!Number.isInteger(payload.refill_threshold)||payload.refill_threshold<0||!Number.isInteger(payload.batch_size)||payload.batch_size<1||payload.batch_size>100000||!Number.isFinite(payload.min_order_amount)||payload.min_order_amount<0)throw new Error('Check refill, quantity and minimum order values.');
+  const {error}=await fmSupabase.from('fm_spin_coupon_pool_settings').upsert(payload,{onConflict:'id'});if(error)throw error;
+  msg.textContent='Coupon pool settings saved. New coupons will use these settings.';await fmAdminLoadCouponPool();
+ }catch(e){msg.textContent='Could not save settings: '+(e.message||String(e));}
+}
+async function fmAdminGenerateCouponBatch(){
+ const msg=document.getElementById('fmCouponPoolMsg');try{
+  const {data,error}=await fmSupabase.rpc('fm_admin_generate_spin_coupon_batch');if(error)throw error;
+  msg.textContent='Generated '+Number(data?.generated_count||0)+' coupons successfully.';await fmAdminLoadCouponPool();await fmAdminLoadOffers();
+ }catch(e){msg.textContent='Could not generate coupons: '+(e.message||String(e));}
+}
 async function fmAdminCreateOffer(){
  const m=document.getElementById('fmOfferMsg');if(!m)return;
  try{
@@ -1169,7 +1221,7 @@ async function fmAdminCreateOffer(){
 }
 async function fmAdminLoadOffers(){
  const box=document.getElementById('fmAdminOffersList');if(!box||typeof fmSupabase==='undefined'||!fmSupabase)return;
- box.textContent='Loading coupons and offers…';fmAdminLoadGifts();
+ box.textContent='Loading coupons and offers…';fmAdminLoadGifts();fmAdminLoadCouponPool();
  try{
   const [c,o,spin,plays]=await Promise.all([
    fmSupabase.from('fm_coupons').select('*').order('created_at',{ascending:false}),
