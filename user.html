@@ -914,19 +914,45 @@ async function fmSyncCartForUser(userId){
   const owner=localStorage.getItem('fm_grocery_cart_owner')||'',local=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]');
   const {data:remote,error}=await fmShopClient.from('fm_member_cart_items_v2').select('product_id,variant_id,variant_name,variant_unit,quantity').eq('user_id',userId);
   if(error)throw error;
-  const map=new Map();(remote||[]).forEach(x=>map.set(String(x.product_id)+'|'+String(x.variant_id||''),{...x,quantity:Number(x.quantity)||0}));
-  if(!owner||owner===userId){local.forEach(x=>{const id=String(x.product_id)+'|'+String(x.variant_id||''),q=Number(x.quantity)||0;if(q>0){const old=map.get(id);map.set(id,{...x,quantity:owner===userId?Math.max(old?.quantity||0,q):(old?.quantity||0)+q});}});}
-  fmCart=[...map.values()].filter(x=>x.quantity>0);
-  if(fmCart.length){const {error:upErr}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:userId,product_id:x.product_id,variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:x.quantity,updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});if(upErr)throw upErr;}
+  const map=new Map();
+  (remote||[]).forEach(x=>map.set(String(x.product_id)+'|'+String(x.variant_id||''),{...x,quantity:Number(x.quantity)||0}));
+  if(owner===userId){
+   // Once this browser cart belongs to the signed-in member, local quantities/removals are authoritative.
+   fmCart=local.filter(x=>Number(x.quantity)>0);
+  }else{
+   local.forEach(x=>{const id=String(x.product_id)+'|'+String(x.variant_id||''),q=Number(x.quantity)||0;if(q>0){const old=map.get(id);map.set(id,{...x,quantity:(old?.quantity||0)+q});}});
+   fmCart=[...map.values()].filter(x=>x.quantity>0);
+  }
+  const keep=new Set(fmCart.map(x=>String(x.product_id)+'|'+String(x.variant_id||'')));
+  for(const x of remote||[]){
+   const key=String(x.product_id)+'|'+String(x.variant_id||'');
+   if(!keep.has(key)){
+    let del=fmShopClient.from('fm_member_cart_items_v2').delete().eq('user_id',userId).eq('product_id',x.product_id);
+    if(x.variant_id)del=del.eq('variant_id',x.variant_id);else del=del.is('variant_id',null);
+    const {error:delErr}=await del;if(delErr)throw delErr;
+   }
+  }
+  if(fmCart.length){const {error:upErr}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:userId,product_id:x.product_id,variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});if(upErr)throw upErr;}
   localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));localStorage.setItem('fm_grocery_cart_owner',userId);
   fmRenderCart();renderFreshMartProducts();
  }catch(e){console.warn('Account cart sync failed:',e.message||e);}
  finally{fmCloudCartBusy=false;}
 }
 async function fmPushCartToCloud(){
- try{const session=await getMemberSession(),uid=session.user.id;
+ try{
+  const session=await getMemberSession(),uid=session.user.id;
+  const localKeys=new Set(fmCart.map(x=>String(x.product_id)+'|'+String(x.variant_id||'')));
+  const {data:remote,error:readErr}=await fmShopClient.from('fm_member_cart_items_v2').select('product_id,variant_id').eq('user_id',uid);
+  if(readErr)throw readErr;
+  for(const x of remote||[]){
+   const key=String(x.product_id)+'|'+String(x.variant_id||'');
+   if(!localKeys.has(key)){
+    let del=fmShopClient.from('fm_member_cart_items_v2').delete().eq('user_id',uid).eq('product_id',x.product_id);
+    if(x.variant_id)del=del.eq('variant_id',x.variant_id);else del=del.is('variant_id',null);
+    const {error}=await del;if(error)throw error;
+   }
+  }
   if(fmCart.length){const {error}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:uid,product_id:String(x.product_id),variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});if(error)throw error;}
-  else{const {error}=await fmShopClient.from('fm_member_cart_items_v2').delete().eq('user_id',uid);if(error)throw error;}
   localStorage.setItem('fm_grocery_cart_owner',uid);
  }catch(e){if(!String(e.message||'').includes('Login session'))console.warn('Account cart save failed:',e.message||e);}
 }
@@ -1153,9 +1179,17 @@ async function fmPlaceOrder(){
   if(mode==='slot'&&!slotId)throw new Error('Please choose a delivery date and slot.');
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
-  // A non-empty cart is a new checkout: never reuse a previous pending order ID here.
-  // Existing pending UPI orders are resumed only from their own My Orders payment button.
-   // Self Purchase Discount is applied and verified securely by the checkout SQL function.
+  // Resume the same pending UPI order only when the current cart exactly matches its saved snapshot.
+  const cartSignature=JSON.stringify(fmCart.map(x=>({product_id:String(x.product_id),variant_id:String(x.variant_id||''),quantity:Number(x.quantity||0)})).sort((a,b)=>(a.product_id+'|'+a.variant_id).localeCompare(b.product_id+'|'+b.variant_id)));
+  if(String(method).toLowerCase()==='upi'){
+   let pending=null;try{pending=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null')}catch(_){}
+   if(pending?.sourceId&&pending.cartSignature===cartSignature){
+    msg.textContent='Continuing your saved pending order payment…';
+    await fmUpiUserOpenFor('grocery',String(pending.sourceId));
+    return;
+   }
+  }
+  // Self Purchase Discount is applied and verified securely by the checkout SQL function.
   btn.disabled=true;msg.textContent='Checking stock and placing order…';
   const {data,error}=await fmShopClient.rpc('fm_place_grocery_order',{
    p_items:fmCart,p_address:address,p_pincode:pin,p_delivery_mode:mode,
@@ -1172,8 +1206,8 @@ async function fmPlaceOrder(){
     if(findError)throw findError;orderId=found?.id||null;
    }
    if(!orderId)throw new Error('Order was created, but its ID was not returned. Open My Orders and use Pay this order by UPI QR. Do not place the same order again.');
-   fmCart=[];fmSaveCart();fmAppliedCoupon=null;fmCouponDiscount=0;
-   localStorage.setItem('fm_pending_upi_grocery',JSON.stringify({type:'grocery',sourceId:String(orderId),orderNumber:String(result.order_number||'')}));
+   const cartSignature=JSON.stringify(fmCart.map(x=>({product_id:String(x.product_id),variant_id:String(x.variant_id||''),quantity:Number(x.quantity||0)})).sort((a,b)=>(a.product_id+'|'+a.variant_id).localeCompare(b.product_id+'|'+b.variant_id)));
+   localStorage.setItem('fm_pending_upi_grocery',JSON.stringify({type:'grocery',sourceId:String(orderId),orderNumber:String(result.order_number||''),cartSignature}));
    const savedAddress= document.getElementById('fmCheckoutAddress')?.value||'';
    if(savedAddress)localStorage.setItem('fm_checkout_address_id',savedAddress);
    const savedPin=document.getElementById('fmCheckoutPin')?.value||'';
@@ -1616,7 +1650,8 @@ function showPage(id,fromHistory=false){
      upiModal.style.display='none';
      fmUpiModalHistoryActive=false;
      showPage('checkout',true);
-     history.replaceState({fmUserPage:'checkout'},'',location.pathname+location.search+'#checkout');
+     history.replaceState({fmUserPage:'checkout',fmRoot:true},'',location.pathname+location.search+'#checkout');
+     const checkoutMsg=document.getElementById('fmCheckoutMsg');if(checkoutMsg)checkoutMsg.textContent='Payment was not completed. Your cart and pending order are saved.';
      return;
    }
    if(e.state?.fmRoot){
@@ -1768,7 +1803,8 @@ async function fmUpiUserOpenFor(type,sourceId){
 function fmUpiUserClose(){
  const modal=document.getElementById('fmUpiUserModal');if(!modal||modal.style.display!=='block')return;
  if(!confirm('Are you sure you want to close the payment without proceeding?'))return;
- modal.style.display='none';fmUpiModalHistoryActive=false;showPage('checkout',true);history.replaceState({fmUserPage:'checkout'},'',location.pathname+location.search+'#checkout');
+ modal.style.display='none';fmUpiModalHistoryActive=false;showPage('checkout');history.replaceState({fmUserPage:'checkout',fmRoot:true},'',location.pathname+location.search+'#checkout');
+ const checkoutMsg=document.getElementById('fmCheckoutMsg');if(checkoutMsg)checkoutMsg.textContent='Payment was not completed. Your cart and pending order are saved. You can continue shopping or retry payment.';
 }
 async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:String(sourceId)});if(error)throw error;
