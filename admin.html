@@ -1147,7 +1147,7 @@ function fmRenderSpinSlots(slots,hostId='fmSpinSlotEditor'){
    <option value="none" ${s.reward_type==='none'?'selected':''}>No Prize / Try Again</option>
    <option value="product" ${s.reward_type==='product'?'selected':''}>Gift Product</option>
   </select></div>
-  <div class="field"><label>Gift Product</label><select data-spin-value="${i}"><option value="">Select gift product</option>${gifts.map(g=>`<option value="${fmAdmEsc(g.name)}" ${String(s.reward_value||'')===String(g.name)?'selected':''}>${fmAdmEsc(g.name)} · Stock ${Number(g.stock_quantity||0)}</option>`).join('')}</select></div>
+  <div class="field"><label>Gift Product</label><select data-spin-value="${i}"><option value="">Select gift product</option>${gifts.map(g=>`<option value="${fmAdmEsc(g.name)}" ${String(s.reward_value||'')===String(g.name)?'selected':''}>${fmAdmEsc(g.name)} · Stock ${Number(g.stock_quantity||0)}${g.is_active===false?' · INACTIVE':''}</option>`).join('')}</select></div>
   <div class="field"><label><input type="checkbox" data-spin-enabled="${i}" ${s.enabled!==false?'checked':''}> Enable this slot</label><small class="hint">Disabled slots cannot be won.</small></div>
  </div></div>`).join('');
 }
@@ -1186,7 +1186,7 @@ async function fmAdminLoadGifts(){
  box.textContent='Loading gift products…';
  try{
   const {data,error}=await fmSupabase.from('fm_gift_catalog').select('*').order('created_at',{ascending:false});
-  if(error)throw error;window.fmAdminGiftChoices=(data||[]).filter(g=>g.is_active);
+  if(error)throw error;window.fmAdminGiftChoices=(data||[]); // Keep all catalog rows available in the selector; the server validates active status and stock when awarding.
   box.innerHTML=(data||[]).map(g=>`<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf3ee">${g.image_url?`<img src="${fmAdmEsc(g.image_url)}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:9px">`:''}<div style="flex:1;min-width:0"><b>${fmAdmEsc(g.name)}</b><div>${fmAdmEsc(g.description||'')}</div><small>Stock: ${Number(g.stock_quantity||0)} · ${g.is_active?'ACTIVE':'INACTIVE'}</small><details style="margin-top:5px"><summary>Terms & Conditions</summary>${fmAdmEsc(g.terms_and_conditions||'Not specified')}</details></div><button class="btn btn-outline btn-sm" onclick="fmAdminToggleGift('${g.id}',${!g.is_active})">${g.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No gift products created yet.</p>';
   const selected=document.getElementById('fmPlanSpinPlan')?.value;if(selected)await fmAdminLoadSelectedPlanSpin();
  }catch(e){box.textContent='Could not load gifts: '+(e.message||String(e));}
@@ -1369,7 +1369,7 @@ async function fmAdminLoadSelectedPlanSpin(){
   // Load catalogue without a database-side boolean filter; some legacy rows store active as text.
   const {data:gifts,error:giftErr}=await fmSupabase.from('fm_gift_catalog').select('id,name,stock_quantity,is_active,image_url').order('name');
   if(giftErr)throw giftErr;
-  window.fmAdminGiftChoices=(gifts||[]).filter(g=>g.is_active===true||g.is_active===1||String(g.is_active).toLowerCase()==='true'||String(g.is_active).toLowerCase()==='active');
+  window.fmAdminGiftChoices=(gifts||[]); // Do not hide catalog rows because legacy is_active values may vary; status/stock are checked by the spin RPC.
   let data=null;
   if(planId==='__free_member__'){
    const res=await fmSupabase.from('fm_free_spin_settings').select('id,is_enabled,max_spins_per_user,slots').eq('id',true).maybeSingle();
