@@ -389,6 +389,16 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  </div>
 </div>
 
+<div id="fmGiftClaimModal" role="dialog" aria-modal="true" aria-labelledby="fmGiftClaimTitle" style="display:none;position:fixed;inset:0;z-index:10100;background:#10251acc;padding:16px;align-items:center;justify-content:center;overflow:auto">
+ <div style="background:#fff;border-radius:18px;padding:20px;width:min(100%,440px);max-height:90vh;overflow:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="fmGiftClaimTitle" style="margin:0;color:#126b3b">Claim Your Gift 🎁</h2><button type="button" class="btn btn-outline" onclick="fmCloseGiftClaim()">×</button></div>
+  <p id="fmGiftClaimInfo" class="hint">Checking purchase eligibility…</p>
+  <div class="field" style="margin-top:12px"><label for="fmGiftClaimAddress">Delivery Address</label><select id="fmGiftClaimAddress"><option value="">Loading saved addresses…</option></select></div>
+  <p id="fmGiftClaimMsg" class="hint" aria-live="polite"></p>
+  <button type="button" class="btn btn-green" id="fmGiftClaimSubmit" onclick="fmSubmitGiftClaim()" style="width:100%;margin-top:10px">Submit Gift Claim</button>
+  <button type="button" class="btn btn-outline" onclick="fmGoAddGiftClaimAddress()" style="width:100%;margin-top:8px">Add / Update Address</button>
+ </div>
+</div>
 <div id="fmStickyCartBar" class="fm-sticky-cart" aria-live="polite">
   <div class="fm-sticky-meta">
     <span class="fm-sticky-label">CART TOTAL</span>
@@ -1870,7 +1880,7 @@ async function fmLoadMyOffers(){
     return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');
-  const {data:plays,error:pe}=spinTable?await fmShopClient.from(spinTable).select('reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true}):{data:[],error:null};if(pe)throw pe;
+  const {data:plays,error:pe}=spinTable?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true}):{data:[],error:null};if(pe)throw pe;
   window.fmWelcomeSpinConfig=cfg.data||null;window.fmMemberSpinPlays=plays||[];
   const maxSpins=spinScope==='free'?1:Math.max(1,Number(cfg.data?.max_spins_per_user||1));
   const spinCount=(plays||[]).length,lastPlay=(plays||[])[spinCount-1]||null;
@@ -1958,7 +1968,7 @@ async function fmPlayWelcomeSpin(){
   const usedCount=window.fmMemberSpinPlays.length;
   const maxCount=Math.max(1,Number(window.fmWelcomeSpinConfig?.max_spins_per_user||1));
   const retryAvailable=data.reward_type==='none'&&usedCount<maxCount;
-  if(details){if(wonCoupon){details.innerHTML=`<div style="margin-top:8px;padding:12px;border:1px dashed #d8b84a;border-radius:12px;background:#fffdf3;text-align:left"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:21px;letter-spacing:1px;color:#176b3d">${fmOfferEsc(wonCoupon.code||'')}</strong><button type="button" class="btn btn-outline" style="display:block;margin:8px auto" onclick="fmCopyCouponCode('${fmOfferEsc(wonCoupon.code||'')}')">Copy Code</button>${Number(wonCoupon.min_order_amount||0)>0?`<div class="hint">Minimum order: ${fmOfferMoney(wonCoupon.min_order_amount)}</div>`:''}${wonCoupon.ends_at?`<div class="hint">Valid until: ${new Date(wonCoupon.ends_at).toLocaleString('en-IN')}</div>`:''}${wonCoupon.terms_and_conditions?`<div style="margin-top:8px"><b style="font-size:12px">Terms & Conditions</b><div class="hint" style="white-space:pre-wrap">${fmOfferEsc(wonCoupon.terms_and_conditions)}</div></div>`:''}</div>`;}else{details.textContent=data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your gift has been reserved. Admin will confirm delivery or store pickup.';}}
+  if(details){if(wonCoupon){details.innerHTML=`<div style="margin-top:8px;padding:12px;border:1px dashed #d8b84a;border-radius:12px;background:#fffdf3;text-align:left"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:21px;letter-spacing:1px;color:#176b3d">${fmOfferEsc(wonCoupon.code||'')}</strong><button type="button" class="btn btn-outline" style="display:block;margin:8px auto" onclick="fmCopyCouponCode('${fmOfferEsc(wonCoupon.code||'')}')">Copy Code</button>${Number(wonCoupon.min_order_amount||0)>0?`<div class="hint">Minimum order: ${fmOfferMoney(wonCoupon.min_order_amount)}</div>`:''}${wonCoupon.ends_at?`<div class="hint">Valid until: ${new Date(wonCoupon.ends_at).toLocaleString('en-IN')}</div>`:''}${wonCoupon.terms_and_conditions?`<div style="margin-top:8px"><b style="font-size:12px">Terms & Conditions</b><div class="hint" style="white-space:pre-wrap">${fmOfferEsc(wonCoupon.terms_and_conditions)}</div></div>`:''}</div>`;}else{if(data.reward_type==='product'){details.innerHTML='<p>Your gift is reserved. Check your purchase eligibility and submit your delivery address to claim it.</p><button type="button" class="btn btn-green" onclick="fmOpenGiftClaim()">Claim Gift</button>';window.fmLastWonSpinPlayId=data.spin_play_id||data.id||null;}else details.textContent=data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your reward is recorded.';}}
   const resultAction=document.getElementById('fmSpinResultAction');
   if(resultAction){if(retryAvailable){resultAction.textContent='SPIN AGAIN';resultAction.onclick=fmSpinResultContinue;}else{resultAction.textContent=data.reward_type==='none'?'Close':'View My Coupons';resultAction.onclick=fmGoToMyCoupons;}}
   if(cardBtn){cardBtn.disabled=!retryAvailable;cardBtn.textContent=retryAvailable?'Spin Again ('+(maxCount-usedCount)+' left)':usedCount>=maxCount?'Spin Limit Reached':'Spin Already Used';}
@@ -1967,6 +1977,32 @@ async function fmPlayWelcomeSpin(){
   sessionStorage.setItem('fm_spin_welcome_dismissed_'+(window.fmCurrentSpinMemberId||''),'1');
   await fmLoadMyOffers();
  }catch(e){msg.textContent=e.message||String(e);btn.disabled=false;btn.textContent='SPIN';if(cardBtn)cardBtn.disabled=false;}
+}
+async function fmOpenGiftClaim(){
+ const modal=document.getElementById('fmGiftClaimModal'),info=document.getElementById('fmGiftClaimInfo'),sel=document.getElementById('fmGiftClaimAddress'),msg=document.getElementById('fmGiftClaimMsg'),btn=document.getElementById('fmGiftClaimSubmit');
+ if(!modal)return;modal.style.display='flex';info.textContent='Checking purchase eligibility…';msg.textContent='';btn.disabled=true;
+ try{
+  const session=await getMemberSession();
+  let spinId=window.fmLastWonSpinPlayId;
+  if(!spinId){const {data,error}=await fmShopClient.from('fm_spin_plays').select('id').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;spinId=data?.id;}
+  if(!spinId)throw new Error('Winning gift record not found. Please refresh and contact support.');window.fmLastWonSpinPlayId=spinId;
+  const {data:check,error:checkErr}=await fmShopClient.rpc('fm_check_spin_gift_claim',{p_spin_play_id:spinId});if(checkErr)throw checkErr;
+  window.fmGiftClaimEligible=!!check?.eligible;
+  info.textContent='Minimum purchase: ₹'+Number(check?.minimum_purchase||0).toLocaleString('en-IN')+' · Eligible purchases after winning: ₹'+Number(check?.eligible_purchase_total||0).toLocaleString('en-IN')+(check?.eligible?' — Eligible to claim.':' — Purchase the remaining ₹'+Math.max(0,Number(check?.minimum_purchase||0)-Number(check?.eligible_purchase_total||0)).toLocaleString('en-IN')+' to unlock claim.');
+  const {data:addresses,error:addressErr}=await fmShopClient.from('fm_member_addresses').select('id,label,recipient_name,mobile_number,address_line1,address_line2,landmark,post_office,city,district,state,pincode,is_default').eq('user_id',session.user.id).order('is_default',{ascending:false});if(addressErr)throw addressErr;
+  sel.innerHTML='<option value="">Select delivery address</option>'+(addresses||[]).map(x=>{const full=[x.address_line1,x.address_line2,x.landmark,x.city,x.state,x.pincode].filter(Boolean).join(', ');return `<option value="${fmOfferEsc(x.id)}">${fmOfferEsc(x.label||x.recipient_name||'Address')} · ${fmOfferEsc(full)}</option>`;}).join('');
+  if(addresses?.length){const d=addresses.find(x=>x.is_default)||addresses[0];sel.value=String(d.id);}else{sel.innerHTML='<option value="">No saved address — add one first</option>';}
+  btn.disabled=!check?.eligible||!addresses?.length; if(!addresses?.length)msg.textContent='Please add your delivery address before claiming the gift.';
+ }catch(e){info.textContent='Could not check claim eligibility.';msg.textContent=e.message||String(e);btn.disabled=true;}
+}
+function fmCloseGiftClaim(){const m=document.getElementById('fmGiftClaimModal');if(m)m.style.display='none';}
+function fmGoAddGiftClaimAddress(){fmCloseGiftClaim();showPage('profile');resetAddressForm();setTimeout(()=>document.getElementById('addressFormTitle')?.scrollIntoView({behavior:'smooth',block:'center'}),150);}
+async function fmSubmitGiftClaim(){
+ const btn=document.getElementById('fmGiftClaimSubmit'),msg=document.getElementById('fmGiftClaimMsg'),addressId=document.getElementById('fmGiftClaimAddress')?.value;
+ try{if(!window.fmGiftClaimEligible)throw new Error('Minimum purchase condition is not met yet.');if(!addressId)throw new Error('Select or add a delivery address first.');if(!window.fmLastWonSpinPlayId)throw new Error('Winning gift record is missing. Refresh and try again.');btn.disabled=true;msg.textContent='Submitting claim request…';
+  const {data,error}=await fmShopClient.rpc('fm_claim_spin_gift',{p_spin_play_id:window.fmLastWonSpinPlayId,p_address_id:addressId});if(error)throw error;
+  msg.textContent='Gift claim submitted successfully. Admin will review your request and address.';btn.textContent='Request Submitted';await fmLoadMyOffers();
+ }catch(e){msg.textContent=e.message||String(e);btn.disabled=false;}
 }
 async function fmSpinResultContinue(){
  const cfg=window.fmWelcomeSpinConfig;
