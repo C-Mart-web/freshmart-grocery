@@ -176,7 +176,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   
 </section>
 <section class="page" id="cart"><div class="welcome"><div><h1>My Cart 🛒</h1><p>Review items and quantities before checkout.</p></div><button class="btn btn-outline" onclick="fmRenderCart()">Refresh</button></div><div class="card"><div id="fmCartRows" class="hint">Your cart is empty.</div><div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:850"><span>Subtotal</span><span id="fmCartSubtotal">₹0.00</span></div><button class="btn btn-green" style="margin-top:14px;width:100%" onclick="fmOpenCheckout()">Proceed to Checkout</button><button class="btn btn-outline" style="margin-top:9px;width:100%" onclick="showPage('groceries')">Continue Shopping</button></div></section>
-<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment" onchange="fmUpdateCheckoutButton()"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Benefit (after delivery)</span><b id="fmCheckoutSelfDiscount">Credited after delivery</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Place an Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
+<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div class="field" style="margin:12px 0"><label>Payment Method</label><select id="fmCheckoutPayment" onchange="fmUpdateCheckoutButton()"><option value="">Loading payment methods…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><button type="button" class="btn btn-outline" id="fmShowAvailableCouponsBtn" onclick="fmToggleCheckoutCouponList()" style="margin-top:7px;padding:6px 10px;font-size:12px;min-height:32px">🎟 Available Coupons</button><div id="fmCheckoutAvailableCoupons" style="display:none;margin-top:8px;padding:9px;border:1px solid #dcebe0;border-radius:10px;background:#f7fbf8"><div class="hint" style="font-size:12px;margin-bottom:6px">Your available coupons</div><div id="fmCheckoutAvailableCouponRows" class="hint" style="font-size:12px">Tap Available Coupons to load.</div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Benefit (after delivery)</span><b id="fmCheckoutSelfDiscount">Credited after delivery</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Place an Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
 <section class="page" id="plans"><div class="fm-page-banner" id="fmBannerPlans" style="display:none"></div>
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
 
@@ -1185,6 +1185,44 @@ function fmUpdateCouponTotal(){
  if(d)d.textContent=shopMoney(discount);
  if(t)t.textContent=shopMoney(total);
 }
+function fmToggleCheckoutCouponList(){
+ const panel=document.getElementById('fmCheckoutAvailableCoupons');
+ if(!panel)return;
+ const opening=panel.style.display==='none'||!panel.style.display;
+ panel.style.display=opening?'block':'none';
+ if(opening)fmLoadAvailableCheckoutCoupons();
+}
+async function fmLoadAvailableCheckoutCoupons(){
+ const box=document.getElementById('fmCheckoutAvailableCouponRows');
+ if(!box||!fmShopClient)return;
+ box.textContent='Loading your coupons…';
+ try{
+  const session=await getMemberSession();
+  const {data:assignments,error:ae}=await fmShopClient.from('fm_user_coupons')
+   .select('id,coupon_id,status,assigned_at').eq('user_id',session.user.id).eq('status','available')
+   .order('assigned_at',{ascending:false});
+  if(ae)throw ae;
+  const ids=[...new Set((assignments||[]).map(x=>x.coupon_id).filter(Boolean))];
+  if(!ids.length){box.textContent='No available coupons. Spin & Win or check My Coupons.';return;}
+  const {data:coupons,error:ce}=await fmShopClient.from('fm_coupons')
+   .select('id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active').in('id',ids);
+  if(ce)throw ce;
+  const map=new Map((coupons||[]).map(c=>[String(c.id),c]));
+  const rows=(assignments||[]).map(a=>map.get(String(a.coupon_id))).filter(c=>c&&c.is_active&&(!c.ends_at||new Date(c.ends_at)>new Date())&&c.code);
+  if(!rows.length){box.textContent='No valid available coupons found.';return;}
+  box.innerHTML=rows.map((c,i)=>{
+   const d=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?'₹'+Number(c.discount_value||0)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':'Coupon');
+   return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:${i?'1px solid #e3eee6':'0'}"><div style="min-width:0"><b>${shopEsc(d)}</b><div style="font-size:11px;color:#718078;overflow-wrap:anywhere">${shopEsc(c.code)}${Number(c.min_order_amount||0)>0?' · Min '+shopMoney(c.min_order_amount):''}</div></div><button type="button" class="btn btn-green" style="padding:6px 10px;min-height:30px;font-size:11px;white-space:nowrap" onclick="fmChooseCheckoutCoupon('${shopEsc(c.code)}')">Use</button></div>`;
+  }).join('');
+ }catch(e){box.textContent='Could not load available coupons: '+(e.message||'Please try again.');}
+}
+function fmChooseCheckoutCoupon(code){
+ const input=document.getElementById('fmCheckoutCoupon');
+ if(input)input.value=String(code||'').toUpperCase();
+ const panel=document.getElementById('fmCheckoutAvailableCoupons');if(panel)panel.style.display='none';
+ fmApplyCheckoutCoupon();
+}
+
 async function fmApplyCheckoutCoupon(){
  const msg=document.getElementById('fmCouponApplyMsg');
  const btn=document.getElementById('fmApplyCouponBtn');
@@ -1696,7 +1734,10 @@ function fmToggleMobileMenu(open){
   if(toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 
+window.fmLastNonCheckoutPage=window.fmLastNonCheckoutPage||'dashboard';
 function showPage(id,fromHistory=false){
+ const currentPage=document.querySelector('.page.active')?.id;
+ if(currentPage && currentPage!=='checkout' && id==='checkout')window.fmLastNonCheckoutPage=currentPage;
  fmToggleMobileMenu(false);
  if(id==='rewards' && fmGlobalRewardUserId && fmGlobalRewardAccessToken){loadMyMatchingSlabs(fmGlobalRewardUserId,fmGlobalRewardAccessToken);}
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
@@ -1729,6 +1770,13 @@ function showPage(id,fromHistory=false){
      return;
    }
    if(e.state?.fmRoot){
+     const activeNow=document.querySelector('.page.active')?.id;
+     if(activeNow==='checkout'){
+       const backTarget=(window.fmLastNonCheckoutPage && window.fmLastNonCheckoutPage!=='checkout')?window.fmLastNonCheckoutPage:'cart';
+       showPage(backTarget,true);
+       history.replaceState({fmUserPage:backTarget,fmRoot:true},'',location.pathname+location.search+'#'+encodeURIComponent(backTarget));
+       return;
+     }
      if(confirm('Are you sure you want to exit this page?')){
        signOut();
      }else{
@@ -1801,14 +1849,10 @@ async function fmLoadMyOffers(){
   const usable=joined.filter(x=>x.status==='available'&&x.coupon?.is_active&&(!x.coupon.ends_at||new Date(x.coupon.ends_at)>new Date()));
   const countEl=document.getElementById('fmMyCouponCount');if(countEl)countEl.textContent=usable.length+' AVAILABLE';
   couponBox.innerHTML=joined.length?joined.map(x=>{
-    const c=x.coupon||{};
-    if(!x.coupon){
-      return `<article style="padding:14px;border:1px solid #f1d7a8;border-radius:13px;margin:9px 0;background:#fffaf0"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>Coupon details are not available yet</b><span class="badge pending">DETAILS PENDING</span></div><p class="hint" style="margin:8px 0 0">Your coupon assignment is saved, but the coupon details could not be read. Please refresh after the Coupon access SQL is applied. Do not try to use this coupon until its code is visible here.</p></article>`;
-    }
-    const expired=!!(c.ends_at&&new Date(c.ends_at)<=new Date());
+    const c=x.coupon||{};const expired=!!(c.ends_at&&new Date(c.ends_at)<=new Date());
     const status=expired&&x.status==='available'?'EXPIRED':String(x.status||'unknown').toUpperCase();
-    const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Special Coupon'));
-    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code)}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code)}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
+    const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
+    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');if(spinBtn){spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?'Spin Now':'Spin Wheel Coming Soon';}
   const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true});if(pe)throw pe;
