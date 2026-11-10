@@ -1940,7 +1940,7 @@ async function fmPlayWelcomeSpin(){
   if(!eligible.length)throw new Error('Admin has not enabled any wheel reward.');
   // The database RPC is authoritative; the browser never chooses or credits the prize.
   const spinRpc=window.fmCurrentSpinScope==='free'?'fm_play_free_spin':'fm_play_spin';const {data,error}=await fmShopClient.rpc(spinRpc);if(error)throw error;
-  if(!data||!data.reward_label)throw new Error('Spin result was not returned by server.');
+  if(!data||!data.reward_label)throw new Error('Spin result was not returned by server.');window.fmLastWonSpinPlayId=data.spin_id||data.id||null;window.fmLastWonSpinTable=window.fmCurrentSpinTable||'fm_spin_plays';
   let wonCoupon=null;
   if(String(data.reward_type||'')==='coupon'){
    const memberId=window.fmCurrentSpinMemberId||(await getMemberSession())?.user?.id;
@@ -1963,7 +1963,7 @@ async function fmPlayWelcomeSpin(){
   const spinBox=document.querySelector('.fm-spin-welcome-box');
   const prize=document.getElementById('fmSpinWonPrize');
   const details=document.getElementById('fmSpinWonDetails');
-  if(prize)prize.textContent=data.reward_label||'Special Reward';const giftImg=document.getElementById('fmSpinWonGiftImage');if(giftImg){giftImg.src=data.gift_image_url||'';giftImg.style.display=data.reward_type==='product'&&data.gift_image_url?'block':'none';} const popHeading=document.querySelector('#fmSpinResultPopup h2');if(popHeading)popHeading.textContent=data.reward_type==='none'?'Try Again!':'Congratulations!';
+  if(prize)prize.textContent=data.reward_label||'Special Reward';const fmPrizeAction=document.getElementById('fmSpinResultAction');if(fmPrizeAction){if(data.reward_type==='product'){fmPrizeAction.textContent='Claim Gift';fmPrizeAction.onclick=fmOpenGiftClaim;}else{fmPrizeAction.textContent='View My Coupons';fmPrizeAction.onclick=fmGoToMyCoupons;}}const wonDetails=document.getElementById('fmSpinWonDetails');if(wonDetails)wonDetails.textContent=data.reward_type==='product'?'Your gift is reserved. Complete the minimum purchase and submit your delivery address to claim it.':'Your reward result is shown above.';const giftImg=document.getElementById('fmSpinWonGiftImage');if(giftImg){giftImg.src=data.gift_image_url||'';giftImg.style.display=data.reward_type==='product'&&data.gift_image_url?'block':'none';} const popHeading=document.querySelector('#fmSpinResultPopup h2');if(popHeading)popHeading.textContent=data.reward_type==='none'?'Try Again!':'Congratulations!';
   window.fmMemberSpinPlays=[...(window.fmMemberSpinPlays||[]),{reward_type:data.reward_type,reward_label:data.reward_label,status:data.reward_type==='none'?'no_prize':'fulfilled',played_at:new Date().toISOString()}];
   const usedCount=window.fmMemberSpinPlays.length;
   const maxCount=Math.max(1,Number(window.fmWelcomeSpinConfig?.max_spins_per_user||1));
@@ -1984,9 +1984,9 @@ async function fmOpenGiftClaim(){
  try{
   const session=await getMemberSession();
   let spinId=window.fmLastWonSpinPlayId;
-  if(!spinId){const {data,error}=await fmShopClient.from('fm_spin_plays').select('id').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;spinId=data?.id;}
+  if(!spinId){const spinTable=window.fmLastWonSpinTable||window.fmCurrentSpinTable||(window.fmCurrentSpinScope==='free'?'fm_free_spin_plays':'fm_spin_plays');const {data,error}=await fmShopClient.from(spinTable).select('id').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;spinId=data?.id;window.fmLastWonSpinTable=spinTable;}
   if(!spinId)throw new Error('Winning gift record not found. Please refresh and contact support.');window.fmLastWonSpinPlayId=spinId;
-  const {data:check,error:checkErr}=await fmShopClient.rpc('fm_check_spin_gift_claim',{p_spin_play_id:spinId});if(checkErr)throw checkErr;
+  const isFreeSpin=(window.fmLastWonSpinTable||window.fmCurrentSpinTable)==='fm_free_spin_plays';const {data:check,error:checkErr}=await fmShopClient.rpc(isFreeSpin?'fm_check_free_spin_gift_claim':'fm_check_spin_gift_claim',{p_spin_play_id:spinId});if(checkErr)throw checkErr;
   window.fmGiftClaimEligible=!!check?.eligible;
   info.textContent='Minimum purchase: ₹'+Number(check?.minimum_purchase||0).toLocaleString('en-IN')+' · Eligible purchases after winning: ₹'+Number(check?.eligible_purchase_total||0).toLocaleString('en-IN')+(check?.eligible?' — Eligible to claim.':' — Purchase the remaining ₹'+Math.max(0,Number(check?.minimum_purchase||0)-Number(check?.eligible_purchase_total||0)).toLocaleString('en-IN')+' to unlock claim.');
   const {data:addresses,error:addressErr}=await fmShopClient.from('fm_member_addresses').select('id,label,recipient_name,mobile_number,address_line1,address_line2,landmark,post_office,city,district,state,pincode,is_default').eq('user_id',session.user.id).order('is_default',{ascending:false});if(addressErr)throw addressErr;
@@ -2000,7 +2000,7 @@ function fmGoAddGiftClaimAddress(){fmCloseGiftClaim();showPage('profile');resetA
 async function fmSubmitGiftClaim(){
  const btn=document.getElementById('fmGiftClaimSubmit'),msg=document.getElementById('fmGiftClaimMsg'),addressId=document.getElementById('fmGiftClaimAddress')?.value;
  try{if(!window.fmGiftClaimEligible)throw new Error('Minimum purchase condition is not met yet.');if(!addressId)throw new Error('Select or add a delivery address first.');if(!window.fmLastWonSpinPlayId)throw new Error('Winning gift record is missing. Refresh and try again.');btn.disabled=true;msg.textContent='Submitting claim request…';
-  const {data,error}=await fmShopClient.rpc('fm_claim_spin_gift',{p_spin_play_id:window.fmLastWonSpinPlayId,p_address_id:addressId});if(error)throw error;
+  const isFreeSpin=(window.fmLastWonSpinTable||window.fmCurrentSpinTable)==='fm_free_spin_plays';const {data,error}=await fmShopClient.rpc(isFreeSpin?'fm_claim_free_spin_gift':'fm_claim_spin_gift',{p_spin_play_id:window.fmLastWonSpinPlayId,p_address_id:addressId});if(error)throw error;
   msg.textContent='Gift claim submitted successfully. Admin will review your request and address.';btn.textContent='Request Submitted';await fmLoadMyOffers();
  }catch(e){msg.textContent=e.message||String(e);btn.disabled=false;}
 }
