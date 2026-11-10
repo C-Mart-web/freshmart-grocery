@@ -294,15 +294,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <p class="hint">Set each of the six wheel slots below. Only Gift Product and No Prize slots are allowed. Upload each gift image above and select the gift for each slot. Gift stock is reduced automatically when won.</p>
 <div id="fmSpinSlotEditor" style="display:grid;gap:12px;margin-top:12px"></div>
 <button class="btn btn-green" style="margin-top:14px" onclick="fmAdminSaveSpin()">Save Spin Settings</button><p id="fmSpinAdminMsg" class="hint"></p><div id="fmSpinPlays" class="hint"></div></div>
-<div class="card" style="margin-top:14px;border:1px solid #bfe4ca">
- <h2>🆓 Free Member Registration Spin</h2>
- <p class="hint">Separate one-time wheel for registered members who have not activated any membership plan.</p>
- <label style="display:flex;gap:9px;align-items:center;margin:12px 0"><input type="checkbox" id="fmFreeSpinEnabled"> Enable Free Member Spin</label>
- <div class="field" style="max-width:320px;margin:12px 0"><label>Spin Limit</label><input id="fmFreeSpinMax" type="number" value="1" readonly><small class="hint">Free members receive exactly one spin attempt.</small></div>
- <div id="fmFreeSpinSlotEditor" style="display:grid;gap:12px;margin-top:12px"></div>
- <button class="btn btn-green" style="margin-top:14px" type="button" onclick="fmAdminSaveFreeSpin()">Save Free Member Spin Settings</button>
- <p id="fmFreeSpinAdminMsg" class="hint" aria-live="polite"></p>
-</div><div class="card" style="margin-top:14px"><div class="section-head"><h2>🎁 Gift Claim Requests</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminLoadGiftClaims()">Refresh</button></div><p class="hint">Members' gift claims after meeting the minimum purchase condition. Review address and approve/reject.</p><div id="fmGiftClaimsMsg" class="hint"></div><div id="fmGiftClaimsList" class="tablewrap">Loading gift claim requests…</div></div><div class="card" style="margin-top:14px"><h2>Assign Coupon to Member</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmAssignCouponUser" placeholder="Enter member username or FM User ID"><small class="hint">Searches the member profile. Auth UUID is fetched automatically.</small></div><div class="field"><label>Coupon Code</label><input id="fmAssignCouponCode"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignCoupon()">Assign Coupon</button><p id="fmAssignCouponMsg" class="hint"></p><hr><h2>Assign Scratch Card</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmScratchUser" placeholder="Enter member username or FM User ID"><small class="hint">Auth UUID is fetched automatically from the member profile.</small></div><div class="field"><label>Reward Type</label><select id="fmScratchType"><option value="wallet">Wallet Amount</option><option value="coupon">Coupon</option><option value="product">Product</option><option value="none">No Prize</option></select></div><div class="field"><label>Reward Value</label><input id="fmScratchValue"></div><div class="field"><label>Reward Label</label><input id="fmScratchLabel"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignScratch()">Assign Scratch Card</button><p id="fmScratchAdminMsg" class="hint"></p><hr><h2>Coupons & Offers List</h2><div id="fmAdminOffersList" class="hint">Loading…</div></div></section></main>
+<div class="card" style="margin-top:14px"><div class="section-head"><h2>🎁 Gift Claim Requests</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminLoadGiftClaims()">Refresh</button></div><p class="hint">Members' gift claims after meeting the minimum purchase condition. Review address and approve/reject.</p><div id="fmGiftClaimsMsg" class="hint"></div><div id="fmGiftClaimsList" class="tablewrap">Loading gift claim requests…</div></div><div class="card" style="margin-top:14px"><h2>Assign Coupon to Member</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmAssignCouponUser" placeholder="Enter member username or FM User ID"><small class="hint">Searches the member profile. Auth UUID is fetched automatically.</small></div><div class="field"><label>Coupon Code</label><input id="fmAssignCouponCode"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignCoupon()">Assign Coupon</button><p id="fmAssignCouponMsg" class="hint"></p><hr><h2>Assign Scratch Card</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmScratchUser" placeholder="Enter member username or FM User ID"><small class="hint">Auth UUID is fetched automatically from the member profile.</small></div><div class="field"><label>Reward Type</label><select id="fmScratchType"><option value="wallet">Wallet Amount</option><option value="coupon">Coupon</option><option value="product">Product</option><option value="none">No Prize</option></select></div><div class="field"><label>Reward Value</label><input id="fmScratchValue"></div><div class="field"><label>Reward Label</label><input id="fmScratchLabel"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignScratch()">Assign Scratch Card</button><p id="fmScratchAdminMsg" class="hint"></p><hr><h2>Coupons & Offers List</h2><div id="fmAdminOffersList" class="hint">Loading…</div></div></section></main>
 </div>
 <nav class="mobile-nav"><button class="active" data-page="dashboard"><span>⌂</span>Home</button><button data-page="payments"><span>🧾</span>Payments</button><button data-page="orders"><span>📦</span>Orders</button><button data-page="offers"><span>🎁</span>Offers</button><button type="button" onclick="fmToggleMobileMenu(true)"><span>☰</span>More</button></nav>
 
@@ -1196,7 +1188,7 @@ async function fmAdminLoadGifts(){
   const {data,error}=await fmSupabase.from('fm_gift_catalog').select('*').order('created_at',{ascending:false});
   if(error)throw error;window.fmAdminGiftChoices=(data||[]).filter(g=>g.is_active);
   box.innerHTML=(data||[]).map(g=>`<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf3ee">${g.image_url?`<img src="${fmAdmEsc(g.image_url)}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:9px">`:''}<div style="flex:1;min-width:0"><b>${fmAdmEsc(g.name)}</b><div>${fmAdmEsc(g.description||'')}</div><small>Stock: ${Number(g.stock_quantity||0)} · ${g.is_active?'ACTIVE':'INACTIVE'}</small><details style="margin-top:5px"><summary>Terms & Conditions</summary>${fmAdmEsc(g.terms_and_conditions||'Not specified')}</details></div><button class="btn btn-outline btn-sm" onclick="fmAdminToggleGift('${g.id}',${!g.is_active})">${g.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No gift products created yet.</p>';
-  const selected=document.getElementById('fmPlanSpinPlan')?.value;if(selected)await fmAdminLoadSelectedPlanSpin();if(document.getElementById('fmFreeSpinSlotEditor'))fmRenderSpinSlots(window.fmFreeSpinSlots||FM_DEFAULT_SPIN_SLOTS,'fmFreeSpinSlotEditor');
+  const selected=document.getElementById('fmPlanSpinPlan')?.value;if(selected)await fmAdminLoadSelectedPlanSpin();
  }catch(e){box.textContent='Could not load gifts: '+(e.message||String(e));}
 }
 async function fmAdminToggleGift(id,on){
@@ -1345,7 +1337,7 @@ async function fmAdminLoadOffers(){
   ]);
   if(c.error)throw c.error;if(o.error)throw o.error;
   box.innerHTML='<h3>Coupons</h3>'+((c.data||[]).map(x=>`<div style="padding:9px;border-bottom:1px solid #edf3ee"><b>${fmAdmEsc(x.code)}</b> · ${fmAdmEsc(x.title)} · ${fmAdmEsc(x.discount_type)} ${x.discount_value} · ${x.is_active?'ACTIVE':'OFF'}<details style="margin-top:5px"><summary>Terms & Conditions</summary>${fmAdmEsc(x.terms_and_conditions||'Not specified')}</details> <button class="btn btn-outline btn-sm" onclick="fmAdminToggleCoupon('${x.id}',${!x.is_active})">${x.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No coupons created.</p>')+'<h3 style="margin-top:18px">Offer Campaigns</h3>'+((o.data||[]).map(x=>`<div style="padding:9px;border-bottom:1px solid #edf3ee"><b>${fmAdmEsc(x.title)}</b> · ${fmAdmEsc(x.offer_type)} · ${x.is_active?'ACTIVE':'OFF'} <button class="btn btn-outline btn-sm" onclick="fmAdminToggleOffer('${x.id}',${!x.is_active})">${x.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No offers created.</p>');
-  const planSel=document.getElementById('fmPlanSpinPlan');if(planSel){const {data:plans,error:planErr}=await fmSupabase.from('fm_membership_plans').select('id,plan_name,plan_amount').order('plan_amount');if(planErr)throw planErr;const old=planSel.value;planSel.innerHTML='<option value="">Select eligible plan</option>'+(plans||[]).map(p=>`<option value="${p.id}">${fmAdmEsc(p.plan_name)} · ₹${Number(p.plan_amount||0).toLocaleString('en-IN')}</option>`).join('');if(old&&(plans||[]).some(p=>String(p.id)===old))planSel.value=old;else if(plans?.length)planSel.value=String(plans[0].id);if(planSel.value)await fmAdminLoadSelectedPlanSpin();}
+  const planSel=document.getElementById('fmPlanSpinPlan');if(planSel){const {data:plans,error:planErr}=await fmSupabase.from('fm_membership_plans').select('id,plan_name,plan_amount').order('plan_amount');if(planErr)throw planErr;const old=planSel.value;planSel.innerHTML='<option value="">Select eligible plan</option><option value="__free_member__">🆓 Free Member – Registration</option>'+(plans||[]).map(p=>`<option value="${p.id}">${fmAdmEsc(p.plan_name)} · ₹${Number(p.plan_amount||0).toLocaleString('en-IN')}</option>`).join('');if(old&&(plans||[]).some(p=>String(p.id)===old))planSel.value=old;else if(plans?.length)planSel.value=String(plans[0].id);if(planSel.value)await fmAdminLoadSelectedPlanSpin();}
   await fmAdminLoadFreeSpin();
   const playsBox=document.getElementById('fmSpinPlays');if(playsBox)playsBox.innerHTML='<b>Recent Spin Results</b><br>'+((plays.data||[]).map(x=>`${fmAdmEsc(x.user_id)} — ${fmAdmEsc(x.reward_label)} (${fmAdmEsc(x.status)})`).join('<br>')||'No spins yet.');
  }catch(e){box.textContent='Could not load offers: '+(e.message||String(e));}
@@ -1372,28 +1364,46 @@ async function fmAdminToggleCoupon(id,on){const {error}=await fmSupabase.from('f
 async function fmAdminToggleOffer(id,on){const {error}=await fmSupabase.from('fm_offer_campaigns').update({is_active:on}).eq('id',id);if(error)alert(error.message);else fmAdminLoadOffers();}
 async function fmAdminLoadSelectedPlanSpin(){
  const planId=document.getElementById('fmPlanSpinPlan')?.value;if(!planId)return;
- const m=document.getElementById('fmSpinAdminMsg');if(m)m.textContent='Loading selected plan wheel and gift products…';
+ const m=document.getElementById('fmSpinAdminMsg');if(m)m.textContent='Loading wheel settings and gift products…';
  try{
-  const {data:gifts,error:giftErr}=await fmSupabase.from('fm_gift_catalog').select('id,name,stock_quantity,is_active,image_url').eq('is_active',true).order('name');
+  // Load catalogue without a database-side boolean filter; some legacy rows store active as text.
+  const {data:gifts,error:giftErr}=await fmSupabase.from('fm_gift_catalog').select('id,name,stock_quantity,is_active,image_url').order('name');
   if(giftErr)throw giftErr;
-  window.fmAdminGiftChoices=gifts||[];
-  const {data,error}=await fmSupabase.from('fm_plan_spin_settings').select('*').eq('plan_id',planId).maybeSingle();if(error)throw error;
+  window.fmAdminGiftChoices=(gifts||[]).filter(g=>g.is_active===true||g.is_active===1||String(g.is_active).toLowerCase()==='true'||String(g.is_active).toLowerCase()==='active');
+  let data=null;
+  if(planId==='__free_member__'){
+   const res=await fmSupabase.from('fm_free_spin_settings').select('id,is_enabled,max_spins_per_user,slots').eq('id',true).maybeSingle();
+   if(res.error)throw res.error;data=res.data;
+   const mx=document.getElementById('fmSpinMaxPerUser');if(mx)mx.value='1';
+   if(m) m.textContent=data?'Free Member Registration Spin settings loaded.':'No Free Member Spin saved yet.';
+  }else{
+   const res=await fmSupabase.from('fm_plan_spin_settings').select('*').eq('plan_id',planId).maybeSingle();
+   if(res.error)throw res.error;data=res.data;
+   const mx=document.getElementById('fmSpinMaxPerUser');if(mx)mx.value=String(Math.max(1,Number(data?.max_spins_per_user||1)));
+   if(m)m.textContent=data?'Plan wheel settings loaded.':'No wheel saved for this plan yet. Configure and save.';
+  }
   const en=document.getElementById('fmSpinEnabled');if(en)en.checked=!!data?.is_enabled;
-  const mx=document.getElementById('fmSpinMaxPerUser');if(mx)mx.value=String(Math.max(1,Number(data?.max_spins_per_user||1)));
-  fmRenderSpinSlots(data?.slots||FM_DEFAULT_SPIN_SLOTS);if(m)m.textContent=data?'Plan wheel settings loaded.':'No wheel saved for this plan yet. Configure and save.';
- }catch(e){if(m)m.textContent='Plan wheel load failed: '+(e.message||e);}
+  fmRenderSpinSlots(data?.slots||FM_DEFAULT_SPIN_SLOTS);
+ }catch(e){if(m)m.textContent='Spin Wheel load failed: '+(e.message||e);}
 }
 async function fmAdminSaveSpin(){
  const m=document.getElementById('fmSpinAdminMsg');try{
   if(!fmSupabase)throw new Error('Database client is not ready. Refresh and sign in again.');
-  const planId=document.getElementById('fmPlanSpinPlan')?.value;if(!planId)throw new Error('Select a membership plan first.');
+  const planId=document.getElementById('fmPlanSpinPlan')?.value;if(!planId)throw new Error('Select a membership plan or Free Member first.');
   const slots=fmCollectSpinSlots();
   for(let i=0;i<slots.length;i++){const x=slots[i];if(!x.label)throw new Error('Enter a label for Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='product'&&!x.reward_value)throw new Error('Select a gift product for enabled Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type!=='none'&&x.reward_type!=='product')throw new Error('Only Gift Product and No Prize are allowed in the wheel.');}
   if(!slots.some(x=>x.enabled))throw new Error('Enable at least one wheel slot.');
   const maxSpins=Math.max(1,Math.min(100,Math.floor(Number(document.getElementById('fmSpinMaxPerUser')?.value||1))));
-  const payload={plan_id:planId,is_enabled:!!document.getElementById('fmSpinEnabled')?.checked,max_spins_per_user:maxSpins,slots,updated_at:new Date().toISOString()};
-  const {error}=await fmSupabase.from('fm_plan_spin_settings').upsert(payload,{onConflict:'plan_id'});if(error)throw error;
-  m.textContent='Selected plan Spin Wheel settings saved successfully.';
+  const enabled=!!document.getElementById('fmSpinEnabled')?.checked;
+  if(planId==='__free_member__'){
+   const {error}=await fmSupabase.from('fm_free_spin_settings').upsert({id:true,is_enabled:enabled,max_spins_per_user:1,slots,updated_at:new Date().toISOString()},{onConflict:'id'});
+   if(error)throw error;
+   m.textContent='Free Member Registration Spin settings saved successfully.';
+  }else{
+   const payload={plan_id:planId,is_enabled:enabled,max_spins_per_user:maxSpins,slots,updated_at:new Date().toISOString()};
+   const {error}=await fmSupabase.from('fm_plan_spin_settings').upsert(payload,{onConflict:'plan_id'});if(error)throw error;
+   m.textContent='Selected plan Spin Wheel settings saved successfully.';
+  }
  }catch(e){m.textContent='Could not save settings: '+(e.message||String(e));}
 }
 
