@@ -77,7 +77,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="grid">
 <div class="card"><div class="stat-head">Total Members <span class="stat-icon">👥</span></div><div class="stat-value" id="totalMembers">—</div><div class="stat-note" id="membersStatus">Connecting to Supabase…</div></div>
 <div class="card"><div class="stat-head">Pending Payments <span class="stat-icon">🧾</span></div><div class="stat-value" id="pendingCount">0</div><div class="stat-note">Demo requests in this browser</div></div>
-<div class="card"><div class="stat-head">Active Plans <span class="stat-icon">✅</span></div><div class="stat-value" id="activePlansCount">—</div><div class="stat-note" id="activePlansNote">Loading live activations…</div></div>
+<div class="card"><div class="stat-head">Total Plans <span class="stat-icon">✅</span></div><div class="stat-value" id="activePlansCount">—</div><div class="stat-note" id="activePlansNote">Loading membership plans…</div></div>
 <div class="card"><div class="stat-head">Orders Today <span class="stat-icon">📦</span></div><div class="stat-value" id="ordersTodayCount">—</div><div class="stat-note" id="ordersTodayNote">Loading today’s orders…</div></div>
 </div>
 <div class="card"><div class="section-head"><h2>Latest payment requests</h2><button class="btn btn-outline btn-sm" data-goto="payments">Open approvals →</button></div><div class="tablewrap"><table><thead><tr><th>Member</th><th>Plan</th><th>Amount</th><th>Reference</th><th>Status</th><th>Action</th></tr></thead><tbody id="latestRows"><tr><td colspan="6" class="empty">No demo requests. Live requests will appear after Supabase connection.</td></tr></tbody></table></div></div>
@@ -398,17 +398,17 @@ async function fmLoadDashboardBusinessMetrics(){
  const activeNote=document.getElementById('activePlansNote');
  const ordersValue=document.getElementById('ordersTodayCount');
  const ordersNote=document.getElementById('ordersTodayNote');
- // Count currently active member plan activations.
+ // Count membership plans from the actual plan catalogue (not member activations).
  try{
-  const {count,error}=await fmSupabase.from('fm_plan_roi_activations')
-    .select('id',{count:'exact',head:true}).eq('status','active');
+  const {count,error}=await fmSupabase.from('fm_membership_plans')
+    .select('id',{count:'exact',head:true});
   if(error)throw error;
   if(activeValue)activeValue.textContent=Number(count||0).toLocaleString('en-IN');
-  if(activeNote)activeNote.textContent='Active member plan activations';
+  if(activeNote)activeNote.textContent='Membership plans in catalogue';
  }catch(e){
   if(activeValue)activeValue.textContent='—';
-  if(activeNote)activeNote.textContent='Could not load: '+(e.message||'Check table / permissions');
-  console.error('Active plan dashboard metric:',e);
+  if(activeNote)activeNote.textContent='Could not load plans: '+(e.message||'Check table / permissions');
+  console.error('Total plans dashboard metric:',e);
  }
  // Count grocery orders created today using India local calendar boundaries.
  try{
