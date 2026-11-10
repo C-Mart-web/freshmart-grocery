@@ -976,7 +976,7 @@ async function loadSignedInMember(){
 
 
 // Grocery cart: guest cart stays local; signed-in cart syncs to the member account.
-let fmCart=[];try{fmCart=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]')}catch(e){fmCart=[]}
+let fmCart=[]; // Start empty until the signed-in member's own cloud cart is loaded; never show another browser user's cart.
 let fmCheckoutArea=null,fmCheckoutSlots=[],fmCloudCartBusy=false;
 async function fmSyncCartForUser(userId){
  if(!fmShopClient||!userId||fmCloudCartBusy)return;fmCloudCartBusy=true;
@@ -987,11 +987,12 @@ async function fmSyncCartForUser(userId){
   const map=new Map();
   (remote||[]).forEach(x=>map.set(String(x.product_id)+'|'+String(x.variant_id||''),{...x,quantity:Number(x.quantity)||0}));
   if(owner===userId){
-   // Once this browser cart belongs to the signed-in member, local quantities/removals are authoritative.
+   // Restore this member's own saved browser cart.
    fmCart=local.filter(x=>Number(x.quantity)>0);
   }else{
-   local.forEach(x=>{const id=String(x.product_id)+'|'+String(x.variant_id||''),q=Number(x.quantity)||0;if(q>0){const old=map.get(id);map.set(id,{...x,quantity:(old?.quantity||0)+q});}});
-   fmCart=[...map.values()].filter(x=>x.quantity>0);
+   // A cart from another or unassigned browser session must NEVER be copied to this member.
+   // For a new member/device, only that member's own cloud cart is trusted.
+   fmCart=[...map.values()].filter(x=>Number(x.quantity)>0);
   }
   const keep=new Set(fmCart.map(x=>String(x.product_id)+'|'+String(x.variant_id||'')));
   for(const x of remote||[]){
