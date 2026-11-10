@@ -184,6 +184,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="section-head"><h2>🥗 Daily Fresh Subscription</h2><button class="link" type="button" onclick="fmDFUserLoad()">Refresh</button></div>
   <p class="hint">Choose a category, view all available subscription plans, then select a plan to see its package and payment details. Only one Daily Fresh subscription can be active at a time.</p>
   <div id="fmDFUserActive" class="hint">Checking your subscription…</div>
+  <div id="fmDFUserDelivery" style="margin-top:12px"></div>
   <h3 style="font-size:16px;margin:16px 0 9px">1. Choose your Daily Fresh category</h3>
   <div id="fmDFUserCategories" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px">
    <button type="button" class="fm-df-category selected" data-category="dry_fruits" onclick="fmDFUserChooseCategory('dry_fruits')">🥜<b>Dry Fruits</b><small>Healthy daily dry fruits</small></button>
@@ -2051,7 +2052,120 @@ async function fmLoadWithdrawalHistory(){const rows=document.getElementById('fmW
 
 <script>
 let fmDFUserPlans=[],fmDFUserSelected=null,fmDFUserItems=[],fmDFUserHasActive=false,fmDFUserRequestId=null;const fmDFUserNames={dry_fruits:'Dry Fruits',fresh_juices:'Fresh Juices',fruits_vegetables:'Fresh Fruits & Vegetables',fresh_sprouts:'Fresh Sprouts'};function fmDFUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}function fmDFUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
-async function fmDFUserLoad(){const active=document.getElementById('fmDFUserActive');if(!active||!fmShopClient)return;try{await fmShopClient.rpc('fm_daily_fresh_expire_due');const [{data:plans,error:pe},{data:subs,error:se},{data:req,error:re}]=await Promise.all([fmShopClient.from('fm_daily_fresh_plans').select('*').eq('is_active',true).order('category_code').order('duration_months'),fmShopClient.from('fm_daily_fresh_subscriptions').select('*').order('created_at',{ascending:false}).limit(20),fmShopClient.from('fm_daily_fresh_payment_requests').select('id,amount,status,created_at,transaction_reference').order('created_at',{ascending:false}).limit(10)]);if(pe)throw pe;if(se)throw se;if(re)throw re;fmDFUserPlans=plans||[];const now=Date.now(),live=(subs||[]).find(s=>s.status==='active'&&new Date(s.ends_at).getTime()>now);fmDFUserHasActive=!!live;if(live){active.innerHTML=`<div style="padding:12px;background:#eaf8ef;border-radius:10px"><b>Active: ${fmDFUserEsc(live.category_name)}</b><br>Valid until: ${new Date(live.ends_at).toLocaleDateString('en-IN')}<br><span class="hint">Your purchased package stays unchanged during this validity.</span></div>`;document.getElementById('fmDFUserOpenQr').disabled=true;}else{active.innerHTML='<div style="padding:10px;background:#fff7e4;border-radius:10px">No active Daily Fresh subscription. Choose a package below to subscribe or renew.</div>';document.getElementById('fmDFUserOpenQr').disabled=true;}fmDFUserRenderPlans(live);document.getElementById('fmDFUserHistory').innerHTML=(subs||[]).map(s=>`<div style="padding:9px;border-bottom:1px solid #e1eee5"><b>${fmDFUserEsc(s.category_name)}</b> · ${s.duration_months} month(s) · ${fmDFUserMoney(s.amount_paid)}<br><span class="hint">${new Date(s.starts_at).toLocaleDateString('en-IN')} – ${new Date(s.ends_at).toLocaleDateString('en-IN')} · ${fmDFUserEsc(s.status)}</span><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">${(Array.isArray(s.package_snapshot)?s.package_snapshot:[]).map(i=>`<span class="hint">${fmDFUserEsc(i.product_name)}: ${i.daily_quantity} ${fmDFUserEsc(i.quantity_unit)}</span>`).join(' · ')}</div></div>`).join('')||'No Daily Fresh subscription history yet.';if(req?.length)document.getElementById('fmDFUserHistory').innerHTML+='<p class="hint">Payment requests: '+req.map(r=>'#'+fmDFUserEsc(r.id)+' '+fmDFUserEsc(r.status)+' ('+fmDFUserMoney(r.amount)+')').join(' · ')+'</p>';}catch(e){active.textContent='Daily Fresh unavailable: '+e.message+'. Please contact Admin if SQL migration is not installed.';}}
+async function fmDFUserLoad(){
+ const active=document.getElementById('fmDFUserActive');
+ if(!active||!fmShopClient)return;
+ const delivery=document.getElementById('fmDFUserDelivery');
+ try{
+  await fmShopClient.rpc('fm_daily_fresh_expire_due');
+  const [{data:plans,error:pe},{data:subs,error:se},{data:req,error:re}]=await Promise.all([
+   fmShopClient.from('fm_daily_fresh_plans').select('*').eq('is_active',true).order('category_code').order('duration_months'),
+   fmShopClient.from('fm_daily_fresh_subscriptions').select('*').order('created_at',{ascending:false}).limit(20),
+   fmShopClient.from('fm_daily_fresh_payment_requests').select('id,amount,status,created_at,transaction_reference').order('created_at',{ascending:false}).limit(10)
+  ]);
+  if(pe)throw pe;if(se)throw se;if(re)throw re;
+  fmDFUserPlans=plans||[];
+  const now=Date.now();
+  const live=(subs||[]).find(s=>s.status==='active'&&new Date(s.ends_at).getTime()>now);
+  fmDFUserHasActive=!!live;
+  if(live){
+   const start=new Date(live.starts_at),end=new Date(live.ends_at);
+   const totalDays=Math.max(1,Math.ceil((end-start)/86400000));
+   const completedDays=Math.min(totalDays,Math.max(1,Math.floor((now-start.getTime())/86400000)+1));
+   const remainingDays=Math.max(0,totalDays-completedDays);
+   active.innerHTML=`<div style="padding:13px;background:#eaf8ef;border:1px solid #cce8d4;border-radius:12px">
+    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>🥗 Active Daily Fresh Subscription</b><span style="color:#168447;font-weight:800">ACTIVE</span></div>
+    <div style="font-size:20px;font-weight:850;margin-top:7px">${fmDFUserEsc(live.category_name)} · ${Number(live.duration_months)} Month(s)</div>
+    <div style="font-size:13px;color:#52675b;margin-top:5px">Started: ${start.toLocaleDateString('en-IN')} · Expires: ${end.toLocaleDateString('en-IN')}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px">
+     <div style="background:#fff;padding:9px;border-radius:9px"><b>${totalDays}</b><div class="hint">Total days</div></div>
+     <div style="background:#fff;padding:9px;border-radius:9px"><b>${completedDays}</b><div class="hint">Day count</div></div>
+     <div style="background:#fff;padding:9px;border-radius:9px"><b>${remainingDays}</b><div class="hint">Days left</div></div>
+    </div>
+    <div style="height:8px;background:#dcebe1;border-radius:9px;margin-top:10px;overflow:hidden"><div style="height:100%;width:${Math.min(100,completedDays/totalDays*100)}%;background:#168447"></div></div>
+    <div class="hint" style="margin-top:7px">Your purchased products and quantities remain frozen for this subscription.</div>
+   </div>`;
+   if(delivery)fmDFUserRenderDelivery(live);
+   const qrBtn=document.getElementById('fmDFUserOpenQr');if(qrBtn)qrBtn.disabled=true;
+  }else{
+   active.innerHTML='<div style="padding:10px;background:#fff7e4;border-radius:10px">No active Daily Fresh subscription. Choose a package below to subscribe or renew.</div>';
+   if(delivery)delivery.innerHTML='';
+   const qrBtn=document.getElementById('fmDFUserOpenQr');if(qrBtn)qrBtn.disabled=true;
+  }
+  fmDFUserRenderPlans(live);
+  document.getElementById('fmDFUserHistory').innerHTML=(subs||[]).map(s=>`<div style="padding:9px;border-bottom:1px solid #e1eee5"><b>${fmDFUserEsc(s.category_name)}</b> · ${s.duration_months} month(s) · ${fmDFUserMoney(s.amount_paid)}<br><span class="hint">${new Date(s.starts_at).toLocaleDateString('en-IN')} – ${new Date(s.ends_at).toLocaleDateString('en-IN')} · ${fmDFUserEsc(s.status)}</span><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">${(Array.isArray(s.package_snapshot)?s.package_snapshot:[]).map(i=>`<span class="hint">${fmDFUserEsc(i.product_name)}: ${i.daily_quantity} ${fmDFUserEsc(i.quantity_unit)}</span>`).join(' · ')}</div></div>`).join('')||'No Daily Fresh subscription history yet.';
+  if(req?.length)document.getElementById('fmDFUserHistory').innerHTML+='<p class="hint">Payment requests: '+req.map(r=>'#'+fmDFUserEsc(r.id)+' '+fmDFUserEsc(r.status)+' ('+fmDFUserMoney(r.amount)+')').join(' · ')+'</p>';
+ }catch(e){
+  active.textContent='Daily Fresh unavailable: '+e.message+'. Please contact Admin if the delivery settings SQL has not been installed.';
+ }
+}
+function fmDFUserRenderDelivery(s){
+ const box=document.getElementById('fmDFUserDelivery');if(!box)return;
+ const nowInIndia=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const currentMonth=nowInIndia.slice(0,7);
+ const changedMonth=String(s.delivery_slot_last_changed_month||'').slice(0,7);
+ const changedThisMonth=!!changedMonth&&changedMonth===currentMonth;
+ const current=s.delivery_period||'';
+ const lock=changedThisMonth&&!!current;
+ const periodLabel=current==='morning'?'Morning Delivery':current==='evening'?'Evening Delivery':'Not selected';
+ const slotChangeText=lock
+  ? 'You have already changed your delivery time this month. You can change it again from next month.'
+  : (current?'You may change your delivery time once in the current calendar month.':'Choose Morning or Evening. Your first selection does not use the monthly change.');
+ box.innerHTML=`<div style="padding:14px;border:1px solid #dce9e0;border-radius:13px;background:#fff">
+  <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>🚚 Delivery Preferences</b><span class="hint">Subscription delivery</span></div>
+  <p class="hint" style="margin:5px 0 12px">Select one delivery window. Your selected time and address will be visible to Fresh-Mart Admin.</p>
+  <div style="font-weight:750;margin-bottom:8px">Choose Delivery Time</div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">
+   <label style="border:1px solid ${current==='morning'?'#168447':'#dce7df'};background:${current==='morning'?'#effaf2':'#fff'};border-radius:11px;padding:12px;display:flex;gap:8px;align-items:center;opacity:${lock&&current!=='morning'?.55:1}">
+    <input type="radio" name="fmDFDeliveryPeriod" value="morning" ${current==='morning'?'checked':''} ${lock&&current!=='morning'?'disabled':''}>
+    <span>🌅 <b>Morning</b></span>
+   </label>
+   <label style="border:1px solid ${current==='evening'?'#168447':'#dce7df'};background:${current==='evening'?'#effaf2':'#fff'};border-radius:11px;padding:12px;display:flex;gap:8px;align-items:center;opacity:${lock&&current!=='evening'?.55:1}">
+    <input type="radio" name="fmDFDeliveryPeriod" value="evening" ${current==='evening'?'checked':''} ${lock&&current!=='evening'?'disabled':''}>
+    <span>🌆 <b>Evening</b></span>
+   </label>
+  </div>
+  <p class="hint" style="margin:7px 0 12px">${fmDFUserEsc(slotChangeText)} ${s.delivery_slot_changed_at?'Last change: '+new Date(s.delivery_slot_changed_at).toLocaleDateString('en-IN'):''}</p>
+  <div style="font-weight:750;margin-bottom:8px">Delivery Address</div>
+  <label class="hint">Receiver Name<input id="fmDFDeliveryName" maxlength="100" value="${fmDFUserEsc(s.delivery_contact_name||'')}" placeholder="Name receiving the delivery" style="display:block;width:100%;padding:11px;border:1px solid #d5e2d9;border-radius:9px;margin:5px 0 10px;box-sizing:border-box"></label>
+  <label class="hint">Mobile Number<input id="fmDFDeliveryPhone" maxlength="15" inputmode="tel" value="${fmDFUserEsc(s.delivery_phone||'')}" placeholder="10-digit mobile number" style="display:block;width:100%;padding:11px;border:1px solid #d5e2d9;border-radius:9px;margin:5px 0 10px;box-sizing:border-box"></label>
+  <label class="hint">Full Address<textarea id="fmDFDeliveryAddress" maxlength="500" rows="3" placeholder="House / Flat No, Street, Area, Village / City" style="display:block;width:100%;padding:11px;border:1px solid #d5e2d9;border-radius:9px;margin:5px 0 10px;box-sizing:border-box">${fmDFUserEsc(s.delivery_address||'')}</textarea></label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+   <label class="hint">Pincode<input id="fmDFDeliveryPincode" maxlength="6" inputmode="numeric" value="${fmDFUserEsc(s.delivery_pincode||'')}" placeholder="6-digit pincode" style="display:block;width:100%;padding:11px;border:1px solid #d5e2d9;border-radius:9px;margin:5px 0 10px;box-sizing:border-box"></label>
+   <label class="hint">Landmark<input id="fmDFDeliveryLandmark" maxlength="150" value="${fmDFUserEsc(s.delivery_landmark||'')}" placeholder="Nearby landmark" style="display:block;width:100%;padding:11px;border:1px solid #d5e2d9;border-radius:9px;margin:5px 0 10px;box-sizing:border-box"></label>
+  </div>
+  <button class="btn btn-green" type="button" onclick="fmDFUserSaveDelivery(${Number(s.id)})">Save Delivery Preferences</button>
+  <p id="fmDFDeliveryMsg" class="hint" aria-live="polite" style="margin-top:8px">${current?'Current time: '+fmDFUserEsc(periodLabel):'Please select your delivery time and enter your address.'}</p>
+ </div>`;
+}
+async function fmDFUserSaveDelivery(subscriptionId){
+ const msg=document.getElementById('fmDFDeliveryMsg');
+ const selected=document.querySelector('input[name="fmDFDeliveryPeriod"]:checked');
+ const period=selected?.value||'';
+ const name=document.getElementById('fmDFDeliveryName')?.value.trim()||'';
+ const phone=document.getElementById('fmDFDeliveryPhone')?.value.trim()||'';
+ const address=document.getElementById('fmDFDeliveryAddress')?.value.trim()||'';
+ const pincode=document.getElementById('fmDFDeliveryPincode')?.value.trim()||'';
+ const landmark=document.getElementById('fmDFDeliveryLandmark')?.value.trim()||'';
+ try{
+  if(!period)throw new Error('Please select Morning or Evening delivery.');
+  if(!name)throw new Error('Enter the receiver name.');
+  if(!/^[0-9]{10}$/.test(phone))throw new Error('Enter a valid 10-digit mobile number.');
+  if(address.length<8)throw new Error('Enter the complete delivery address.');
+  if(!/^[0-9]{6}$/.test(pincode))throw new Error('Enter a valid 6-digit pincode.');
+  if(msg)msg.textContent='Saving your delivery preferences…';
+  const {data,error}=await fmShopClient.rpc('fm_daily_fresh_save_delivery',{
+   p_subscription_id:subscriptionId,p_delivery_period:period,p_delivery_address:address,
+   p_delivery_pincode:pincode,p_delivery_landmark:landmark,
+   p_delivery_contact_name:name,p_delivery_phone:phone
+  });
+  if(error)throw error;
+  if(data?.success===false)throw new Error(data.message||'Could not save delivery preferences.');
+  if(msg)msg.textContent='Delivery time and address saved successfully.';
+  await fmDFUserLoad();
+ }catch(e){if(msg)msg.textContent='Save failed: '+(e.message||String(e));}
+}
+
 let fmDFUserCategory='dry_fruits';
 function fmDFUserChooseCategory(code){if(fmDFUserHasActive)return;fmDFUserCategory=code;document.querySelectorAll('.fm-df-category').forEach(b=>b.classList.toggle('selected',b.dataset.category===code));fmDFUserSelected=null;fmDFUserRequestId=null;fmDFUserItems=[];document.getElementById('fmDFUserPlanInfo').innerHTML='';document.getElementById('fmDFUserItems').innerHTML='';document.getElementById('fmDFUserPaymentArea').style.display='none';fmDFUserRenderPlans();const planArea=document.getElementById('fmDFUserPlanCards');if(planArea){setTimeout(()=>planArea.scrollIntoView({behavior:'smooth',block:'center'}),120);}}
 async function fmDFUserRenderPlans(active){const cards=document.getElementById('fmDFUserPlanCards'),info=document.getElementById('fmDFUserPlanInfo'),itemsBox=document.getElementById('fmDFUserItems');if(active){cards.innerHTML='<div class="hint">Your current subscription is active. New plan selection is available after expiry.</div>';document.getElementById('fmDFUserPaymentArea').style.display='none';info.innerHTML='';itemsBox.innerHTML='';return;}const cat=fmDFUserCategory;const available=[1,3,6,12].map(d=>fmDFUserPlans.find(p=>p.category_code===cat&&Number(p.duration_months)===d)).filter(Boolean);cards.innerHTML=available.map(p=>`<button type="button" class="fm-df-plan" onclick="fmDFUserSelectPlan(${Number(p.id)})"><strong>${Number(p.duration_months)===12?'1 Year':p.duration_months+' Months'}</strong><span class="fm-df-price">${fmDFUserMoney(p.price)}</span><small>View package details →</small></button>`).join('')||'<p class="hint">No plans available for this category yet.</p>';info.innerHTML='<p class="hint">Select one of the plans above to view included products and payment details.</p>';itemsBox.innerHTML='';document.getElementById('fmDFUserPaymentArea').style.display='none';}
