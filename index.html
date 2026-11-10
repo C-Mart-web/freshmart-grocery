@@ -84,41 +84,95 @@
  const originalEmptyParent=empty.parentNode, originalEmptyNext=empty.nextSibling;
  const originalStatusParent=status.parentNode, originalStatusNext=status.nextSibling;
  const searchHide=[hero,main.querySelector('.offer-strip'),benefits].filter(Boolean);
- let cart=0,toastTimer,allProducts=[];try{cart=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]').reduce((n,x)=>n+Number(x.quantity||0),0)}catch(e){}
+ let cart=0,toastTimer,allProducts=[],activeCartUserId=null,cartReady=false;
+ function readCartKey(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+ function guestCartRows(){return readCartKey('fm_grocery_guest_cart')}
+ function cartRows(){return readCartKey('fm_grocery_cart')}
+ function setVisibleCart(rows,owner){
+  const clean=(rows||[]).filter(x=>Number(x.quantity)>0);
+  localStorage.setItem('fm_grocery_cart',JSON.stringify(clean));
+  if(owner)localStorage.setItem('fm_grocery_cart_owner',owner);else localStorage.removeItem('fm_grocery_cart_owner');
+  cart=clean.reduce((n,x)=>n+Number(x.quantity||0),0);updateCart();
+  if(allProducts.length)renderProducts(allProducts);
+ }
+ function showGuestCart(){activeCartUserId=null;cartReady=true;setVisibleCart(guestCartRows(),null);}
+ function clearVisibleCartAfterLogout(){
+  activeCartUserId=null;cartReady=true;
+  localStorage.removeItem('fm_grocery_cart');localStorage.removeItem('fm_grocery_cart_owner');localStorage.removeItem('fm_grocery_guest_cart');
+  cart=0;updateCart();if(allProducts.length)renderProducts(allProducts);
+ }
  function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
  function updateCart(){document.getElementById('cartCount').textContent=cart;document.getElementById('mobileCartCount').textContent=cart;renderIndexCart();}
  updateCart();
  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
  function iconFor(name){const n=String(name||'').toLowerCase();if(n.includes('fruit'))return '🍎';if(n.includes('veget'))return '🥦';if(n.includes('dairy')||n.includes('milk'))return '🥛';if(n.includes('rice')||n.includes('staple'))return '🍚';if(n.includes('snack'))return '🍪';if(n.includes('beverage')||n.includes('drink'))return '🧃';if(n.includes('home'))return '🧴';if(n.includes('personal'))return '🧼';return '🛒'}
  function priceOf(p){return Number(p.offer_price??p.retail_price??p.central_price??0)}
- function cartRows(){try{return JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]')}catch(e){return []}}
  function quantityInCart(id){const row=cartRows().find(x=>String(x.product_id)===String(id));return Number(row?.quantity||0)}
  let fmCartSyncBusy=false;
  async function fmSyncCartForUser(userId){
   if(!db||!userId||fmCartSyncBusy)return;fmCartSyncBusy=true;
   try{
-   const local=cartRows(),owner=localStorage.getItem('fm_grocery_cart_owner')||'';
-   const {data:remote,error}=await db.from('fm_member_cart').select('product_id,quantity').eq('user_id',userId);
+   const guest=guestCartRows();
+   const {data:remote,error}=await db.from('fm_member_cart_items_v2').select('product_id,variant_id,variant_name,variant_unit,quantity').eq('user_id',userId);
    if(error)throw error;
-   const map=new Map();(remote||[]).forEach(x=>map.set(String(x.product_id),Number(x.quantity)||0));
-   if(!owner||owner===userId){local.forEach(x=>{const id=String(x.product_id),q=Number(x.quantity)||0;if(q>0)map.set(id,owner===userId?Math.max(map.get(id)||0,q):(map.get(id)||0)+q);});}
-   const merged=[...map.entries()].filter(x=>x[1]>0).map(([product_id,quantity])=>({product_id,quantity}));
-   if(merged.length){const {error:upErr}=await db.from('fm_member_cart').upsert(merged.map(x=>({user_id:userId,product_id:x.product_id,quantity:x.quantity,updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id'});if(upErr)throw upErr;}
-   localStorage.setItem('fm_grocery_cart',JSON.stringify(merged));localStorage.setItem('fm_grocery_cart_owner',userId);
-   cart=merged.reduce((n,x)=>n+Number(x.quantity||0),0);updateCart();if(allProducts.length)renderProducts(allProducts);
-  }catch(e){console.warn('Cloud cart sync unavailable:',e.message||e);}
+   const map=new Map();
+   (remote||[]).forEach(x=>map.set(String(x.product_id)+'|'+String(x.variant_id||''),{...x,quantity:Number(x.quantity)||0}));
+   guest.forEach(x=>{
+    const key=String(x.product_id)+'|'+String(x.variant_id||''),q=Number(x.quantity)||0;
+    if(q>0){const old=map.get(key);map.set(key,{...(old||{}),...x,quantity:(Number(old?.quantity)||0)+q});}
+   });
+   const merged=[...map.values()].filter(x=>Number(x.quantity)>0);
+   if(guest.length){
+    const {error:upErr}=await db.from('fm_member_cart_items_v2').upsert(merged.map(x=>({user_id:userId,product_id:String(x.product_id),variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});
+    if(upErr)throw upErr;
+    localStorage.removeItem('fm_grocery_guest_cart');
+   }
+   activeCartUserId=userId;cartReady=true;setVisibleCart(merged,userId);
+  }catch(e){console.warn('Cloud cart sync unavailable:',e.message||e);if(!activeCartUserId)showGuestCart();}
   finally{fmCartSyncBusy=false;}
  }
  async function fmPushCartToCloud(){
-  try{const {data:{session}}=await db.auth.getSession();if(!session?.user?.id)return;
-   const rows=cartRows(),uid=session.user.id;
-   if(rows.length){const {error}=await db.from('fm_member_cart').upsert(rows.map(x=>({user_id:uid,product_id:String(x.product_id),quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id'});if(error)throw error;}
-   else{const {error}=await db.from('fm_member_cart').delete().eq('user_id',uid);if(error)throw error;}
+  try{
+   const {data:{session}}=await db.auth.getSession(),rows=cartRows();
+   if(!session?.user?.id){
+    activeCartUserId=null;localStorage.setItem('fm_grocery_guest_cart',JSON.stringify(rows));localStorage.removeItem('fm_grocery_cart_owner');return;
+   }
+   const uid=session.user.id;
+   if(activeCartUserId!==uid){await fmSyncCartForUser(uid);return;}
+   const {data:remote,error:readErr}=await db.from('fm_member_cart_items_v2').select('product_id,variant_id').eq('user_id',uid);
+   if(readErr)throw readErr;
+   const keys=new Set(rows.map(x=>String(x.product_id)+'|'+String(x.variant_id||'')));
+   for(const x of remote||[]){
+    const key=String(x.product_id)+'|'+String(x.variant_id||'');
+    if(!keys.has(key)){
+     let del=db.from('fm_member_cart_items_v2').delete().eq('user_id',uid).eq('product_id',x.product_id);
+     if(x.variant_id)del=del.eq('variant_id',x.variant_id);else del=del.is('variant_id',null);
+     const {error}=await del;if(error)throw error;
+    }
+   }
+   if(rows.length){
+    const {error}=await db.from('fm_member_cart_items_v2').upsert(rows.map(x=>({user_id:uid,product_id:String(x.product_id),variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});
+    if(error)throw error;
+   }
    localStorage.setItem('fm_grocery_cart_owner',uid);
   }catch(e){console.warn('Could not save cart to account:',e.message||e);}
  }
- function changeCartQty(id,delta){let rows=cartRows(),row=rows.find(x=>String(x.product_id)===String(id));if(row)row.quantity=Number(row.quantity||0)+delta;else if(delta>0)rows.push({product_id:String(id),quantity:delta});rows=rows.filter(x=>Number(x.quantity)>0);localStorage.setItem('fm_grocery_cart',JSON.stringify(rows));cart=rows.reduce((n,x)=>n+Number(x.quantity||0),0);updateCart();fmPushCartToCloud();renderProducts(allProducts.filter(p=>{const q=search.value.trim(),terms=searchNormalize(q).split(/\\s+/).filter(Boolean),hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));return !q||terms.some(t=>hay.includes(t));}));}
- if(db?.auth){db.auth.getSession().then(({data})=>{if(data?.session?.user?.id)fmSyncCartForUser(data.session.user.id)});db.auth.onAuthStateChange((event,session)=>{if(session?.user?.id&&['SIGNED_IN','TOKEN_REFRESHED','INITIAL_SESSION'].includes(event))fmSyncCartForUser(session.user.id);});}
+ function changeCartQty(id,delta){
+  let rows=cartRows(),row=rows.find(x=>String(x.product_id)===String(id));
+  if(row)row.quantity=Number(row.quantity||0)+delta;else if(delta>0)rows.push({product_id:String(id),quantity:delta});
+  rows=rows.filter(x=>Number(x.quantity)>0);
+  localStorage.setItem('fm_grocery_cart',JSON.stringify(rows));
+  if(!activeCartUserId)localStorage.setItem('fm_grocery_guest_cart',JSON.stringify(rows));
+  cart=rows.reduce((n,x)=>n+Number(x.quantity||0),0);updateCart();fmPushCartToCloud();
+  renderProducts(allProducts.filter(p=>{const q=search.value.trim(),terms=searchNormalize(q).split(/\\s+/).filter(Boolean),hay=searchNormalize([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));return !q||terms.some(t=>hay.includes(t));}));
+ }
+ if(db?.auth){
+  db.auth.getSession().then(({data})=>{const uid=data?.session?.user?.id;if(uid)fmSyncCartForUser(uid);else showGuestCart();}).catch(()=>showGuestCart());
+  db.auth.onAuthStateChange((event,session)=>{
+   if(session?.user?.id&&['SIGNED_IN','TOKEN_REFRESHED','INITIAL_SESSION','USER_UPDATED'].includes(event))fmSyncCartForUser(session.user.id);
+   else if(event==='SIGNED_OUT')clearVisibleCartAfterLogout();
+  });
+ }else{showGuestCart();}
  function renderCategories(cats){
    if(!cats.length){categories.innerHTML='<div class="empty" style="display:block;grid-column:1/-1">Categories will appear here.</div>';return}
    categories.innerHTML=cats.map(c=>'<a class="category" href="#popular" data-category="'+esc(c.category_name)+'"><div class="cat-icon">'+iconFor(c.category_name)+'</div><b>'+esc(c.category_name)+'</b></a>').join('');

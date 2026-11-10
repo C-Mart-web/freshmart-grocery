@@ -975,35 +975,29 @@ async function loadSignedInMember(){
 
 
 
-// Grocery cart: guest cart stays local; signed-in cart syncs to the member account.
-let fmCart=[]; // Start empty until the signed-in member's own cloud cart is loaded; never show another browser user's cart.
+// Account-specific cart. Only the pre-login guest cart is merged into the signed-in member's cloud cart.
+let fmCart=[],fmCartUserId=null,fmCartReady=false;
 let fmCheckoutArea=null,fmCheckoutSlots=[],fmCloudCartBusy=false;
+function fmReadCartStorage(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
 async function fmSyncCartForUser(userId){
  if(!fmShopClient||!userId||fmCloudCartBusy)return;fmCloudCartBusy=true;
  try{
-  const owner=localStorage.getItem('fm_grocery_cart_owner')||'',local=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]');
+  const guest=fmReadCartStorage('fm_grocery_guest_cart');
   const {data:remote,error}=await fmShopClient.from('fm_member_cart_items_v2').select('product_id,variant_id,variant_name,variant_unit,quantity').eq('user_id',userId);
   if(error)throw error;
   const map=new Map();
   (remote||[]).forEach(x=>map.set(String(x.product_id)+'|'+String(x.variant_id||''),{...x,quantity:Number(x.quantity)||0}));
-  if(owner===userId){
-   // Restore this member's own saved browser cart.
-   fmCart=local.filter(x=>Number(x.quantity)>0);
-  }else{
-   // A cart from another or unassigned browser session must NEVER be copied to this member.
-   // For a new member/device, only that member's own cloud cart is trusted.
-   fmCart=[...map.values()].filter(x=>Number(x.quantity)>0);
+  guest.forEach(x=>{
+   const key=String(x.product_id)+'|'+String(x.variant_id||''),q=Number(x.quantity)||0;
+   if(q>0){const old=map.get(key);map.set(key,{...(old||{}),...x,quantity:(Number(old?.quantity)||0)+q});}
+  });
+  fmCart=[...map.values()].filter(x=>Number(x.quantity)>0);
+  if(guest.length){
+   const {error:upErr}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:userId,product_id:String(x.product_id),variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});
+   if(upErr)throw upErr;
+   localStorage.removeItem('fm_grocery_guest_cart');
   }
-  const keep=new Set(fmCart.map(x=>String(x.product_id)+'|'+String(x.variant_id||'')));
-  for(const x of remote||[]){
-   const key=String(x.product_id)+'|'+String(x.variant_id||'');
-   if(!keep.has(key)){
-    let del=fmShopClient.from('fm_member_cart_items_v2').delete().eq('user_id',userId).eq('product_id',x.product_id);
-    if(x.variant_id)del=del.eq('variant_id',x.variant_id);else del=del.is('variant_id',null);
-    const {error:delErr}=await del;if(delErr)throw delErr;
-   }
-  }
-  if(fmCart.length){const {error:upErr}=await fmShopClient.from('fm_member_cart_items_v2').upsert(fmCart.map(x=>({user_id:userId,product_id:x.product_id,variant_id:x.variant_id||null,variant_name:x.variant_name||null,variant_unit:x.variant_unit||null,quantity:Number(x.quantity),updated_at:new Date().toISOString()})),{onConflict:'user_id,product_id,variant_id'});if(upErr)throw upErr;}
+  fmCartUserId=userId;fmCartReady=true;
   localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));localStorage.setItem('fm_grocery_cart_owner',userId);
   fmRenderCart();renderFreshMartProducts();
  }catch(e){console.warn('Account cart sync failed:',e.message||e);}
@@ -1011,7 +1005,7 @@ async function fmSyncCartForUser(userId){
 }
 async function fmPushCartToCloud(){
  try{
-  const session=await getMemberSession(),uid=session.user.id;
+  const session=await getMemberSession(),uid=session.user.id;fmCartUserId=uid;fmCartReady=true;
   const localKeys=new Set(fmCart.map(x=>String(x.product_id)+'|'+String(x.variant_id||'')));
   const {data:remote,error:readErr}=await fmShopClient.from('fm_member_cart_items_v2').select('product_id,variant_id').eq('user_id',uid);
   if(readErr)throw readErr;
@@ -1027,7 +1021,7 @@ async function fmPushCartToCloud(){
   localStorage.setItem('fm_grocery_cart_owner',uid);
  }catch(e){if(!String(e.message||'').includes('Login session'))console.warn('Account cart save failed:',e.message||e);}
 }
-function fmSaveCartLocalOnly(){localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));}
+function fmSaveCartLocalOnly(){if(!fmCartReady)return;localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));if(fmCartUserId)localStorage.setItem('fm_grocery_cart_owner',fmCartUserId);}
 function fmSaveCart(){localStorage.setItem('fm_grocery_cart',JSON.stringify(fmCart));fmRenderCart();renderFreshMartProducts();fmPushCartToCloud();if(document.getElementById('fmCheckoutCard')?.style.display!=='none'&&document.getElementById('fmCheckoutPin')?.value)fmLoadDeliveryChoices();}
 function fmAddToCart(id){const p=fmShopProducts.find(x=>String(x.id)===String(id));if(!p)return;const row=fmCart.find(x=>String(x.product_id)===String(id));if(row)row.quantity++;else fmCart.push({product_id:String(id),quantity:1});fmSaveCart();document.getElementById('fmTopCartCount')&&(document.getElementById('fmTopCartCount').textContent=fmCart.reduce((n,x)=>n+Number(x.quantity||0),0));}
 function fmRenderCart(){
@@ -1719,6 +1713,11 @@ async function fmSavePayoutDetails(){
 }
 async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;let pendingMarker=null;try{pendingMarker=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}const newlyPaid=pendingMarker?(orders||[]).find(o=>String(o.id)===String(pendingMarker.sourceId)&&String(o.payment_status).toLowerCase()==='paid'):null;if(newlyPaid){localStorage.removeItem('fm_pending_upi_grocery');alert('Payment confirmed. Order placed: '+(newlyPaid.order_number||''));showPage('orders');}badge.textContent=(orders||[]).length+' ORDERS';if(!orders?.length){box.textContent='No orders yet. Your placed orders will appear here.';return;}box.innerHTML=orders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div>${o.payment_method==='upi'&&o.payment_status==='pending'&&o.order_status!=='cancelled'?`<button type="button" class="btn btn-green" style="margin-top:10px" onclick="fmUpiUserOpenFor('grocery','${o.id}')">Pay this order by UPI QR</button>`:''}</article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
 async function signOut(){
+  try{if(fmCartUserId)await fmPushCartToCloud();}catch(e){console.warn('Cart sync before sign-out failed:',e);}
+  fmCart=[];fmCartUserId=null;fmCartReady=false;
+  localStorage.removeItem('fm_grocery_cart');
+  localStorage.removeItem('fm_grocery_cart_owner');
+  localStorage.removeItem('fm_grocery_guest_cart');
   Object.keys(localStorage).filter(k=>k.startsWith('fm_sticky_cart_dismissed_until_')).forEach(k=>localStorage.removeItem(k));
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
   if(authKey){
