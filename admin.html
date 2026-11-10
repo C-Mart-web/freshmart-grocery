@@ -294,6 +294,11 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <p class="hint">Set each of the six wheel slots below. Only Gift Product and No Prize slots are allowed. Upload each gift image above and select the gift for each slot. Gift stock is reduced automatically when won.</p>
 <div id="fmSpinSlotEditor" style="display:grid;gap:12px;margin-top:12px"></div>
 <button class="btn btn-green" style="margin-top:14px" onclick="fmAdminSaveSpin()">Save Spin Settings</button><p id="fmSpinAdminMsg" class="hint"></p><div id="fmSpinPlays" class="hint"></div></div>
+<div class="card" id="fmPlanSpinOverviewCard" style="margin-top:14px">
+<div class="section-head"><h2>📋 Plan-wise Spin Wheel Summary</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminLoadPlanSpinOverview()">Refresh</button></div>
+<p class="hint">Here you can check all membership plans and Free Member settings together. This is a view-only summary; use the Spin Wheel Settings above to edit a plan.</p>
+<div id="fmPlanSpinOverview" class="tablewrap"><p class="empty">Loading plan-wise spin settings…</p></div>
+</div>
 <div class="card" style="margin-top:14px"><div class="section-head"><h2>🎁 Gift Claim Requests</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminLoadGiftClaims()">Refresh</button></div><p class="hint">Members' gift claims after meeting the minimum purchase condition. Review address and approve/reject.</p><div id="fmGiftClaimsMsg" class="hint"></div><div id="fmGiftClaimsList" class="tablewrap">Loading gift claim requests…</div></div><div class="card" style="margin-top:14px"><h2>Assign Coupon to Member</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmAssignCouponUser" placeholder="Enter member username or FM User ID"><small class="hint">Searches the member profile. Auth UUID is fetched automatically.</small></div><div class="field"><label>Coupon Code</label><input id="fmAssignCouponCode"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignCoupon()">Assign Coupon</button><p id="fmAssignCouponMsg" class="hint"></p><hr><h2>Assign Scratch Card</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmScratchUser" placeholder="Enter member username or FM User ID"><small class="hint">Auth UUID is fetched automatically from the member profile.</small></div><div class="field"><label>Reward Type</label><select id="fmScratchType"><option value="wallet">Wallet Amount</option><option value="coupon">Coupon</option><option value="product">Product</option><option value="none">No Prize</option></select></div><div class="field"><label>Reward Value</label><input id="fmScratchValue"></div><div class="field"><label>Reward Label</label><input id="fmScratchLabel"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignScratch()">Assign Scratch Card</button><p id="fmScratchAdminMsg" class="hint"></p><hr><h2>Coupons & Offers List</h2><div id="fmAdminOffersList" class="hint">Loading…</div></div></section></main>
 </div>
 <nav class="mobile-nav"><button class="active" data-page="dashboard"><span>⌂</span>Home</button><button data-page="payments"><span>🧾</span>Payments</button><button data-page="orders"><span>📦</span>Orders</button><button data-page="offers"><span>🎁</span>Offers</button><button type="button" onclick="fmToggleMobileMenu(true)"><span>☰</span>More</button></nav>
@@ -1337,7 +1342,7 @@ async function fmAdminSaveFreeSpin(){
   for(let i=0;i<slots.length;i++){const x=slots[i];if(!x.label)throw new Error('Enter a label for Free Member Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='product'&&!x.reward_value)throw new Error('Select a gift product for Free Member Slot '+(i+1)+'.');}
   const payload={id:true,is_enabled:!!document.getElementById('fmFreeSpinEnabled')?.checked,max_spins_per_user:1,slots,updated_at:new Date().toISOString()};
   const {error}=await fmSupabase.from('fm_free_spin_settings').upsert(payload,{onConflict:'id'});if(error)throw error;
-  fmFreeSpinSlots=slots;if(msg)msg.textContent='Free Member one-time Spin settings saved successfully.';
+  fmFreeSpinSlots=slots;if(msg)msg.textContent='Free Member one-time Spin settings saved successfully.';await fmAdminLoadPlanSpinOverview();
  }catch(e){if(msg)msg.textContent='Could not save Free Member settings: '+(e.message||e);}
 }
 async function fmAdminLoadOffers(){
@@ -1377,6 +1382,42 @@ async function fmAdminAssignCoupon(){
 }
 async function fmAdminToggleCoupon(id,on){const {error}=await fmSupabase.from('fm_coupons').update({is_active:on}).eq('id',id);if(error)alert(error.message);else fmAdminLoadOffers();}
 async function fmAdminToggleOffer(id,on){const {error}=await fmSupabase.from('fm_offer_campaigns').update({is_active:on}).eq('id',id);if(error)alert(error.message);else fmAdminLoadOffers();}
+async function fmAdminLoadPlanSpinOverview(){
+ const host=document.getElementById('fmPlanSpinOverview');if(!host||!fmSupabase)return;
+ host.innerHTML='<p class="hint">Loading saved settings for all plans…</p>';
+ try{
+  const [plansRes,settingsRes,freeRes]=await Promise.all([
+   fmSupabase.from('fm_membership_plans').select('id,plan_name,plan_amount').order('plan_amount'),
+   fmSupabase.from('fm_plan_spin_settings').select('plan_id,is_enabled,max_spins_per_user,slots'),
+   fmSupabase.from('fm_free_spin_settings').select('id,is_enabled,slots').eq('id',true).maybeSingle()
+  ]);
+  if(plansRes.error)throw plansRes.error;if(settingsRes.error)throw settingsRes.error;if(freeRes.error)throw freeRes.error;
+  const settings=new Map((settingsRes.data||[]).map(x=>[String(x.plan_id),x]));
+  const esc=v=>fmAdmEsc(String(v??''));
+  const renderSlots=slots=>{
+   if(!Array.isArray(slots)||!slots.length)return '<span class="hint">No slots configured</span>';
+   return slots.map((x,i)=>{
+    const enabled=x.enabled!==false;
+    const prize=x.reward_type==='product'?(x.reward_value||x.label||'Gift Product'):(x.label||'No Prize / Try Again');
+    return `<div style="padding:5px 0;border-bottom:1px solid #edf3ee"><b>Slot ${i+1}:</b> ${esc(prize)} <span class="badge ${enabled?'approved':'rejected'}">${enabled?'ENABLED':'DISABLED'}</span></div>`;
+   }).join('');
+  };
+  const rows=[];
+  const free=freeRes.data;
+  rows.push(`<tr><td><b>Free Member</b><div class="hint">Registration</div></td><td><span class="badge ${free?.is_enabled?'approved':'rejected'}">${free?.is_enabled?'ENABLED':'DISABLED / NOT SET'}</span></td><td>1</td><td>${renderSlots(free?.slots)}</td><td><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminSelectSpinPlan('__free_member__')">View / Edit</button></td></tr>`);
+  (plansRes.data||[]).forEach(p=>{
+   const x=settings.get(String(p.id));
+   rows.push(`<tr><td><b>${esc(p.plan_name)}</b><div class="hint">₹${Number(p.plan_amount||0).toLocaleString('en-IN')}</div></td><td><span class="badge ${x?.is_enabled?'approved':'rejected'}">${x?(x.is_enabled?'ENABLED':'DISABLED'):'NOT SET'}</span></td><td>${x?Number(x.max_spins_per_user||1):'—'}</td><td>${renderSlots(x?.slots)}</td><td><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminSelectSpinPlan('${esc(p.id)}')">View / Edit</button></td></tr>`);
+  });
+  host.innerHTML=`<table style="min-width:680px"><thead><tr><th>Membership Plan</th><th>Wheel Status</th><th>Max Spins</th><th>Saved Prize Slots</th><th>Action</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+ }catch(e){host.innerHTML='<p class="hint" style="color:#b72e2e">Could not load plan-wise summary: '+fmAdmEsc(e.message||String(e))+'</p>';}
+}
+function fmAdminSelectSpinPlan(planId){
+ const sel=document.getElementById('fmPlanSpinPlan');if(!sel)return;
+ sel.value=String(planId);fmAdminLoadSelectedPlanSpin();
+ document.getElementById('fmSpinSlotEditor')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 async function fmAdminLoadSelectedPlanSpin(){
  const planId=document.getElementById('fmPlanSpinPlan')?.value;if(!planId)return;
  const m=document.getElementById('fmSpinAdminMsg');if(m)m.textContent='Loading wheel settings and gift products…';
