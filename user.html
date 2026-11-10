@@ -69,13 +69,20 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 @media(max-width:680px){.fm-product-gallery-main{height:125px}}
 
 /* Sticky shopping cart summary */
-.fm-sticky-cart{display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:35;background:linear-gradient(110deg,#126f3b,#168447);color:#fff;border-radius:15px;padding:11px 13px;box-shadow:0 8px 28px rgba(0,0,0,.22);align-items:center;justify-content:space-between;gap:10px}
+.fm-sticky-cart{display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:35;background:linear-gradient(110deg,#126f3b,#168447);color:#fff;border-radius:15px;padding:9px 11px;box-shadow:0 8px 28px rgba(0,0,0,.22);align-items:center;justify-content:space-between;gap:8px}
 .fm-sticky-cart.show{display:flex}
 .fm-sticky-cart .fm-sticky-meta{min-width:0;display:flex;flex-direction:column;gap:3px}
 .fm-sticky-cart .fm-sticky-label{font-size:10px;font-weight:800;letter-spacing:.5px;opacity:.9}
 .fm-sticky-cart .fm-sticky-total{font-size:21px;font-weight:900;line-height:1.1}
 .fm-sticky-cart .fm-sticky-count{font-size:11px;opacity:.9}
-.fm-sticky-cart .fm-sticky-go{border:0;border-radius:10px;background:#fff;color:#126f3b;font-weight:850;padding:12px 13px;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.fm-sticky-cart .fm-sticky-go{position:relative;overflow:hidden;border:0;border-radius:10px;background:#fff;color:#126f3b;font-weight:850;font-size:13px;padding:9px 10px;white-space:nowrap;display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(255,255,255,.18)}
+.fm-sticky-cart .fm-sticky-go:before{content:"";position:absolute;top:-40%;left:-45%;width:28%;height:180%;background:rgba(255,218,75,.75);transform:rotate(25deg);animation:fmCheckoutShine 2.5s ease-in-out infinite}@keyframes fmCheckoutShine{0%,45%{left:-45%;opacity:0}55%{opacity:1}100%{left:130%;opacity:0}}
+.fm-sticky-dismiss{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:50%;width:25px;height:25px;flex:0 0 25px;font-size:17px;line-height:1;display:grid;place-items:center}
+.fm-top-cart-visual{position:relative;display:inline-flex;align-items:center;justify-content:center;width:36px;height:30px;margin-right:3px;vertical-align:middle}
+.fm-top-cart-visual .fm-cart-basket{font-size:25px;line-height:1}
+.fm-top-cart-visual .fm-cart-goods{position:absolute;top:-5px;left:7px;font-size:12px;letter-spacing:-4px;animation:fmCartGoods 1.8s ease-in-out infinite;transform-origin:bottom center}
+@keyframes fmCartGoods{0%,100%{transform:translateY(1px) rotate(-3deg)}50%{transform:translateY(-4px) rotate(4deg)}}
+.fm-sticky-cart .fm-sticky-total{font-size:19px}
 @media(min-width:681px){.fm-sticky-cart{left:auto;right:24px;bottom:24px;width:350px}}
 
 /* Compact mobile grocery cards: use two columns and reduce vertical whitespace. */
@@ -120,7 +127,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <header class="topbar">
   <button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button>
   <div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div>
-  <div class="topright"><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><button class="signout-btn" type="button" onclick="showPage('cart')" aria-label="Open Cart" style="position:relative;font-size:18px;padding:8px 11px">🛒<span id="fmTopCartCount" style="font-size:10px;background:#d8f36a;color:#173a26;border-radius:20px;padding:2px 6px;margin-left:3px">0</span></button><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
+  <div class="topright"><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><button class="signout-btn" type="button" onclick="showPage('cart')" aria-label="Open Cart" style="position:relative;font-size:18px;padding:8px 11px"><span class="fm-top-cart-visual"><span class="fm-cart-goods">🥬🥕</span><span class="fm-cart-basket">🛒</span></span><span id="fmTopCartCount" style="font-size:10px;background:#d8f36a;color:#173a26;border-radius:20px;padding:2px 6px;margin-left:3px">0</span></button><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
 </header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
 <div class="layout">
@@ -388,7 +395,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <span id="fmStickyCartTotal" class="fm-sticky-total">₹0.00</span>
     <span id="fmStickyCartCount" class="fm-sticky-count">0 items</span>
   </div>
-  <button type="button" class="fm-sticky-go" onclick="fmOpenCheckout()">Proceed to Checkout <span aria-hidden="true">➜</span></button>
+  <button type="button" class="fm-sticky-go" onclick="fmOpenCheckout()"><span style="position:relative;z-index:1">Checkout</span><span aria-hidden="true" style="position:relative;z-index:1">➜</span></button>
+  <button type="button" class="fm-sticky-dismiss" onclick="fmDismissStickyCart()" aria-label="Hide cart bar">×</button>
 </div>
 <nav class="mobile-nav">
 <button class="active" data-page="dashboard"><span>⌂</span>Home</button>
@@ -1022,12 +1030,25 @@ function fmRenderCart(){
  const stickyCount=document.getElementById('fmStickyCartCount');
  if(sticky){
    const activePage=document.querySelector('.page.active')?.id||'';
-   const showSticky=itemCount>0 && activePage!=='cart' && activePage!=='checkout';
+   const dismissKey='fm_sticky_cart_dismissed_until_'+(window.fmCurrentSpinMemberId||'member');
+   const dismissedUntil=Number(localStorage.getItem(dismissKey)||0);
+   const stillDismissed=dismissedUntil>Date.now();
+   const showSticky=itemCount>0 && activePage!=='cart' && activePage!=='checkout' && !stillDismissed;
    sticky.classList.toggle('show',showSticky);
+   if(stillDismissed&&!window.fmStickyCartWakeTimer){window.fmStickyCartWakeTimer=setTimeout(()=>{window.fmStickyCartWakeTimer=null;localStorage.removeItem(dismissKey);fmRenderCart();},Math.max(1000,dismissedUntil-Date.now()));}
    if(stickyTotal)stickyTotal.textContent=shopMoney(total);
    if(stickyCount)stickyCount.textContent=itemCount+' item'+(itemCount===1?'':'s');
  }
 }
+
+function fmDismissStickyCart(){
+ const key='fm_sticky_cart_dismissed_until_'+(window.fmCurrentSpinMemberId||'member');
+ localStorage.setItem(key,String(Date.now()+5*60*1000));
+ const bar=document.getElementById('fmStickyCartBar');if(bar)bar.classList.remove('show');
+ if(window.fmStickyCartWakeTimer)clearTimeout(window.fmStickyCartWakeTimer);
+ window.fmStickyCartWakeTimer=setTimeout(()=>{window.fmStickyCartWakeTimer=null;localStorage.removeItem(key);fmRenderCart();},5*60*1000);
+}
+
 function fmCartQty(i,d){if(!fmCart[i])return;fmCart[i].quantity+=d;if(fmCart[i].quantity<=0)fmCart.splice(i,1);fmSaveCart();}
 function fmRemoveCart(i){fmCart.splice(i,1);fmSaveCart();}
 async function fmOpenCheckout(){if(!fmCart.length){alert('Please add products to cart first.');return;}showPage('checkout');const dateInput=document.getElementById('fmCheckoutDeliveryDate');const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());if(dateInput){dateInput.min=today;const savedDate=localStorage.getItem('fm_checkout_delivery_date');if(savedDate&&savedDate>=today)dateInput.value=savedDate;if(!dateInput.value||dateInput.value<today)dateInput.value=today;localStorage.setItem('fm_checkout_delivery_date',dateInput.value);}const card=document.getElementById('fmCheckoutCard');card.style.display='block';await loadDeliveryAddresses();const sel=document.getElementById('fmCheckoutAddress'),wrap=document.getElementById('fmCheckoutAddressWrap'),addBtn=document.getElementById('fmCheckoutAddAddressBtn');if(!fmAddresses.length){wrap.style.display='none';addBtn.style.display='inline-flex';document.getElementById('fmCheckoutPin').value=localStorage.getItem('fm_checkout_pincode')||'';document.getElementById('fmDeliveryChoices').textContent='Add a delivery address to check delivery options.';fmCheckoutArea=null;}else{wrap.style.display='block';addBtn.style.display='inline-flex';sel.innerHTML='<option value="">Select a delivery address</option>'+fmAddresses.map(a=>`<option value="${shopEsc(a.id)}">${shopEsc(a.label||'Address')} · ${shopEsc(a.pincode)} · ${shopEsc(a.address_line1)}</option>`).join('');const savedId=localStorage.getItem('fm_checkout_address_id');const def=fmAddresses.find(a=>String(a.id)===String(savedId))||fmAddresses.find(a=>a.is_default)||fmAddresses[0];if(def){sel.value=String(def.id);localStorage.setItem('fm_checkout_address_id',String(def.id));document.getElementById('fmCheckoutPin').value=def.pincode;localStorage.setItem('fm_checkout_pincode',String(def.pincode||''));await fmLoadDeliveryChoices();}}await fmLoadCheckoutPayments();fmUpdateCheckoutButton();fmRemoveCheckoutCoupon();fmRenderCart();fmUpdateCouponTotal();window.scrollTo({top:0,behavior:'smooth'});}
@@ -1649,6 +1670,7 @@ async function fmSavePayoutDetails(){
 }
 async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;let pendingMarker=null;try{pendingMarker=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}const newlyPaid=pendingMarker?(orders||[]).find(o=>String(o.id)===String(pendingMarker.sourceId)&&String(o.payment_status).toLowerCase()==='paid'):null;if(newlyPaid){localStorage.removeItem('fm_pending_upi_grocery');alert('Payment confirmed. Order placed: '+(newlyPaid.order_number||''));showPage('orders');}badge.textContent=(orders||[]).length+' ORDERS';if(!orders?.length){box.textContent='No orders yet. Your placed orders will appear here.';return;}box.innerHTML=orders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div>${o.payment_method==='upi'&&o.payment_status==='pending'&&o.order_status!=='cancelled'?`<button type="button" class="btn btn-green" style="margin-top:10px" onclick="fmUpiUserOpenFor('grocery','${o.id}')">Pay this order by UPI QR</button>`:''}</article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
 async function signOut(){
+  Object.keys(localStorage).filter(k=>k.startsWith('fm_sticky_cart_dismissed_until_')).forEach(k=>localStorage.removeItem(k));
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
   if(authKey){
     try{
@@ -1766,33 +1788,55 @@ async function fmLoadMyOffers(){
   const live=(offers.data||[]).filter(x=>(!x.starts_at||x.starts_at<=now)&&(!x.ends_at||x.ends_at>=now));
   offerBox.innerHTML=live.length?live.map(x=>`<article style="padding:13px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.badge_text||'SPECIAL OFFER')} · ${fmOfferEsc(x.title)}</b><p class="hint">${fmOfferEsc(x.description||'')}</p>${x.discount_value>0?`<strong style="color:#168447">${x.discount_type==='percent'?Number(x.discount_value)+'% OFF':fmOfferMoney(x.discount_value)+' OFF'}</strong>`:''}</article>`).join(''):'No active offers right now.';
   const session=await getMemberSession();
-  window.fmCurrentSpinMemberId=session?.user?.id||null;
-  const {data:coupons,error:ce}=await fmShopClient.from('fm_user_coupons').select('id,status,assigned_at,redeemed_at,fm_coupons(code,title,description,discount_type,discount_value,min_order_amount,ends_at,is_active)').eq('user_id',session.user.id).order('assigned_at',{ascending:false});if(ce)throw ce;
-  const usable=(coupons||[]).filter(x=>x.status==='available'&&x.fm_coupons?.is_active&&(!x.fm_coupons.ends_at||new Date(x.fm_coupons.ends_at)>new Date()));
-  document.getElementById('fmMyCouponCount').textContent=usable.length+' AVAILABLE';
-  couponBox.innerHTML=(coupons||[]).length?(coupons||[]).map(x=>{const c=x.fm_coupons||{};return `<article style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><div><b>${fmOfferEsc(c.title||'Coupon')}</b><div class="hint">${fmOfferEsc(c.description||'')} · Code: <strong>${fmOfferEsc(c.code||'')}</strong></div><small class="hint">${c.discount_type==='percent'?Number(c.discount_value)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':'Free Delivery'} · Min order ${fmOfferMoney(c.min_order_amount)}</small></div><div><span class="badge ${x.status==='available'?'approved':x.status==='redeemed'?'rejected':'pending'}">${fmOfferEsc(x.status==='available'&&c.ends_at&&new Date(c.ends_at)<=new Date()?'EXPIRED':x.status.toUpperCase())}</span>${x.status==='available'&&(!c.ends_at||new Date(c.ends_at)>new Date())?`<button class="btn btn-outline" style="display:block;margin-top:7px" onclick="navigator.clipboard?.writeText('${fmOfferEsc(c.code||'')}').then(()=>alert('Coupon code copied'))">Copy Code</button>`:''}</div></article>`}).join(''):'No coupons assigned to your account yet.';
-  const spinBtn=document.getElementById('fmSpinButton');spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?'Spin Now':'Spin Wheel Coming Soon';
+  if(!session?.user?.id)throw new Error('Please sign in again to view your coupons.');
+  window.fmCurrentSpinMemberId=session.user.id;
+  // Fetch assignments first, then coupon rows directly. This avoids relation-name mismatches.
+  const {data:assignments,error:ae}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at,redeemed_at').eq('user_id',session.user.id).order('assigned_at',{ascending:false});
+  if(ae)throw ae;
+  const couponIds=[...new Set((assignments||[]).map(x=>x.coupon_id).filter(Boolean))];
+  let couponRows=[];
+  if(couponIds.length){const {data,error}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,max_discount,ends_at,is_active').in('id',couponIds);if(error)throw error;couponRows=data||[];}
+  const couponMap=new Map(couponRows.map(c=>[String(c.id),c]));
+  const joined=(assignments||[]).map(a=>({...a,coupon:couponMap.get(String(a.coupon_id))||null}));
+  const usable=joined.filter(x=>x.status==='available'&&x.coupon?.is_active&&(!x.coupon.ends_at||new Date(x.coupon.ends_at)>new Date()));
+  const countEl=document.getElementById('fmMyCouponCount');if(countEl)countEl.textContent=usable.length+' AVAILABLE';
+  couponBox.innerHTML=joined.length?joined.map(x=>{
+    const c=x.coupon||{};const expired=!!(c.ends_at&&new Date(c.ends_at)<=new Date());
+    const status=expired&&x.status==='available'?'EXPIRED':String(x.status||'unknown').toUpperCase();
+    const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
+    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
+  }).join(''):'No coupons assigned to your account yet.';
+  const spinBtn=document.getElementById('fmSpinButton');if(spinBtn){spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?'Spin Now':'Spin Wheel Coming Soon';}
   const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true});if(pe)throw pe;
-  window.fmWelcomeSpinConfig=cfg.data||null;
-  window.fmMemberSpinPlays=plays||[];
+  window.fmWelcomeSpinConfig=cfg.data||null;window.fmMemberSpinPlays=plays||[];
   const maxSpins=Math.max(1,Number(cfg.data?.max_spins_per_user||1));
-  const spinCount=(plays||[]).length, lastPlay=(plays||[])[spinCount-1]||null;
+  const spinCount=(plays||[]).length,lastPlay=(plays||[])[spinCount-1]||null;
   const canRetry=!!lastPlay&&String(lastPlay.reward_type||'none')==='none'&&spinCount<maxSpins;
-  const canStart=!lastPlay;
-  const canSpin=!!cfg.data?.is_enabled&&(canStart||canRetry)&&spinCount<maxSpins;
+  const canStart=!lastPlay,canSpin=!!cfg.data?.is_enabled&&(canStart||canRetry)&&spinCount<maxSpins;
   const welcomeDismissKey='fm_spin_welcome_dismissed_'+session.user.id;
   if(lastPlay){
-   spinBtn.disabled=!canSpin;spinBtn.textContent=canSpin?'Spin Again ('+(maxSpins-spinCount)+' left)':'Spin Limit Reached';
-   document.getElementById('fmSpinResult').textContent='Your result: '+lastPlay.reward_label+' ('+lastPlay.status+'). '+(canRetry?'You can spin again.':'');
+   if(spinBtn){spinBtn.disabled=!canSpin;spinBtn.textContent=canSpin?'Spin Again ('+(maxSpins-spinCount)+' left)':'Spin Limit Reached';}
+   const spinResult=document.getElementById('fmSpinResult');if(spinResult)spinResult.textContent='Your result: '+lastPlay.reward_label+' ('+lastPlay.status+'). '+(canRetry?'You can spin again.':'');
    const welcomeModal=document.getElementById('fmSpinWelcomeModal');if(welcomeModal&&!document.getElementById('fmSpinResultPopup')?.classList.contains('show'))welcomeModal.classList.remove('open');
    if(canRetry&&!sessionStorage.getItem(welcomeDismissKey))setTimeout(()=>fmOpenWelcomeSpin(cfg.data.slots),450);
   }else if(canSpin&&Array.isArray(cfg.data.slots)&&cfg.data.slots.some(x=>x.enabled!==false)){
-   spinBtn.disabled=false;spinBtn.textContent='Spin Now';
+   if(spinBtn){spinBtn.disabled=false;spinBtn.textContent='Spin Now';}
    if(!sessionStorage.getItem(welcomeDismissKey))setTimeout(()=>fmOpenWelcomeSpin(cfg.data.slots),450);
-  }else{spinBtn.disabled=true;spinBtn.textContent=cfg.data?.is_enabled?'Spin Limit Reached':'Spin Wheel Coming Soon';}
+  }else if(spinBtn){spinBtn.disabled=true;spinBtn.textContent=cfg.data?.is_enabled?'Spin Limit Reached':'Spin Wheel Coming Soon';}
   const {data:scratch,error:se}=await fmShopClient.from('fm_scratch_cards').select('id,title,reward_label,status').eq('user_id',session.user.id).order('created_at',{ascending:false});if(se)throw se;
-  scratchBox.innerHTML=(scratch||[]).length?(scratch||[]).map(x=>`<article style="padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.title)}</b><p class="hint">${x.status==='available'?'Tap to reveal your reward.':fmOfferEsc(x.reward_label)+' · '+fmOfferEsc(x.status)}</p>${x.status==='available'&&(!c.ends_at||new Date(c.ends_at)>new Date())?`<button class="btn btn-green" onclick="fmRevealScratch('${x.id}')">Scratch & Reveal</button>`:''}</article>`).join(''):'No scratch cards assigned yet.';
- }catch(e){offerBox.textContent='Could not load offers: '+e.message;couponBox.textContent='Please sign in and try again.';scratchBox.textContent='Scratch cards unavailable: '+e.message;}
+  scratchBox.innerHTML=(scratch||[]).length?(scratch||[]).map(x=>`<article style="padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.title)}</b><p class="hint">${x.status==='available'?'Tap to reveal your reward.':fmOfferEsc(x.reward_label)+' · '+fmOfferEsc(x.status)}</p>${x.status==='available'?`<button class="btn btn-green" onclick="fmRevealScratch('${x.id}')">Scratch & Reveal</button>`:''}</article>`).join(''):'No scratch cards assigned yet.';
+ }catch(e){offerBox.textContent='Could not load offers: '+e.message;couponBox.textContent='Could not load coupons: '+e.message;scratchBox.textContent='Scratch cards unavailable: '+e.message;}
+}
+function fmCopyCouponCode(code){
+ const value=String(code||'');if(!value)return;
+ if(navigator.clipboard?.writeText){navigator.clipboard.writeText(value).then(()=>alert('Coupon code copied: '+value)).catch(()=>fmCopyCouponFallback(value));}
+ else fmCopyCouponFallback(value);
+}
+function fmCopyCouponFallback(value){const t=document.createElement('textarea');t.value=value;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');alert('Coupon code copied: '+value);}catch(e){alert('Coupon code: '+value);}t.remove();}
+function fmGoToMyCoupons(){
+ const modal=document.getElementById('fmSpinWelcomeModal');if(modal)modal.classList.remove('open');
+ showPage('myoffers');
+ setTimeout(()=>{fmLoadMyOffers();const box=document.getElementById('fmUserCouponList');if(box)box.scrollIntoView({behavior:'smooth',block:'start'});},120);
 }
 
 let fmWelcomeSpinSlots=[];
@@ -1804,7 +1848,7 @@ function fmOpenWelcomeSpin(slots){
  wheel.innerHTML=fmWelcomeSpinSlots.map((x,i)=>`<div class="fm-spin-wheel-label" style="--slot:${i}">${fmOfferEsc(x.label||('Mystery Prize '+(i+1)))}</div>`).join('');
  wheel.style.transition='none';wheel.style.transform='rotate(0deg)';void wheel.offsetWidth;wheel.style.transition='transform 5.2s cubic-bezier(.12,.72,.08,1)';
  document.getElementById('fmWelcomeSpinMessage').textContent='Tap SPIN to reveal your surprise reward!';
- document.getElementById('fmWelcomeSpinAction').disabled=false;document.getElementById('fmWelcomeSpinAction').textContent='SPIN';const resultAction=document.getElementById('fmSpinResultAction');if(resultAction){resultAction.textContent='View My Coupons';resultAction.onclick=fmCloseWelcomeSpin;}
+ document.getElementById('fmWelcomeSpinAction').disabled=false;document.getElementById('fmWelcomeSpinAction').textContent='SPIN';const resultAction=document.getElementById('fmSpinResultAction');if(resultAction){resultAction.textContent='View My Coupons';resultAction.onclick=fmGoToMyCoupons;}
  modal.classList.add('open');
 }
 function fmCloseWelcomeSpin(){
@@ -1823,6 +1867,16 @@ async function fmPlayWelcomeSpin(){
   // The database RPC is authoritative; the browser never chooses or credits the prize.
   const {data,error}=await fmShopClient.rpc('fm_play_spin');if(error)throw error;
   if(!data||!data.reward_label)throw new Error('Spin result was not returned by server.');
+  let wonCoupon=null;
+  if(String(data.reward_type||'')==='coupon'){
+   const memberId=window.fmCurrentSpinMemberId||(await getMemberSession())?.user?.id;
+   if(memberId){
+    const {data:assigned,error:assignErr}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at').eq('user_id',memberId).order('assigned_at',{ascending:false}).limit(1).maybeSingle();
+    if(assignErr)throw assignErr;
+    if(assigned?.coupon_id){const {data:coupon,error:couponErr}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,ends_at,is_active').eq('id',assigned.coupon_id).maybeSingle();if(couponErr)throw couponErr;wonCoupon=coupon?{...coupon,status:assigned.status}:null;}
+   }
+   if(!wonCoupon)throw new Error('Coupon prize was recorded, but its assigned coupon could not be loaded. Please refresh My Coupons or contact support.');
+  }
   const idx=eligible.findIndex(x=>String(x.reward_type||'none')===String(data.reward_type||'none') && (String(data.reward_label||'').trim()===String(x.label||'').trim() || (data.reward_type==='coupon' && String(data.reward_label||'').trim().startsWith(String(x.label||'').trim()+' · '))));
   if(idx<0)throw new Error('Reward configuration changed. Refresh the page to see the latest wheel settings.');
   const target=eligible[idx].index,center=target*60;
@@ -1840,9 +1894,9 @@ async function fmPlayWelcomeSpin(){
   const usedCount=window.fmMemberSpinPlays.length;
   const maxCount=Math.max(1,Number(window.fmWelcomeSpinConfig?.max_spins_per_user||1));
   const retryAvailable=data.reward_type==='none'&&usedCount<maxCount;
-  if(details)details.textContent=data.reward_type==='coupon'?'Your coupon has been saved in Coupons & Offers → My Coupons. Use it before expiry.':data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your reward has been recorded. Check Coupons & Offers for its status.';
+  if(details){if(wonCoupon){details.innerHTML=`<div style="margin-top:8px;padding:12px;border:1px dashed #d8b84a;border-radius:12px;background:#fffdf3;text-align:left"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:21px;letter-spacing:1px;color:#176b3d">${fmOfferEsc(wonCoupon.code||'')}</strong><button type="button" class="btn btn-outline" style="display:block;margin:8px auto" onclick="fmCopyCouponCode('${fmOfferEsc(wonCoupon.code||'')}')">Copy Code</button>${Number(wonCoupon.min_order_amount||0)>0?`<div class="hint">Minimum order: ${fmOfferMoney(wonCoupon.min_order_amount)}</div>`:''}${wonCoupon.ends_at?`<div class="hint">Valid until: ${new Date(wonCoupon.ends_at).toLocaleString('en-IN')}</div>`:''}${wonCoupon.terms_and_conditions?`<div style="margin-top:8px"><b style="font-size:12px">Terms & Conditions</b><div class="hint" style="white-space:pre-wrap">${fmOfferEsc(wonCoupon.terms_and_conditions)}</div></div>`:''}</div>`;}else{details.textContent=data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your reward has been recorded. Check Coupons & Offers for its status.';}}
   const resultAction=document.getElementById('fmSpinResultAction');
-  if(resultAction){if(retryAvailable){resultAction.textContent='SPIN AGAIN';resultAction.onclick=fmSpinResultContinue;}else{resultAction.textContent=data.reward_type==='none'?'Close':'View My Coupons';resultAction.onclick=fmCloseWelcomeSpin;}}
+  if(resultAction){if(retryAvailable){resultAction.textContent='SPIN AGAIN';resultAction.onclick=fmSpinResultContinue;}else{resultAction.textContent=data.reward_type==='none'?'Close':'View My Coupons';resultAction.onclick=fmGoToMyCoupons;}}
   if(cardBtn){cardBtn.disabled=!retryAvailable;cardBtn.textContent=retryAvailable?'Spin Again ('+(maxCount-usedCount)+' left)':usedCount>=maxCount?'Spin Limit Reached':'Spin Already Used';}
   if(spinBox)spinBox.classList.add('has-result');
   if(resultPop)resultPop.classList.add('show');
