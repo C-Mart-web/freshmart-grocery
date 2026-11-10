@@ -1151,6 +1151,20 @@ function fmRenderSpinSlots(slots,hostId='fmSpinSlotEditor'){
   <div class="field"><label><input type="checkbox" data-spin-enabled="${i}" ${s.enabled!==false?'checked':''}> Enable this slot</label><small class="hint">Disabled slots cannot be won.</small></div>
  </div></div>`).join('');
 }
+function fmRefreshSpinGiftDropdowns(){
+ const gifts=Array.isArray(window.fmAdminGiftChoices)?window.fmAdminGiftChoices:[];
+ ['fmSpinSlotEditor','fmFreeSpinSlotEditor'].forEach(hostId=>{
+  const host=document.getElementById(hostId);if(!host)return;
+  host.querySelectorAll('select[data-spin-value]').forEach(sel=>{
+   const old=sel.value;
+   sel.innerHTML='<option value="">'+(gifts.length?'Select gift product':'No gift products loaded — check Gift Catalog / permissions')+'</option>'+
+    gifts.map(g=>'<option value="'+fmAdmEsc(g.name)+'">'+fmAdmEsc(g.name)+' · Stock '+Number(g.stock_quantity||0)+(g.is_active===false?' · INACTIVE':'')+'</option>').join('');
+   if(old && gifts.some(g=>String(g.name)===String(old)))sel.value=old;
+  });
+ });
+ const status=document.getElementById('fmSpinAdminMsg');
+ if(status && gifts.length)status.textContent='Gift products available for wheel selection: '+gifts.length+'.';
+}
 function fmCollectSpinSlots(hostId='fmSpinSlotEditor'){
  const host=document.getElementById(hostId);if(!host)return [];
  return Array.from({length:6},(_,i)=>{
@@ -1187,9 +1201,9 @@ async function fmAdminLoadGifts(){
  try{
   const {data,error}=await fmSupabase.from('fm_gift_catalog').select('*').order('created_at',{ascending:false});
   if(error)throw error;window.fmAdminGiftChoices=(data||[]); // Keep all catalog rows available in the selector; the server validates active status and stock when awarding.
+  fmRefreshSpinGiftDropdowns();
   box.innerHTML=(data||[]).map(g=>`<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf3ee">${g.image_url?`<img src="${fmAdmEsc(g.image_url)}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:9px">`:''}<div style="flex:1;min-width:0"><b>${fmAdmEsc(g.name)}</b><div>${fmAdmEsc(g.description||'')}</div><small>Stock: ${Number(g.stock_quantity||0)} · ${g.is_active?'ACTIVE':'INACTIVE'}</small><details style="margin-top:5px"><summary>Terms & Conditions</summary>${fmAdmEsc(g.terms_and_conditions||'Not specified')}</details></div><button class="btn btn-outline btn-sm" onclick="fmAdminToggleGift('${g.id}',${!g.is_active})">${g.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No gift products created yet.</p>';
-  const selected=document.getElementById('fmPlanSpinPlan')?.value;if(selected)await fmAdminLoadSelectedPlanSpin();
- }catch(e){box.textContent='Could not load gifts: '+(e.message||String(e));}
+ }catch(e){box.textContent='Could not load gifts: '+(e.message||String(e));const status=document.getElementById('fmSpinAdminMsg');if(status)status.textContent='Gift dropdown could not load: '+(e.message||String(e));}
 }
 async function fmAdminToggleGift(id,on){
  const {error}=await fmSupabase.from('fm_gift_catalog').update({is_active:on}).eq('id',id);
@@ -1311,6 +1325,7 @@ async function fmAdminLoadFreeSpin(){
   const mx=document.getElementById('fmFreeSpinMax');if(mx)mx.value='1';
   fmFreeSpinSlots=Array.isArray(data?.slots)&&data.slots.length===6?data.slots:FM_DEFAULT_SPIN_SLOTS.map(x=>({...x}));
   fmRenderSpinSlots(fmFreeSpinSlots,'fmFreeSpinSlotEditor');
+  fmRefreshSpinGiftDropdowns();
   if(msg)msg.textContent=data?'Free Member wheel settings loaded.':'No Free Member wheel saved yet. Configure and save.';
  }catch(e){if(msg)msg.textContent='Free Member settings load failed: '+(e.message||e)+' — run Free Member One-Time Spin SQL first.';}
 }
@@ -1384,6 +1399,7 @@ async function fmAdminLoadSelectedPlanSpin(){
   }
   const en=document.getElementById('fmSpinEnabled');if(en)en.checked=!!data?.is_enabled;
   fmRenderSpinSlots(data?.slots||FM_DEFAULT_SPIN_SLOTS);
+  fmRefreshSpinGiftDropdowns();
  }catch(e){if(m)m.textContent='Spin Wheel load failed: '+(e.message||e);}
 }
 async function fmAdminSaveSpin(){
