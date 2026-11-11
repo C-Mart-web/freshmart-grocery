@@ -1878,9 +1878,11 @@ async function fmLoadMyOffers(){
   if(!session?.user?.id)throw new Error('Please sign in again to view your coupons.');
   const [offers,activationRows]=await Promise.all([fmShopClient.from('fm_offer_campaigns').select('*').eq('is_active',true).order('sort_order').limit(50),fmShopClient.from('fm_plan_roi_activations').select('id,plan_id,start_date,status').eq('user_id',session.user.id).order('start_date',{ascending:true})]);
   if(offers.error)throw offers.error;if(activationRows.error)throw activationRows.error;
-  const onlyActivation=(activationRows.data||[]).length===1?(activationRows.data||[])[0]:null;
+  const onlyActivation=(activationRows.data||[]).filter(x=>String(x.status||'').toLowerCase()==='active').sort((a,b)=>new Date(b.start_date)-new Date(a.start_date))[0]||null;
   const live=(offers.data||[]).filter(x=>(!x.starts_at||x.starts_at<=now)&&(!x.ends_at||x.ends_at>=now));
   offerBox.innerHTML=live.length?live.map(x=>`<article style="padding:13px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.badge_text||'SPECIAL OFFER')} · ${fmOfferEsc(x.title)}</b><p class="hint">${fmOfferEsc(x.description||'')}</p>${x.discount_value>0?`<strong style="color:#168447">${x.discount_type==='percent'?Number(x.discount_value)+'% OFF':fmOfferMoney(x.discount_value)+' OFF'}</strong>`:''}</article>`).join(''):'No active offers right now.';
+  const activeMemberships=(activationRows.data||[]).filter(x=>String(x.status||'').toLowerCase()==='active');
+  if(activeMemberships.length){offerBox.innerHTML+='<section style="margin-top:14px;padding:12px;border:1px solid #dcebe0;border-radius:12px"><b>🎡 Membership Activation Spin Chances</b><div id="fmActivationSpinCards" class="hint">Loading activation Spin chances…</div></section>';setTimeout(()=>fmRenderMembershipSpinCards(activeMemberships),0);}
   let cfg={data:null};
   const activationList=activationRows.data||[];
   let spinScope=null,spinTable=null;
@@ -1913,14 +1915,14 @@ async function fmLoadMyOffers(){
     return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');
-  const {data:plays,error:pe}=spinTable?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true}):{data:[],error:null};if(pe)throw pe;
+  const {data:plays,error:pe}=spinTable?(spinScope==='plan'?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at,membership_activation_id').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',onlyActivation?.id||-1).order('played_at',{ascending:true}):await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true})):{data:[],error:null};if(pe)throw pe;
   window.fmWelcomeSpinConfig=cfg.data||null;window.fmMemberSpinPlays=plays||[];
   const maxSpins=spinScope==='free'?1:Math.max(1,Number(cfg.data?.max_spins_per_user||1));
   const spinCount=(plays||[]).length,lastPlay=(plays||[])[spinCount-1]||null;
   if(spinBtn){spinBtn.disabled=!cfg.data?.is_enabled;spinBtn.textContent=cfg.data?.is_enabled?(spinScope==='free'?'Free Member Spin':'Spin Now'):'Spin Wheel Coming Soon';}
   const canRetry=!!lastPlay&&String(lastPlay.reward_type||'none')==='none'&&spinCount<maxSpins;
   const canStart=!lastPlay,canSpin=!!cfg.data?.is_enabled&&(canStart||canRetry)&&spinCount<maxSpins;
-  const welcomeDismissKey='fm_spin_welcome_dismissed_'+session.user.id;
+  const welcomeDismissKey='fm_spin_welcome_dismissed_'+session.user.id+'_'+(spinScope==='plan'?('activation_'+onlyActivation?.id):'free');
   if(lastPlay){
    if(spinBtn){spinBtn.disabled=!canSpin;spinBtn.textContent=canSpin?'Spin Again ('+(maxSpins-spinCount)+' left)':'Spin Limit Reached';}
    const spinResult=document.getElementById('fmSpinResult');if(spinResult)spinResult.textContent='Your result: '+lastPlay.reward_label+' ('+lastPlay.status+'). '+(canRetry?'You can spin again.':'');
@@ -1933,6 +1935,36 @@ async function fmLoadMyOffers(){
   const {data:scratch,error:se}=await fmShopClient.from('fm_scratch_cards').select('id,title,reward_label,status').eq('user_id',session.user.id).order('created_at',{ascending:false});if(se)throw se;
   scratchBox.innerHTML=(scratch||[]).length?(scratch||[]).map(x=>`<article style="padding:12px;border:1px solid #e1eee5;border-radius:12px;margin:8px 0"><b>${fmOfferEsc(x.title)}</b><p class="hint">${x.status==='available'?'Tap to reveal your reward.':fmOfferEsc(x.reward_label)+' · '+fmOfferEsc(x.status)}</p>${x.status==='available'?`<button class="btn btn-green" onclick="fmRevealScratch('${x.id}')">Scratch & Reveal</button>`:''}</article>`).join(''):'No scratch cards assigned yet.';
  }catch(e){offerBox.textContent='Could not load offers: '+e.message;couponBox.textContent='Could not load coupons: '+e.message;scratchBox.textContent='Scratch cards unavailable: '+e.message;}
+}
+
+async function fmRenderMembershipSpinCards(activations){
+ const host=document.getElementById('fmActivationSpinCards');if(!host)return;
+ try{
+  const session=await getMemberSession();const rows=[];
+  for(const a of activations){
+   const [{data:cfg,error:ce},{data:plays,error:pe}]=await Promise.all([
+    fmShopClient.from('fm_plan_spin_settings').select('is_enabled,max_spins_per_user,slots').eq('plan_id',a.plan_id).maybeSingle(),
+    fmShopClient.from('fm_spin_plays').select('id,reward_type,reward_label').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',a.id).order('played_at',{ascending:true})
+   ]);if(ce)throw ce;if(pe)throw pe;
+   const count=(plays||[]).length,last=(plays||[])[count-1],max=Math.max(1,Number(cfg?.max_spins_per_user||1));
+   const can=!!cfg?.is_enabled&&count<max&&(!last||String(last.reward_type||'none')==='none');
+   rows.push(`<div style="padding:10px;margin:8px 0;border:1px solid #e5eee7;border-radius:10px"><b>Plan Activation #${fmOfferEsc(a.id)}</b><div class="hint">${can?`${max-count} Spin Available` : !cfg?.is_enabled?'Spin Disabled':'Spin Completed'}</div><button type="button" class="btn btn-green" style="margin-top:7px" ${can?'':'disabled'} onclick="fmStartMembershipActivationSpin('${a.id}','${a.plan_id}')">${can?'Spin Now':'Not Available'}</button></div>`);
+  }
+  host.innerHTML=rows.join('')||'No active Membership activation.';
+ }catch(e){host.textContent='Could not load activation Spin chances: '+(e.message||e);}
+}
+async function fmStartMembershipActivationSpin(activationId,planId){
+ try{
+  const session=await getMemberSession();const [{data:cfg,error:ce},{data:plays,error:pe}]=await Promise.all([
+   fmShopClient.from('fm_plan_spin_settings').select('is_enabled,max_spins_per_user,slots').eq('plan_id',planId).maybeSingle(),
+   fmShopClient.from('fm_spin_plays').select('id,reward_type,reward_label,status,played_at').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',Number(activationId)).order('played_at',{ascending:true})
+  ]);if(ce)throw ce;if(pe)throw pe;
+  const count=(plays||[]).length,last=(plays||[])[count-1],max=Math.max(1,Number(cfg?.max_spins_per_user||1));
+  if(!cfg?.is_enabled)throw new Error('Spin Wheel is not enabled for this plan.');
+  if(count>=max||(last&&String(last.reward_type||'none')!=='none'))throw new Error('Spin attempts are completed for this activation.');
+  window.fmCurrentSpinScope='plan';window.fmCurrentSpinTable='fm_spin_plays';window.fmCurrentSpinActivationId=Number(activationId);window.fmCurrentSpinPlanId=Number(planId);window.fmCurrentSpinMemberId=session.user.id;window.fmWelcomeSpinConfig=cfg;window.fmMemberSpinPlays=plays||[];
+  fmOpenWelcomeSpin(cfg.slots);
+ }catch(e){alert(e.message||e);}
 }
 function fmCopyCouponCode(code){
  const value=String(code||'');if(!value)return;
@@ -1962,7 +1994,7 @@ function fmCloseWelcomeSpin(){
  const modal=document.getElementById('fmSpinWelcomeModal');if(modal)modal.classList.remove('open');
  // Closing without spinning hides it for this member in this browser session only.
  const memberId=window.fmCurrentSpinMemberId||window.fmWelcomeSpinMemberId;
- if(memberId)sessionStorage.setItem('fm_spin_welcome_dismissed_'+memberId,'1');
+ if(memberId)sessionStorage.setItem('fm_spin_welcome_dismissed_'+memberId+'_'+(window.fmCurrentSpinScope==='plan'?('activation_'+window.fmCurrentSpinActivationId):window.fmCurrentSpinScope==='daily_fresh'?('daily_'+window.fmCurrentDailyFreshSubscriptionId):'free'),'1');
 }
 async function fmPlayWelcomeSpin(){
  const btn=document.getElementById('fmWelcomeSpinAction'),msg=document.getElementById('fmWelcomeSpinMessage'),wheel=document.getElementById('fmWelcomeSpinWheel');
@@ -1972,7 +2004,7 @@ async function fmPlayWelcomeSpin(){
   const eligible=fmWelcomeSpinSlots.map((x,i)=>({...x,index:i})).filter(x=>x.enabled!==false);
   if(!eligible.length)throw new Error('Admin has not enabled any wheel reward.');
   // The database RPC is authoritative; the browser never chooses or credits the prize.
-  const spinRpc=window.fmCurrentSpinScope==='free'?'fm_play_free_spin':'fm_play_spin';const {data,error}=await fmShopClient.rpc(spinRpc);if(error)throw error;
+  const spinRpc=window.fmCurrentSpinScope==='free'?'fm_play_free_spin':window.fmCurrentSpinScope==='daily_fresh'?'fm_play_daily_fresh_spin':'fm_play_spin';const spinArgs=window.fmCurrentSpinScope==='daily_fresh'?{p_subscription_id:Number(window.fmCurrentDailyFreshSubscriptionId)}:window.fmCurrentSpinScope==='plan'?{p_activation_id:Number(window.fmCurrentSpinActivationId)}:{};const {data,error}=await fmShopClient.rpc(spinRpc,spinArgs);if(error)throw error;
   if(!data||!data.reward_label)throw new Error('Spin result was not returned by server.');window.fmLastWonSpinPlayId=data.spin_id||data.id||null;window.fmLastWonSpinTable=window.fmCurrentSpinTable||'fm_spin_plays';
   let wonCoupon=null;
   if(String(data.reward_type||'')==='coupon'){
@@ -2007,7 +2039,7 @@ async function fmPlayWelcomeSpin(){
   if(cardBtn){cardBtn.disabled=!retryAvailable;cardBtn.textContent=retryAvailable?'Spin Again ('+(maxCount-usedCount)+' left)':usedCount>=maxCount?'Spin Limit Reached':'Spin Already Used';}
   if(spinBox)spinBox.classList.add('has-result');
   if(resultPop)resultPop.classList.add('show');
-  sessionStorage.setItem('fm_spin_welcome_dismissed_'+(window.fmCurrentSpinMemberId||''),'1');
+  sessionStorage.setItem('fm_spin_welcome_dismissed_'+(window.fmCurrentSpinMemberId||'')+'_'+(window.fmCurrentSpinScope==='plan'?('activation_'+window.fmCurrentSpinActivationId):window.fmCurrentSpinScope==='daily_fresh'?('daily_'+window.fmCurrentDailyFreshSubscriptionId):'free'),'1');
   await fmLoadMyOffers();
  }catch(e){msg.textContent=e.message||String(e);btn.disabled=false;btn.textContent='SPIN';if(cardBtn)cardBtn.disabled=false;}
 }
@@ -2103,8 +2135,10 @@ async function fmDFUserLoad(){
     </div>
     <div style="height:8px;background:#dcebe1;border-radius:9px;margin-top:10px;overflow:hidden"><div style="height:100%;width:${Math.min(100,completedDays/totalDays*100)}%;background:#168447"></div></div>
     <div class="hint" style="margin-top:7px">Your purchased products and quantities remain frozen for this subscription.</div>
+    <div id="fmDFSpinArea" style="margin-top:10px;padding:10px;background:#fff;border-radius:10px"><b>🎡 Spin Wheel</b><div id="fmDFSpinStatus" class="hint">Checking Spin eligibility…</div><button type="button" class="btn btn-green" id="fmDFSpinButton" style="margin-top:7px" onclick="fmDFStartSpin('${String(live.id)}','${fmDFUserEsc(live.category_code)}',true)">Spin Now</button></div>
    </div>`;
    if(delivery)fmDFUserRenderDelivery(live);
+   setTimeout(()=>fmDFStartSpin(live.id,live.category_code),250);
    const qrBtn=document.getElementById('fmDFUserOpenQr');if(qrBtn)qrBtn.disabled=true;
   }else{
    active.innerHTML='<div style="padding:10px;background:#fff7e4;border-radius:10px">No active Daily Fresh subscription. Choose a package below to subscribe or renew.</div>';
@@ -2118,6 +2152,21 @@ async function fmDFUserLoad(){
   active.textContent='Daily Fresh unavailable: '+e.message+'. Please contact Admin if the delivery settings SQL has not been installed.';
  }
 }
+
+async function fmDFStartSpin(subscriptionId,categoryCode,forceOpen=false){
+ try{
+  const session=await getMemberSession();if(!session?.user?.id)throw new Error('Please sign in again.');
+  const {data:cfg,error:ce}=await fmShopClient.from('fm_daily_fresh_spin_settings').select('is_enabled,max_spins_per_user,slots').eq('category_code',categoryCode).maybeSingle();if(ce)throw ce;
+  const {data:plays,error:pe}=await fmShopClient.from('fm_spin_plays').select('id,reward_type,reward_label,status,played_at').eq('user_id',session.user.id).eq('spin_scope','daily_fresh').eq('daily_fresh_subscription_id',Number(subscriptionId)).order('played_at',{ascending:true});if(pe)throw pe;
+  const status=document.getElementById('fmDFSpinStatus'),btn=document.getElementById('fmDFSpinButton');const count=(plays||[]).length,last=(plays||[])[count-1];const max=Math.max(1,Number(cfg?.max_spins_per_user||1));
+  window.fmCurrentSpinScope='daily_fresh';window.fmCurrentSpinTable='fm_spin_plays';window.fmCurrentDailyFreshSubscriptionId=Number(subscriptionId);window.fmCurrentSpinMemberId=session.user.id;window.fmWelcomeSpinConfig=cfg||null;window.fmMemberSpinPlays=plays||[];
+  const can=!!cfg?.is_enabled&&count<max&&(!last||String(last.reward_type||'none')==='none');
+  if(status)status.textContent=!cfg?.is_enabled?'Spin Wheel is not enabled for this category.':can?`${max-count} Spin${max-count===1?'':'s'} Available for this subscription.`:'Spin attempts completed for this subscription.';
+  if(btn){btn.disabled=!can;btn.textContent=can?'Spin Now':!cfg?.is_enabled?'Spin Disabled':'Spin Completed';}
+  if(can&&(forceOpen||!sessionStorage.getItem('fm_spin_welcome_dismissed_'+session.user.id+'_daily_'+Number(subscriptionId)))){fmOpenWelcomeSpin(cfg.slots);}
+ }catch(e){const s=document.getElementById('fmDFSpinStatus');if(s)s.textContent='Spin unavailable: '+(e.message||e);}
+}
+
 function fmDFUserRenderDelivery(s){
  const box=document.getElementById('fmDFUserDelivery');if(!box)return;
  const nowInIndia=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
