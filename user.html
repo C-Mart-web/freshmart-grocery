@@ -1859,7 +1859,7 @@ async function demoSubmit(e){
   msg.textContent='Membership request #'+reqId+' created. UTR and screenshot submitted; admin verification is pending.';document.getElementById('paymentForm').reset();await fmLoadMembershipPayments();
  }catch(err){msg.textContent='Submission failed: '+(err.message||err);}finally{btn.disabled=false;}
 }
-async function fmLoadMembershipPayments(){const body=document.getElementById('paymentRows');if(!body)return;try{const j=await fmPaymentCall('membership_payment_list');body.innerHTML=(j.requests||[]).map(x=>'<tr><td>#'+shopEsc(x.id||'—')+'</td><td>'+shopEsc(x.plan_name)+'</td><td>'+shopMoney(x.amount)+'</td><td>'+shopEsc(x.transaction_reference||'—')+'</td><td><span class="badge '+(x.status==='approved'?'approved':x.status==='rejected'?'rejected':'pending')+'">'+shopEsc(String(x.status).toUpperCase())+'</span>'+(x.admin_note?'<div class="hint">'+shopEsc(x.admin_note)+'</div>':'')+'</td></tr>').join('')||'<tr><td colspan="5">No payment requests yet.</td></tr>';}catch(e){body.innerHTML='<tr><td colspan="4">'+shopEsc(e.message)+'</td></tr>';}}
+async function fmLoadMembershipPayments(){const body=document.getElementById('paymentRows');if(!body)return;try{const j=await fmPaymentCall('membership_payment_list');body.innerHTML=(j.requests||[]).map(x=>'<tr><td>#'+shopEsc(x.id||'—')+'</td><td>'+shopEsc(x.plan_name)+'</td><td>'+shopMoney(x.amount)+'</td><td>'+shopEsc(x.transaction_reference||'—')+'</td><td><span class="badge '+(x.status==='approved'?'approved':x.status==='rejected'?'rejected':x.status==='cancelled'?'rejected':'pending')+'">'+shopEsc(String(x.status).toUpperCase())+'</span>'+(x.admin_note?'<div class="hint">'+shopEsc(x.admin_note)+'</div>':'')+'</td></tr>').join('')||'<tr><td colspan="5">No payment requests yet.</td></tr>';}catch(e){body.innerHTML='<tr><td colspan="4">'+shopEsc(e.message)+'</td></tr>';}}
 document.querySelectorAll('[data-page="plans"]').forEach(b=>b.addEventListener('click',fmLoadMembershipPayments));
 
 function showWalletHistory(walletName){fmRenderWalletHistory(walletName||'All');}
@@ -2298,10 +2298,23 @@ async function fmUpiUserOpenFor(type,sourceId){
  await fmUpiUserOpen();
 }
 
-function fmUpiUserClose(){
+async function fmUpiUserClose(){
  const modal=document.getElementById('fmUpiUserModal');if(!modal||modal.style.display!=='block')return;
- if(!confirm('Are you sure you want to close the payment without proceeding?'))return;
+ if(!confirm('Are you sure you want to cancel this payment request?'))return;
  const paymentType=fmUpiLastContext?.type||document.getElementById('fmUpiType')?.value||'';
+ if(paymentType==='membership'){
+   try{
+     const requestId=String(fmUpiLastContext?.sourceId||document.getElementById('fmUpiSource')?.value||'').trim();
+     if(!requestId)throw new Error('Membership request ID not found. Please refresh and try again.');
+     await fmPaymentCall('membership_payment_cancel',{request_id:Number(requestId)});
+     const m=document.getElementById('payMessage');if(m)m.textContent='Membership payment cancelled successfully.';
+     await fmLoadMembershipPayments();
+     await fmUpiMyPayments();
+   }catch(e){
+     alert(e.message||'Could not cancel payment. If UTR was submitted, this request cannot be cancelled.');
+     return;
+   }
+ }
  modal.style.display='none';fmUpiModalHistoryActive=false;
  // Keep the pending request ID: selecting the same membership plan again reopens this request.
  fmUpiCurrentTxn=null;
