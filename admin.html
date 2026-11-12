@@ -297,8 +297,8 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
  <div id="fmCouponPoolList" class="hint" style="margin-top:10px">Open this section to load coupon codes.</div>
 </details>
 <p id="fmCouponPoolMsg" class="hint" aria-live="polite"></p>
-</div><div class="card" style="margin-top:14px" id="fmGiftCatalogCard"><h2>🎁 Gift Product Management</h2><p class="hint">Create gift products here and use the exact Gift Name as the Spin Wheel reward value. Set gift stock, image and member terms.</p><div class="formgrid"><div class="field"><label>Gift Product Name *</label><input id="fmGiftName" placeholder="Example: 3L Cooker"></div><div class="field"><label>Gift Image (upload)</label><input id="fmGiftImageFile" type="file" accept="image/jpeg,image/png,image/webp"><input id="fmGiftImage" placeholder="Or paste HTTPS image URL" style="margin-top:7px"></div><div class="field"><label>Available Stock</label><input id="fmGiftStock" type="number" min="0" value="0"></div><div class="field"><label>Gift Status</label><select id="fmGiftActive"><option value="true">Active</option><option value="false">Inactive</option></select></div></div><div class="field" style="margin-top:10px"><label>Description</label><textarea id="fmGiftDescription" placeholder="Describe the gift product"></textarea></div><div class="field" style="margin-top:10px"><label>Gift Terms & Conditions</label><textarea id="fmGiftTerms" placeholder="Eligibility, delivery/pickup, claim deadline, stock limits and other conditions"></textarea></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateGift()">Save Gift Product</button><p id="fmGiftMsg" class="hint"></p><div id="fmGiftList" class="hint">Loading gift products…</div></div><div class="card" style="margin-top:14px"><h2>Spin Wheel Settings (6 Slots)</h2><label style="display:flex;gap:9px;align-items:center;margin:12px 0"><input type="checkbox" id="fmSpinEnabled"> Enable Spin Wheel for members</label><div class="field" style="max-width:420px;margin:12px 0"><label>Eligible Membership Plan</label><select id="fmPlanSpinPlan" onchange="fmAdminLoadSelectedPlanSpin()"><option value="">Loading plans…</option></select><small class="hint">Select a plan, then configure its own wheel prizes. Each new Membership activation / top-up receives its own Spin chance when enabled. Daily Fresh settings are category-wise; each new subscription activation is tracked separately.</small></div><div class="field" style="max-width:320px;margin:12px 0"><label>Maximum Spins for this Plan</label><input id="fmSpinMaxPerUser" type="number" min="1" max="100" step="1" value="1"><small class="hint">Every attempt counts. If a member gets No Prize / Try Again, they can spin again until this limit. A real reward ends their spin attempts.</small></div>
-<p class="hint">Set each of the six wheel slots below. Allowed rewards: No Prize, Gift Product, Wallet Amount (credited only to Shopping Wallet), and Coupon (usable at Shopping checkout). Gift stock is reduced automatically when won.</p>
+</div><div class="card" style="margin-top:14px" id="fmGiftCatalogCard"><h2>🎁 Gift Product Management</h2><p class="hint">Create gift products here and use the exact Gift Name as the Spin Wheel reward value. Set gift stock, image and member terms.</p><div class="formgrid"><div class="field"><label>Gift Product Name *</label><input id="fmGiftName" placeholder="Example: 3L Cooker"></div><div class="field"><label>Gift Image (upload)</label><input id="fmGiftImageFile" type="file" accept="image/jpeg,image/png,image/webp"><input id="fmGiftImage" placeholder="Or paste HTTPS image URL" style="margin-top:7px"></div><div class="field"><label>Available Stock</label><input id="fmGiftStock" type="number" min="0" value="0"></div><div class="field"><label>Minimum Purchase Amount (One Bill ₹)</label><input id="fmGiftMinPurchase" type="number" min="0" step="0.01" value="3000" placeholder="3000"></div><div class="field"><label>Complete Purchase Within (Days)</label><input id="fmGiftValidityDays" type="number" min="1" max="365" step="1" value="15" placeholder="15"></div><div class="field"><label>Gift Status</label><select id="fmGiftActive"><option value="true">Active</option><option value="false">Inactive</option></select></div></div><div class="field" style="margin-top:10px"><label>Description</label><textarea id="fmGiftDescription" placeholder="Describe the gift product"></textarea></div><div class="field" style="margin-top:10px"><label>Gift Terms & Conditions</label><textarea id="fmGiftTerms" placeholder="Eligibility, delivery/pickup, claim deadline, stock limits and other conditions"></textarea></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateGift()">Save Gift Product</button><p id="fmGiftMsg" class="hint"></p><div id="fmGiftList" class="hint">Loading gift products…</div></div><div class="card" style="margin-top:14px"><h2>Spin Wheel Settings (6 Slots)</h2><label style="display:flex;gap:9px;align-items:center;margin:12px 0"><input type="checkbox" id="fmSpinEnabled"> Enable Spin Wheel for members</label><div class="field" style="max-width:420px;margin:12px 0"><label>Eligible Membership Plan</label><select id="fmPlanSpinPlan" onchange="fmAdminLoadSelectedPlanSpin()"><option value="">Loading plans…</option></select><small class="hint">Select a plan, then configure its own wheel prizes. Each new Membership activation / top-up receives its own Spin chance when enabled. Daily Fresh settings are category-wise; each new subscription activation is tracked separately.</small></div><div class="field" style="max-width:320px;margin:12px 0"><label>Maximum Spins for this Plan</label><input id="fmSpinMaxPerUser" type="number" min="1" max="100" step="1" value="1"><small class="hint">Every attempt counts. If a member gets No Prize / Try Again, they can spin again until this limit. A real reward ends their spin attempts.</small></div>
+<p class="hint">Set each of the six wheel slots below. Only Gift Product and No Prize slots are allowed. Upload each gift image above and select the gift for each slot. Gift stock is reduced automatically when won.</p>
 <div id="fmSpinSlotEditor" style="display:grid;gap:12px;margin-top:12px"></div>
 <button class="btn btn-green" style="margin-top:14px" onclick="fmAdminSaveSpin()">Save Spin Settings</button><p id="fmSpinAdminMsg" class="hint"></p><div id="fmSpinPlays" class="hint"></div></div>
 <div class="card" id="fmPlanSpinOverviewCard" style="margin-top:14px">
@@ -1151,46 +1151,31 @@ function fmRenderSpinSlots(slots,hostId='fmSpinSlotEditor'){
  const host=document.getElementById(hostId);if(!host)return;
  const safe=Array.isArray(slots)&&slots.length===6?slots:FM_DEFAULT_SPIN_SLOTS;
  const gifts=Array.isArray(window.fmAdminGiftChoices)?window.fmAdminGiftChoices:[];
- const coupons=Array.isArray(window.fmAdminSpinCouponChoices)?window.fmAdminSpinCouponChoices:[];
- host.innerHTML=safe.map((s,i)=>{
-  const type=s.reward_type||'none';let valueControl='';
-  if(type==='product')valueControl=`<select data-spin-value="${i}"><option value="">Select gift product</option>${gifts.map(g=>`<option value="${fmAdmEsc(g.name)}" ${String(s.reward_value||'')===String(g.name)?'selected':''}>${fmAdmEsc(g.name)} · Stock ${Number(g.stock_quantity||0)}</option>`).join('')}</select>`;
-  else if(type==='coupon')valueControl=`<select data-spin-value="${i}"><option value="">Select Spin Coupon</option>${coupons.map(c=>`<option value="${fmAdmEsc(c.code)}" ${String(s.reward_value||'')===String(c.code)?'selected':''}>${fmAdmEsc(c.code)} · ${fmAdmEsc(c.title||'Coupon')}</option>`).join('')}</select>`;
-  else if(type==='wallet')valueControl=`<input data-spin-value="${i}" type="number" min="0.01" step="0.01" value="${fmAdmEsc(s.reward_value||'')}" placeholder="Amount in ₹">`;
-  else valueControl=`<input data-spin-value="${i}" type="text" value="${fmAdmEsc(s.reward_value||'')}" placeholder="No value required" disabled>`;
-  return `<div class="card fm-spin-slot" style="padding:12px;border:1px solid #dbe8de;box-shadow:none"><div style="font-weight:850;margin-bottom:9px">Wheel Slot ${i+1}</div><div class="formgrid"><div class="field"><label>Prize Label</label><input data-spin-label="${i}" maxlength="60" value="${fmAdmEsc(s.label||'')}" placeholder="Example: ₹100 Shopping Wallet"></div><div class="field"><label>Reward Type</label><select data-spin-type="${i}" onchange="fmSpinRewardTypeChanged(${i},'${hostId}')"><option value="none" ${type==='none'?'selected':''}>No Prize / Try Again</option><option value="product" ${type==='product'?'selected':''}>Gift Product</option><option value="wallet" ${type==='wallet'?'selected':''}>Wallet Amount (Shopping)</option><option value="coupon" ${type==='coupon'?'selected':''}>Coupon</option></select></div><div class="field"><label>${type==='product'?'Gift Product':type==='coupon'?'Spin Coupon':type==='wallet'?'Shopping Wallet Amount (₹)':'Reward Value'}</label><div data-spin-value-wrap="${i}">${valueControl}</div></div><div class="field"><label><input type="checkbox" data-spin-enabled="${i}" ${s.enabled!==false?'checked':''}> Enable this slot</label><small class="hint">Disabled slots cannot be won.</small></div></div></div>`;
- }).join('');
-}
-function fmSpinRewardTypeChanged(i,hostId='fmSpinSlotEditor'){
- const host=document.getElementById(hostId);if(!host)return;
- const type=host.querySelector(`[data-spin-type="${i}"]`)?.value||'none';
- const old=host.querySelector(`[data-spin-value="${i}"]`)?.value||'';
- const gifts=Array.isArray(window.fmAdminGiftChoices)?window.fmAdminGiftChoices:[];
- const coupons=Array.isArray(window.fmAdminSpinCouponChoices)?window.fmAdminSpinCouponChoices:[];
- const wrap=host.querySelector(`[data-spin-value-wrap="${i}"]`);if(!wrap)return;
- if(type==='product')wrap.innerHTML=`<select data-spin-value="${i}"><option value="">Select gift product</option>${gifts.map(g=>`<option value="${fmAdmEsc(g.name)}">${fmAdmEsc(g.name)} · Stock ${Number(g.stock_quantity||0)}</option>`).join('')}</select>`;
- else if(type==='coupon')wrap.innerHTML=`<select data-spin-value="${i}"><option value="">Select Spin Coupon</option>${coupons.map(c=>`<option value="${fmAdmEsc(c.code)}">${fmAdmEsc(c.code)} · ${fmAdmEsc(c.title||'Coupon')}</option>`).join('')}</select>`;
- else if(type==='wallet')wrap.innerHTML=`<input data-spin-value="${i}" type="number" min="0.01" step="0.01" value="${/^\\d+(\\.\\d{1,2})?$/.test(old)?old:''}" placeholder="Amount in ₹">`;
- else wrap.innerHTML=`<input data-spin-value="${i}" type="text" value="" disabled placeholder="No value required">`;
+ host.innerHTML=safe.map((s,i)=>`<div class="card fm-spin-slot" style="padding:12px;border:1px solid #dbe8de;box-shadow:none">
+ <div style="font-weight:850;margin-bottom:9px">Wheel Slot ${i+1}</div>
+ <div class="formgrid">
+  <div class="field"><label>Prize Label</label><input data-spin-label="${i}" maxlength="60" value="${fmAdmEsc(s.label||'')}" placeholder="Example: Silver Gift"></div>
+  <div class="field"><label>Reward Type</label><select data-spin-type="${i}">
+   <option value="none" ${s.reward_type==='none'?'selected':''}>No Prize / Try Again</option>
+   <option value="product" ${s.reward_type==='product'?'selected':''}>Gift Product</option>
+  </select></div>
+  <div class="field"><label>Gift Product</label><select data-spin-value="${i}"><option value="">Select gift product</option>${gifts.map(g=>`<option value="${fmAdmEsc(g.name)}" ${String(s.reward_value||'')===String(g.name)?'selected':''}>${fmAdmEsc(g.name)} · Stock ${Number(g.stock_quantity||0)}${g.is_active===false?' · INACTIVE':''}</option>`).join('')}</select></div>
+  <div class="field"><label><input type="checkbox" data-spin-enabled="${i}" ${s.enabled!==false?'checked':''}> Enable this slot</label><small class="hint">Disabled slots cannot be won.</small></div>
+ </div></div>`).join('');
 }
 function fmRefreshSpinGiftDropdowns(){
  const gifts=Array.isArray(window.fmAdminGiftChoices)?window.fmAdminGiftChoices:[];
- const coupons=Array.isArray(window.fmAdminSpinCouponChoices)?window.fmAdminSpinCouponChoices:[];
  ['fmSpinSlotEditor','fmFreeSpinSlotEditor'].forEach(hostId=>{
   const host=document.getElementById(hostId);if(!host)return;
   host.querySelectorAll('select[data-spin-value]').forEach(sel=>{
-   const i=sel.getAttribute('data-spin-value');const type=host.querySelector(`[data-spin-type="${i}"]`)?.value||'none';const old=sel.value;
-   if(type==='coupon'){
-    sel.innerHTML='<option value="">Select Spin Coupon</option>'+coupons.map(c=>'<option value="'+fmAdmEsc(c.code)+'">'+fmAdmEsc(c.code)+' · '+fmAdmEsc(c.title||'Coupon')+'</option>').join('');
-    if(old&&coupons.some(c=>String(c.code)===String(old)))sel.value=old;
-   }else if(type==='product'){
-    sel.innerHTML='<option value="">'+(gifts.length?'Select gift product':'No gift products loaded — check Gift Catalog / permissions')+'</option>'+gifts.map(g=>'<option value="'+fmAdmEsc(g.name)+'">'+fmAdmEsc(g.name)+' · Stock '+Number(g.stock_quantity||0)+(g.is_active===false?' · INACTIVE':'')+'</option>').join('');
-    if(old&&gifts.some(g=>String(g.name)===String(old)))sel.value=old;
-   }
+   const old=sel.value;
+   sel.innerHTML='<option value="">'+(gifts.length?'Select gift product':'No gift products loaded — check Gift Catalog / permissions')+'</option>'+
+    gifts.map(g=>'<option value="'+fmAdmEsc(g.name)+'">'+fmAdmEsc(g.name)+' · Stock '+Number(g.stock_quantity||0)+(g.is_active===false?' · INACTIVE':'')+'</option>').join('');
+   if(old && gifts.some(g=>String(g.name)===String(old)))sel.value=old;
   });
  });
  const status=document.getElementById('fmSpinAdminMsg');
- if(status&&(gifts.length||coupons.length))status.textContent='Spin rewards loaded: '+gifts.length+' gift products, '+coupons.length+' active coupons.';
+ if(status && gifts.length)status.textContent='Gift products available for wheel selection: '+gifts.length+'.';
 }
 function fmCollectSpinSlots(hostId='fmSpinSlotEditor'){
  const host=document.getElementById(hostId);if(!host)return [];
@@ -1207,18 +1192,22 @@ async function fmAdminCreateGift(){
   let image=(document.getElementById('fmGiftImage')?.value||'').trim();
   const imageFile=document.getElementById('fmGiftImageFile')?.files?.[0];
   const stock=Number(document.getElementById('fmGiftStock')?.value||0);
+  const minimumPurchase=Number(document.getElementById('fmGiftMinPurchase')?.value||0);
+  const validityDays=Number(document.getElementById('fmGiftValidityDays')?.value||15);
   const description=(document.getElementById('fmGiftDescription')?.value||'').trim();
   const terms=(document.getElementById('fmGiftTerms')?.value||'').trim();
   const active=document.getElementById('fmGiftActive')?.value==='true';
   if(!name)throw new Error('Enter a gift product name.');
   if(!Number.isInteger(stock)||stock<0)throw new Error('Enter a valid whole-number stock quantity.');
+  if(!Number.isFinite(minimumPurchase)||minimumPurchase<0)throw new Error('Enter a valid minimum purchase amount.');
+  if(!Number.isInteger(validityDays)||validityDays<1||validityDays>365)throw new Error('Validity must be between 1 and 365 days.');
   if(image&&!/^https:\/\//i.test(image))throw new Error('Gift image must be an HTTPS URL.');
   if(imageFile){if(!['image/jpeg','image/png','image/webp'].includes(imageFile.type))throw new Error('Gift image must be JPG, PNG or WEBP.');if(imageFile.size>3*1024*1024)throw new Error('Gift image must be 3 MB or smaller.');const ext=(imageFile.name.split('.').pop()||'jpg').toLowerCase();const path='gifts/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;const up=await fmSupabase.storage.from('fm-gift-images').upload(path,imageFile,{upsert:false,contentType:imageFile.type});if(up.error)throw up.error;image=fmSupabase.storage.from('fm-gift-images').getPublicUrl(path).data.publicUrl;}
-  const {error}=await fmSupabase.from('fm_gift_catalog').insert({name,image_url:image||null,stock_quantity:stock,description,terms_and_conditions:terms,is_active:active});
+  const {error}=await fmSupabase.from('fm_gift_catalog').insert({name,image_url:image||null,stock_quantity:stock,description,terms_and_conditions:terms,minimum_purchase_amount:minimumPurchase,purchase_validity_days:validityDays,is_active:active});
   if(error)throw error;
   msg.textContent='Gift product saved successfully. Use this exact name in a Spin Wheel Product reward.';
   ['fmGiftName','fmGiftImage','fmGiftDescription','fmGiftTerms'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fmGiftStock').value='0';if(document.getElementById('fmGiftImageFile'))document.getElementById('fmGiftImageFile').value='';
+  document.getElementById('fmGiftStock').value='0';document.getElementById('fmGiftMinPurchase').value='3000';document.getElementById('fmGiftValidityDays').value='15';if(document.getElementById('fmGiftImageFile'))document.getElementById('fmGiftImageFile').value='';
   await fmAdminLoadGifts();
  }catch(e){msg.textContent='Could not save gift product: '+(e.message||String(e));}
 }
@@ -1228,9 +1217,8 @@ async function fmAdminLoadGifts(){
  try{
   const {data,error}=await fmSupabase.from('fm_gift_catalog').select('*').order('created_at',{ascending:false});
   if(error)throw error;window.fmAdminGiftChoices=(data||[]); // Keep all catalog rows available in the selector; the server validates active status and stock when awarding.
-  const cp=await fmSupabase.from('fm_coupons').select('code,title').eq('is_spin_pool',true).eq('is_active',true).order('created_at',{ascending:false}).limit(500);if(cp.error)throw cp.error;window.fmAdminSpinCouponChoices=cp.data||[];
   fmRefreshSpinGiftDropdowns();
-  box.innerHTML=(data||[]).map(g=>`<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf3ee">${g.image_url?`<img src="${fmAdmEsc(g.image_url)}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:9px">`:''}<div style="flex:1;min-width:0"><b>${fmAdmEsc(g.name)}</b><div>${fmAdmEsc(g.description||'')}</div><small>Stock: ${Number(g.stock_quantity||0)} · ${g.is_active?'ACTIVE':'INACTIVE'}</small><details style="margin-top:5px"><summary>Terms & Conditions</summary>${fmAdmEsc(g.terms_and_conditions||'Not specified')}</details></div><button class="btn btn-outline btn-sm" onclick="fmAdminToggleGift('${g.id}',${!g.is_active})">${g.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No gift products created yet.</p>';
+  box.innerHTML=(data||[]).map(g=>`<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf3ee">${g.image_url?`<img src="${fmAdmEsc(g.image_url)}" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:9px">`:''}<div style="flex:1;min-width:0"><b>${fmAdmEsc(g.name)}</b><div>${fmAdmEsc(g.description||'')}</div><small>Stock: ${Number(g.stock_quantity||0)} · Minimum one bill: ₹${Number(g.minimum_purchase_amount||0).toLocaleString('en-IN')} · Validity: ${Number(g.purchase_validity_days||15)} days · ${g.is_active?'ACTIVE':'INACTIVE'}</small><details style="margin-top:5px"><summary>Terms & Conditions</summary>${fmAdmEsc(g.terms_and_conditions||'Not specified')}</details></div><button class="btn btn-outline btn-sm" onclick="fmAdminToggleGift('${g.id}',${!g.is_active})">${g.is_active?'Disable':'Enable'}</button></div>`).join('')||'<p>No gift products created yet.</p>';
  }catch(e){box.textContent='Could not load gifts: '+(e.message||String(e));const status=document.getElementById('fmSpinAdminMsg');if(status)status.textContent='Gift dropdown could not load: '+(e.message||String(e));}
 }
 async function fmAdminToggleGift(id,on){
@@ -1362,7 +1350,7 @@ async function fmAdminSaveFreeSpin(){
  try{
   if(!fmSupabase)throw new Error('Database client is not ready.');
   const slots=fmCollectSpinSlots('fmFreeSpinSlotEditor');
-  for(let i=0;i<slots.length;i++){const x=slots[i];if(!x.label)throw new Error('Enter a label for Free Member Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='product'&&!x.reward_value)throw new Error('Select a gift product for Free Member Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='coupon'&&!x.reward_value)throw new Error('Select a Spin Coupon for Free Member Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='wallet'&&!(Number(x.reward_value)>0))throw new Error('Enter a valid Shopping Wallet amount for Free Member Slot '+(i+1)+'.');if(x.enabled&&!['none','product','wallet','coupon'].includes(x.reward_type))throw new Error('Invalid reward type for Free Member Slot '+(i+1)+'.');}
+  for(let i=0;i<slots.length;i++){const x=slots[i];if(!x.label)throw new Error('Enter a label for Free Member Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='product'&&!x.reward_value)throw new Error('Select a gift product for Free Member Slot '+(i+1)+'.');}
   const payload={id:true,is_enabled:!!document.getElementById('fmFreeSpinEnabled')?.checked,max_spins_per_user:1,slots,updated_at:new Date().toISOString()};
   const {error}=await fmSupabase.from('fm_free_spin_settings').upsert(payload,{onConflict:'id'});if(error)throw error;
   fmFreeSpinSlots=slots;if(msg)msg.textContent='Free Member one-time Spin settings saved successfully.';await fmAdminLoadPlanSpinOverview();
@@ -1477,7 +1465,7 @@ async function fmAdminSaveSpin(){
   if(!fmSupabase)throw new Error('Database client is not ready. Refresh and sign in again.');
   const planId=document.getElementById('fmPlanSpinPlan')?.value;if(!planId)throw new Error('Select a membership plan or Free Member first.');
   const slots=fmCollectSpinSlots();
-  for(let i=0;i<slots.length;i++){const x=slots[i];if(!x.label)throw new Error('Enter a label for Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='product'&&!x.reward_value)throw new Error('Select a gift product for enabled Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='coupon'&&!x.reward_value)throw new Error('Select a Spin Coupon for enabled Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='wallet'&&!(Number(x.reward_value)>0))throw new Error('Enter a valid Shopping Wallet amount for enabled Wheel Slot '+(i+1)+'.');if(x.enabled&&!['none','product','wallet','coupon'].includes(x.reward_type))throw new Error('Invalid Spin Wheel reward type.');}
+  for(let i=0;i<slots.length;i++){const x=slots[i];if(!x.label)throw new Error('Enter a label for Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type==='product'&&!x.reward_value)throw new Error('Select a gift product for enabled Wheel Slot '+(i+1)+'.');if(x.enabled&&x.reward_type!=='none'&&x.reward_type!=='product')throw new Error('Only Gift Product and No Prize are allowed in the wheel.');}
   if(!slots.some(x=>x.enabled))throw new Error('Enable at least one wheel slot.');
   const maxSpins=Math.max(1,Math.min(100,Math.floor(Number(document.getElementById('fmSpinMaxPerUser')?.value||1))));
   const enabled=!!document.getElementById('fmSpinEnabled')?.checked;

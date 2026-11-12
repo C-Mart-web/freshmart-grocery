@@ -1914,6 +1914,21 @@ async function fmLoadMyOffers(){
     const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
     return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
+  // Login-time reminders: coupon expiry and Spin Gift purchase deadline.
+  const reminderParts=[];
+  const expiringCoupons=joined.filter(x=>x.status==='available'&&x.coupon?.ends_at&&new Date(x.coupon.ends_at)>new Date());
+  expiringCoupons.forEach(x=>{const end=new Date(x.coupon.ends_at);const hrs=(end-Date.now())/3600000;if(hrs<=72)reminderParts.push('⚠️ Your coupon '+(x.coupon.code||'')+' will expire on '+end.toLocaleString('en-IN')+'. Please use it before expiry.');});
+  const [{data:paidGiftPlays,error:pgErr},{data:freeGiftPlays,error:fgErr},{data:giftCatalog,error:gcErr}]=await Promise.all([
+   fmShopClient.from('fm_spin_plays').select('id,user_id,reward_type,reward_value,played_at').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(50),
+   fmShopClient.from('fm_free_spin_plays').select('id,user_id,reward_type,reward_value,played_at').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(50),
+   fmShopClient.from('fm_gift_catalog').select('name,minimum_purchase_amount,purchase_validity_days,image_url')
+  ]);
+  if(pgErr)throw pgErr;if(fgErr)throw fgErr;if(gcErr)throw gcErr;
+  const giftMap=new Map((giftCatalog||[]).map(g=>[String(g.name||'').trim().toLowerCase(),g]));
+  [...(paidGiftPlays||[]),...(freeGiftPlays||[])].forEach(p=>{const g=giftMap.get(String(p.reward_value||'').trim().toLowerCase());if(!g)return;const days=Math.max(1,Number(g.purchase_validity_days||15));const expiry=new Date(new Date(p.played_at).getTime()+days*86400000);const left=expiry-Date.now();if(left>0){reminderParts.push('🎁 Your gift '+g.name+' will expire on '+expiry.toLocaleString('en-IN')+'. Complete one paid and delivered purchase of ₹'+Number(g.minimum_purchase_amount||0).toLocaleString('en-IN')+' in a single bill before expiry to claim it.');}});
+  let reminder=document.getElementById('fmLoginExpiryReminder');
+  if(!reminder){reminder=document.createElement('div');reminder.id='fmLoginExpiryReminder';reminder.style.cssText='padding:12px;margin:10px 0;border:1px solid #e5c56b;border-radius:12px;background:#fff9e8;color:#6c4d0a;white-space:pre-line';offerBox.parentElement.insertBefore(reminder,offerBox.nextSibling);}
+  reminder.textContent=reminderParts.join('\n');reminder.style.display=reminderParts.length?'block':'none';
   const spinBtn=document.getElementById('fmSpinButton');
   const {data:plays,error:pe}=spinTable?(spinScope==='plan'?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at,membership_activation_id').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',onlyActivation?.id||-1).order('played_at',{ascending:true}):await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true})):{data:[],error:null};if(pe)throw pe;
   window.fmWelcomeSpinConfig=cfg.data||null;window.fmMemberSpinPlays=plays||[];
@@ -2010,7 +2025,9 @@ async function fmPlayWelcomeSpin(){
   if(String(data.reward_type||'')==='coupon'){
    const memberId=window.fmCurrentSpinMemberId||(await getMemberSession())?.user?.id;
    if(memberId){
-    const {data:coupon,error:couponErr}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,ends_at,is_active').eq('code',String(data.reward_value||'')).maybeSingle();if(couponErr)throw couponErr;if(coupon){const {data:assigned,error:assignErr}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at').eq('user_id',memberId).eq('coupon_id',coupon.id).order('assigned_at',{ascending:false}).limit(1).maybeSingle();if(assignErr)throw assignErr;wonCoupon=assigned?{...coupon,status:assigned.status}:null;}
+    const {data:assigned,error:assignErr}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at').eq('user_id',memberId).order('assigned_at',{ascending:false}).limit(1).maybeSingle();
+    if(assignErr)throw assignErr;
+    if(assigned?.coupon_id){const {data:coupon,error:couponErr}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,ends_at,is_active').eq('id',assigned.coupon_id).maybeSingle();if(couponErr)throw couponErr;wonCoupon=coupon?{...coupon,status:assigned.status}:null;}
    }
    if(!wonCoupon)throw new Error('Coupon prize was recorded, but its assigned coupon could not be loaded. Please refresh My Coupons or contact support.');
   }
