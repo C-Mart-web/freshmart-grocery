@@ -89,21 +89,18 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 /* Compact mobile grocery cards: use two columns and reduce vertical whitespace. */
 @media(max-width:640px){#freshMartProductGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.fm-product-card{padding:7px!important;border-radius:11px!important}.fm-product-gallery-main{height:105px!important}.fm-product-thumbs img{width:27px!important;height:27px!important}.fm-variant-list{gap:4px!important;margin-top:6px!important}.fm-variant-pill{padding:4px 6px!important;font-size:10px!important}.fm-product-card .hint{font-size:10px!important}}
 
-/* Friendly animated bottom navigation + contextual usage tip */
-.fm-nav-coach{display:none}
+/* Friendly animated bottom navigation: no floating usage banner */
 @media(max-width:680px){
- .fm-nav-coach{position:fixed;left:10px;right:10px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:39;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f1fff5;border:1px solid #ccebd6;border-radius:14px;box-shadow:0 6px 20px rgba(16,90,45,.13);animation:fmCoachIn .35s ease both}
- .fm-nav-coach-icon{font-size:22px;flex:0 0 auto}
- .fm-nav-coach b{display:block;color:#126b3b;font-size:12px;margin-bottom:2px}
- .fm-nav-coach small{display:block;color:#60756a;font-size:10px;line-height:1.25}
- .fm-nav-coach button{margin-left:auto;border:0;background:transparent;color:#52715f;font-size:20px;padding:0 3px}
  .mobile-nav button{position:relative;transition:color .2s ease,transform .2s ease}
- .mobile-nav button span{transition:transform .22s ease;transform-origin:center}
- .mobile-nav button.active span{transform:translateY(-3px) scale(1.16);filter:drop-shadow(0 3px 3px rgba(22,132,71,.18))}
+ .mobile-nav button span{display:inline-block;transition:transform .22s ease;transform-origin:center}
+ .mobile-nav button.active span{transform:translateY(-2px) scale(1.12);filter:drop-shadow(0 3px 3px rgba(22,132,71,.18))}
+ .mobile-nav button[data-page="groceries"].active span{animation:fmShopBag 1.8s ease-in-out infinite}
+ .mobile-nav button[data-page="orders"].active span{animation:fmOrderBox 1.8s ease-in-out infinite}
  .mobile-nav button.active:after{content:"";position:absolute;top:0;width:19px;height:3px;border-radius:0 0 5px 5px;background:#168447;animation:fmNavLine .25s ease both}
  .mobile-nav button:active{transform:scale(.92)}
- @keyframes fmCoachIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
  @keyframes fmNavLine{from{transform:scaleX(.2)}to{transform:scaleX(1)}}
+ @keyframes fmShopBag{0%,100%{transform:translateY(-2px) rotate(0) scale(1.12)}25%{transform:translateY(-4px) rotate(-7deg) scale(1.16)}50%{transform:translateY(-2px) rotate(5deg) scale(1.12)}75%{transform:translateY(-3px) rotate(-3deg) scale(1.14)}}
+ @keyframes fmOrderBox{0%,100%{transform:translateY(-2px) scale(1.12)}35%{transform:translateY(-5px) scale(1.18)}65%{transform:translateY(-2px) scale(1.12)}}
 }
 </style>
 <style>
@@ -418,7 +415,6 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button type="button" class="fm-sticky-go" onclick="fmOpenCheckout()"><span style="position:relative;z-index:1">Checkout</span><span aria-hidden="true" style="position:relative;z-index:1">➜</span></button>
   <button type="button" class="fm-sticky-dismiss" onclick="fmDismissStickyCart()" aria-label="Hide cart bar">×</button>
 </div>
-<div id="fmNavCoach" class="fm-nav-coach" aria-live="polite"><span id="fmNavCoachIcon" class="fm-nav-coach-icon">🛍️</span><span><b id="fmNavCoachTitle">Shop</b><small id="fmNavCoachText">Browse groceries, search products and add items to your cart.</small></span><button type="button" aria-label="Hide navigation tip" onclick="fmHideNavCoach()">×</button></div>
 <nav class="mobile-nav" aria-label="Main navigation">
 <button class="active" data-page="dashboard" title="Account overview" aria-label="Home"><span>⌂</span>Home</button>
 <button data-page="groceries" title="Browse and buy groceries" aria-label="Shop"><span>🛍️</span>Shop</button>
@@ -1834,7 +1830,7 @@ function showPage(id,fromHistory=false){
  });
 })();
 const fmNavTips={dashboard:['Home','See your account overview, plan status and wallet summary.','⌂'],groceries:['Shop','Browse groceries, search products and add items to your cart.','🛍️'],cart:['Cart','Review quantities, apply coupons and proceed to checkout.','🛒'],orders:['Orders','Track your orders, payment status and delivery updates.','📦'],wallets:['Wallet','Check Shopping Wallet, Income Wallet and balances.','💳'],team:['My Team','View your referrals, team members and binary details.','👥'],withdrawals:['Withdraw','Submit a withdrawal and check previous requests.','↗']};
-function fmUpdateNavCoach(page){const d=fmNavTips[page];if(!d)return;const box=document.getElementById('fmNavCoach');if(!box)return;document.getElementById('fmNavCoachIcon')?.replaceChildren(document.createTextNode(d[2]));const title=document.getElementById('fmNavCoachTitle'),txt=document.getElementById('fmNavCoachText');if(title)title.textContent=d[0];if(txt)txt.textContent=d[1];box.style.display='flex';box.style.animation='none';void box.offsetWidth;box.style.animation='fmCoachIn .35s ease both';}
+function fmUpdateNavCoach(page){ /* Floating navigation coach intentionally removed. */ }
 function fmHideNavCoach(){const box=document.getElementById('fmNavCoach');if(box)box.style.display='none';}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='groceries')loadFreshMartProducts();if(b.dataset.page==='cart')fmRenderCart();if(b.dataset.page==='orders')loadMyGroceryOrders();if(b.dataset.page==='withdrawals'){fmLoadPayoutDetails();fmLoadWithdrawalInfo();fmLoadWithdrawalHistory();}}));
 loadFreshMartProducts();
