@@ -2563,6 +2563,32 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 .fm-global-notice-box p{font-size:14px;line-height:1.6;color:#5e7066;margin:0 0 18px}
 .fm-global-notice-box button{min-width:120px;padding:11px 18px;border:0;border-radius:10px;background:#168447;color:#fff;font-weight:800}
 .fm-global-notice-icon{font-size:42px;line-height:1.2}
+
+/* Compact mobile top header: brand, cart and sign-out */
+@media (max-width: 680px) {
+  .topbar, .app-header, header.main-header { gap: 7px !important; }
+  .topbar { padding: 6px 10px !important; min-height: 64px !important; }
+  .topbar .brand, .app-header .brand { gap: 6px !important; }
+  .topbar .brand img, .app-header .brand img,
+  .topbar .logo, .app-header .logo { width: 34px !important; height: 34px !important; }
+  .topbar .brand-name, .app-header .brand-name,
+  .topbar .logo-text, .app-header .logo-text { font-size: 15px !important; line-height: 1.05 !important; }
+  .topbar button, .app-header button { min-height: 40px !important; padding: 6px 9px !important; }
+  .topbar .cart, .app-header .cart,
+  .topbar [aria-label*="cart" i], .app-header [aria-label*="cart" i] {
+    min-width: 54px !important; padding: 4px 7px !important;
+  }
+  .topbar .cart img, .app-header .cart img,
+  .topbar .cart-icon, .app-header .cart-icon { width: 30px !important; height: 30px !important; }
+  .topbar .cart-count, .app-header .cart-count { min-width: 17px !important; height: 17px !important; font-size: 10px !important; }
+  .topbar .signout, .app-header .signout,
+  .topbar button[onclick*="signOut" i], .app-header button[onclick*="signOut" i],
+  .topbar button[onclick*="logout" i], .app-header button[onclick*="logout" i] {
+    min-height: 40px !important; min-width: 68px !important;
+    padding: 5px 8px !important; font-size: 12px !important; line-height: 1.05 !important;
+  }
+}
+
 </style>
 <div id="fmPaymentProcessingNotice" role="dialog" aria-modal="true" aria-labelledby="fmPaymentProcessingTitle">
  <div class="fm-global-notice-box"><div class="fm-global-notice-icon">⏳</div><h2 id="fmPaymentProcessingTitle">Payment Processing</h2><p>Your UTR and payment screenshot were submitted successfully. Please allow <b>5–10 minutes</b> for Admin verification. You can continue browsing Fresh-Mart. Your membership activates only after the payment is approved.</p><button type="button" onclick="fmClosePaymentProcessingNotice()">Close</button></div>
