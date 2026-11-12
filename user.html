@@ -151,6 +151,37 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  .fm-sticky-cart .fm-sticky-dismiss{width:28px!important;height:28px!important;font-size:18px!important}
 }
 
+
+/* Compact floating cart bar: 30% narrower than the previous full-width bar */
+@media (max-width: 680px) {
+  #fmStickyCartBar.fm-sticky-cart {
+    left: 50% !important;
+    right: auto !important;
+    width: 70% !important;
+    max-width: 430px !important;
+    min-width: 0 !important;
+    transform: translateX(-50%);
+    bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+    padding: 7px 9px !important;
+    border-radius: 13px !important;
+    gap: 7px !important;
+  }
+  #fmStickyCartBar .fm-sticky-label { font-size: 9px !important; }
+  #fmStickyCartBar .fm-sticky-total { font-size: 17px !important; }
+  #fmStickyCartBar .fm-sticky-count { font-size: 10px !important; }
+  #fmStickyCartBar .fm-sticky-go {
+    font-size: 11px !important;
+    padding: 7px 9px !important;
+    border-radius: 9px !important;
+  }
+  #fmStickyCartBar .fm-sticky-dismiss {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    font-size: 17px !important;
+  }
+}
+
 </style>
 <style>
 /* Fresh-Mart first-login spin wheel */
