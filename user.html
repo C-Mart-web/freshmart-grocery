@@ -36,7 +36,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   .sidebar .navlabel{padding-top:18px}
   .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;min-height:58px;background:#fff;border-top:1px solid var(--line);z-index:40;justify-content:space-around;align-items:center;overflow:visible;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(20,70,40,.06)}
   .mobile-nav{min-height:66px;gap:0;padding:5px 2px calc(5px + env(safe-area-inset-bottom));}
-  .mobile-nav button{border:0;background:transparent;color:#718078;font-size:8px;line-height:1.05;display:flex;flex:1 1 12.5%;min-width:0;max-width:12.5%;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+  .mobile-nav button{border:0;background:transparent;color:#718078;font-size:8px;line-height:1.05;display:flex;flex:1 1 14.285%;min-width:0;max-width:14.285%;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:clip}
   .mobile-nav button span{font-size:16px;line-height:1}
   .mobile-nav button.active{color:var(--green);font-weight:850}
   main{padding-bottom:calc(82px + env(safe-area-inset-bottom))}
@@ -96,11 +96,17 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  .mobile-nav button.active span{transform:translateY(-2px) scale(1.12);filter:drop-shadow(0 3px 3px rgba(22,132,71,.18))}
  .mobile-nav button[data-page="groceries"].active span{animation:fmShopBag 1.8s ease-in-out infinite}
  .mobile-nav button[data-page="orders"].active span{animation:fmOrderBox 1.8s ease-in-out infinite}
+ .mobile-nav button[data-page="wallets"].active span{animation:fmWalletCredit 1.55s ease-in-out infinite}
+ .mobile-nav button[data-page="team"].active span{animation:fmTeamSplit 1.65s ease-in-out infinite}
+ .mobile-nav button[data-page="withdrawals"].active span{animation:fmBankWithdraw 1.65s ease-in-out infinite}
  .mobile-nav button.active:after{content:"";position:absolute;top:0;width:19px;height:3px;border-radius:0 0 5px 5px;background:#168447;animation:fmNavLine .25s ease both}
  .mobile-nav button:active{transform:scale(.92)}
  @keyframes fmNavLine{from{transform:scaleX(.2)}to{transform:scaleX(1)}}
  @keyframes fmShopBag{0%,100%{transform:translateY(-2px) rotate(0) scale(1.12)}25%{transform:translateY(-4px) rotate(-7deg) scale(1.16)}50%{transform:translateY(-2px) rotate(5deg) scale(1.12)}75%{transform:translateY(-3px) rotate(-3deg) scale(1.14)}}
  @keyframes fmOrderBox{0%,100%{transform:translateY(-2px) scale(1.12)}35%{transform:translateY(-5px) scale(1.18)}65%{transform:translateY(-2px) scale(1.12)}}
+ @keyframes fmWalletCredit{0%,100%{transform:translateY(-2px) scale(1.12)}35%{transform:translateY(-6px) scale(1.2)}55%{transform:translateY(-1px) scale(1.12)}70%{transform:translateY(-3px) scale(1.15)}}
+ @keyframes fmTeamSplit{0%,100%{transform:translateY(-2px) scale(1.12)}30%{transform:translate(-3px,-3px) scale(1.16)}65%{transform:translate(3px,-3px) scale(1.16)}}
+ @keyframes fmBankWithdraw{0%,100%{transform:translateY(-2px) scale(1.12)}35%{transform:translateY(2px) scale(1.1)}65%{transform:translateY(-5px) scale(1.18)}}
 }
 </style>
 <style>
@@ -418,11 +424,10 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <nav class="mobile-nav" aria-label="Main navigation">
 <button class="active" data-page="dashboard" title="Account overview" aria-label="Home"><span>⌂</span>Home</button>
 <button data-page="groceries" title="Browse and buy groceries" aria-label="Shop"><span>🛍️</span>Shop</button>
-<button data-page="cart" title="Review cart and checkout" aria-label="Cart"><span>🛒</span>Cart</button>
 <button data-page="orders" title="Track your orders" aria-label="Orders"><span>📦</span>Orders</button>
-<button data-page="wallets" title="View your wallets" aria-label="Wallet"><span>💳</span>Wallet</button>
-<button data-page="team" title="View your team" aria-label="My Team"><span>👥</span>Team</button>
-<button data-page="withdrawals" title="Withdraw and view requests" aria-label="Withdrawals"><span>↗</span>Withdraw</button>
+<button data-page="wallets" title="View your wallets" aria-label="Wallet"><span>💰</span>Wallet</button>
+<button data-page="team" title="View left and right teams" aria-label="My Team"><span>↔️</span>Team</button>
+<button data-page="withdrawals" title="Transfer money to your bank" aria-label="Withdrawals"><span>🏦</span>Withdraw</button>
 <button type="button" onclick="fmToggleMobileMenu(true)" aria-label="More menu"><span>☰</span>More</button>
 </nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
