@@ -97,7 +97,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="welcome"><div><h1>Members</h1><p>Search member accounts and review activation status.</p></div></div>
 <div class="searchrow"><input id="memberSearchInput" placeholder="Search name, username, mobile or user ID" onkeydown="if(event.key==='Enter')loadMembers()"><select id="memberStatusFilter"><option value="all">All account statuses</option><option value="inactive">Inactive</option><option value="active">Active</option><option value="blocked">Blocked</option></select><button class="btn btn-green" onclick="loadMembers()">Search</button></div>
 <p id="memberLoadStatus" class="hint" aria-live="polite">Members will load from Supabase after admin sign-in.</p>
-<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Referred By</th><th>Account Type</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="8" class="empty">Loading member records…</td></tr></tbody></table></div></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Referred By</th><th>Account Type</th><th>Plans</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="9" class="empty">Loading member records…</td></tr></tbody></table></div></div>
 <div class="card" style="margin-top:16px">
  <div class="section-head"><h2>Member Bank Details</h2><span class="badge approved">SUPER ADMIN ONLY</span></div>
  <p class="hint">Search by Fresh-Mart ID, username, mobile number or member name. Only Super Admin can update saved bank details.</p>
@@ -451,7 +451,7 @@ async function loadMembers(){
  const tbody=document.getElementById('membersTable');
  const status=document.getElementById('memberLoadStatus');
  if(!tbody||!status)return;
- tbody.innerHTML='<tr><td colspan="8" class="empty">Loading members…</td></tr>';
+ tbody.innerHTML='<tr><td colspan="9" class="empty">Loading members…</td></tr>';
  status.textContent='Connecting to member records…';status.style.color='#718078';
  try{
   const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
@@ -459,8 +459,9 @@ async function loadMembers(){
   if(!session)throw new Error('Please sign in as Super Admin.');
   const q=(document.getElementById('memberSearchInput')?.value||'').trim();
   const filter=document.getElementById('memberStatusFilter')?.value||'all';
-  let query=fmSupabase.from('fm_profiles').select('id,user_code,display_name,username,mobile_number,account_type,account_status').order('updated_at',{ascending:false}).limit(200);
-  if(filter!=='all')query=query.eq('account_status',filter);
+  let query=fmSupabase.from('fm_profiles')
+   .select('id,user_code,display_name,username,mobile_number,account_type,account_status')
+   .order('updated_at',{ascending:false}).limit(200);
   if(q){
    const safe=q.replace(/[(),]/g,' ').trim();
    query=query.or(`display_name.ilike.%${safe}%,username.ilike.%${safe}%,mobile_number.ilike.%${safe}%,user_code.ilike.%${safe}%`);
@@ -468,34 +469,47 @@ async function loadMembers(){
   const {data,error}=await query;
   if(error)throw error;
   const rows=data||[];
-  // Referral relationship is stored separately in fm_network_members.
-  // Fetch sponsors in batches for the currently displayed member rows.
   const memberIds=rows.map(m=>m.id).filter(Boolean);
-  let networkRows=[], referralWarning='';
+  let networkRows=[],activationRows=[],dailyRows=[],membershipPlanMap=new Map(),warnings=[];
   if(memberIds.length){
-   const {data:netData,error:netError}=await fmSupabase
-    .from('fm_network_members')
-    .select('user_id,sponsor_id')
-    .in('user_id',memberIds);
-   if(netError){
-    referralWarning=' Referral details could not be loaded: '+(netError.message||'check fm_network_members permissions/schema.');
-   }else{
-    networkRows=netData||[];
-   }
+   const [netResult,activationResult,dailyResult]=await Promise.all([
+    fmSupabase.from('fm_network_members').select('user_id,sponsor_id').in('user_id',memberIds),
+    fmSupabase.from('fm_plan_roi_activations')
+     .select('id,user_id,plan_id,plan_amount,status,start_date,end_date,created_at')
+     .in('user_id',memberIds).order('created_at',{ascending:false}).limit(2000),
+    fmSupabase.from('fm_daily_fresh_subscriptions')
+     .select('*').in('user_id',memberIds).order('created_at',{ascending:false}).limit(2000)
+   ]);
+   if(netResult.error)warnings.push('Referral details: '+netResult.error.message);
+   else networkRows=netResult.data||[];
+   if(activationResult.error)warnings.push('Membership details: '+activationResult.error.message);
+   else activationRows=activationResult.data||[];
+   if(dailyResult.error)warnings.push('Daily Fresh details: '+dailyResult.error.message);
+   else dailyRows=dailyResult.data||[];
+  }
+  const planIds=[...new Set(activationRows.map(a=>a.plan_id).filter(Boolean).map(String))];
+  if(planIds.length){
+   const {data:plans,error:plansError}=await fmSupabase.from('fm_membership_plans')
+    .select('id,plan_name,plan_amount').in('id',planIds);
+   if(plansError)warnings.push('Membership plan names: '+plansError.message);
+   else membershipPlanMap=new Map((plans||[]).map(p=>[String(p.id),p]));
   }
   const sponsorIds=[...new Set(networkRows.map(n=>n.sponsor_id).filter(Boolean).map(String))];
   let sponsorMap=new Map();
   if(sponsorIds.length){
-   const {data:sponsorProfiles,error:sponsorError}=await fmSupabase
-    .from('fm_profiles')
-    .select('id,user_code,display_name,username')
-    .in('id',sponsorIds);
-   if(sponsorError){
-    referralWarning=' Sponsor names could not be loaded: '+(sponsorError.message||'check profile permissions.');
-   }else{
-    sponsorMap=new Map((sponsorProfiles||[]).map(p=>[String(p.id),p]));
-   }
+   const {data:sponsorProfiles,error:sponsorError}=await fmSupabase.from('fm_profiles')
+    .select('id,user_code,display_name,username').in('id',sponsorIds);
+   if(sponsorError)warnings.push('Sponsor names: '+sponsorError.message);
+   else sponsorMap=new Map((sponsorProfiles||[]).map(p=>[String(p.id),p]));
   }
+  const now=Date.now();
+  const indiaDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const isMembershipActive=a=>String(a.status||'').toLowerCase()==='active'
+   &&(!a.start_date||String(a.start_date).slice(0,10)<=indiaDate)
+   &&(!a.end_date||String(a.end_date).slice(0,10)>=indiaDate);
+  const isDailyFreshActive=d=>String(d.status||'').toLowerCase()==='active'
+   &&(!d.starts_at||new Date(d.starts_at).getTime()<=now)
+   &&(!d.ends_at||new Date(d.ends_at).getTime()>now);
   const networkMap=new Map(networkRows.map(n=>[String(n.user_id),n]));
   const referralCell=m=>{
    const network=networkMap.get(String(m.id));
@@ -505,11 +519,54 @@ async function loadMembers(){
    const label=sponsor.display_name||sponsor.username||sponsor.user_code||'Member';
    return `<span>${escapeHtml(label)}</span><br><span class="small">${escapeHtml(sponsor.user_code||sponsor.username||'')}</span>`;
   };
-  tbody.innerHTML=rows.map(m=>`<tr><td>${escapeHtml(m.user_code||m.id||'—')}</td><td>${escapeHtml(m.display_name||'—')}</td><td>${escapeHtml(m.username||'—')}</td><td>${escapeHtml(m.mobile_number||'—')}</td><td>${referralCell(m)}</td><td>${escapeHtml(m.account_type||'Not set')}</td><td><span class="badge ${String(m.account_status).toLowerCase()==='active'?'approved':String(m.account_status).toLowerCase()==='blocked'?'rejected':'pending'}">${escapeHtml(m.account_status||'unknown')}</span></td><td><button class="btn btn-outline btn-sm" onclick="resetMemberPassword('${m.id}')">Reset Password</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">No member records match this search.</td></tr>';
-  status.textContent=`Showing ${rows.length} member record(s).`+referralWarning;
-  status.style.color=referralWarning?'#956500':'#168447';
+  const memberRows=rows.map(m=>{
+   const memberships=activationRows.filter(a=>String(a.user_id)===String(m.id));
+   const freshSubs=dailyRows.filter(d=>String(d.user_id)===String(m.id));
+   const activeMemberships=memberships.filter(isMembershipActive);
+   const activeFresh=freshSubs.filter(isDailyFreshActive);
+   const labels=[];
+   activeMemberships.forEach(a=>{
+    const p=membershipPlanMap.get(String(a.plan_id));
+    const label=p?.plan_name||('Membership ₹'+Number(a.plan_amount||0).toLocaleString('en-IN'));
+    if(!labels.includes(label+' · Active'))labels.push(label+' · Active');
+   });
+   activeFresh.forEach(d=>{
+    const label=(d.category_name||d.category_code||'Daily Fresh')
+      +(d.duration_months?' · '+Number(d.duration_months)+' Month(s)':'');
+    if(!labels.includes(label+' · Active'))labels.push(label+' · Active');
+   });
+   if(!labels.length){
+    if(memberships[0]){
+     const a=memberships[0],p=membershipPlanMap.get(String(a.plan_id));
+     labels.push((p?.plan_name||('Membership ₹'+Number(a.plan_amount||0).toLocaleString('en-IN')))
+       +' · '+(a.status||'Inactive'));
+    }
+    if(freshSubs[0]){
+     const d=freshSubs[0];
+     labels.push((d.category_name||d.category_code||'Daily Fresh')
+       +(d.duration_months?' · '+Number(d.duration_months)+' Month(s)':'')
+       +' · '+(d.status||'Inactive'));
+    }
+   }
+   const blocked=String(m.account_status||'').toLowerCase()==='blocked';
+   const effectiveStatus=blocked?'blocked':(activeMemberships.length||activeFresh.length?'active':'inactive');
+   return {...m,_effectiveStatus:effectiveStatus,_planLabels:labels};
+  }).filter(m=>filter==='all'||m._effectiveStatus===filter);
+  tbody.innerHTML=memberRows.map(m=>`<tr>
+   <td>${escapeHtml(m.user_code||m.id||'—')}</td>
+   <td>${escapeHtml(m.display_name||'—')}</td>
+   <td>${escapeHtml(m.username||'—')}</td>
+   <td>${escapeHtml(m.mobile_number||'—')}</td>
+   <td>${referralCell(m)}</td>
+   <td>${escapeHtml(m.account_type||'Not set')}</td>
+   <td style="min-width:170px">${m._planLabels.length?m._planLabels.map(x=>`<span class="small" style="display:inline-block;margin:2px 0;padding:4px 7px;border-radius:7px;background:#eaf6ee;color:#176b3b">${escapeHtml(x)}</span>`).join('<br>'):'<span class="small">No active plan</span>'}</td>
+   <td><span class="badge ${m._effectiveStatus==='active'?'approved':m._effectiveStatus==='blocked'?'rejected':'pending'}">${escapeHtml(m._effectiveStatus)}</span></td>
+   <td><button class="btn btn-outline btn-sm" onclick="resetMemberPassword('${m.id}')">Reset Password</button></td>
+  </tr>`).join('')||'<tr><td colspan="9" class="empty">No member records match this search.</td></tr>';
+  status.textContent=`Showing ${memberRows.length} member record(s). Status is based on Membership OR Daily Fresh.`+(warnings.length?' '+warnings.join(' · '):'');
+  status.style.color=warnings.length?'#956500':'#168447';
  }catch(e){
-  tbody.innerHTML=`<tr><td colspan="8" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
+  tbody.innerHTML=`<tr><td colspan="9" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
   status.textContent='Member list could not be loaded. Check the message in the table and Supabase SELECT permissions.';
   status.style.color='#b72e2e';
   console.error('Fresh-Mart members load:',e);
