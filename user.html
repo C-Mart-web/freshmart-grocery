@@ -360,7 +360,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Change Password 🔐</h2><p class="hint">Choose a new password with at least 8 characters. Do not share it with anyone.</p><div class="formgrid"><div class="field"><label for="memberNewPassword">New password</label><input id="memberNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Enter new password"></div><div class="field"><label for="memberConfirmPassword">Confirm new password</label><input id="memberConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Re-enter new password"></div></div><p id="memberPasswordMsg" class="hint" aria-live="polite"></p><button class="btn btn-green" type="button" id="memberChangePasswordBtn" onclick="changeOwnPassword()">Update Password</button></div>
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
-<div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping<br>Design preview — not yet connected to live account data.</div>
+<div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping.</div>
 <section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">Admin నిర్ణయించిన Spin Limit వరకు ప్రయత్నించవచ్చు. No Prize / Try Again వస్తే మిగిలిన attempts ఉంటే మళ్లీ Spin చేయవచ్చు. Wallet prize నేరుగా Shopping Walletలో చేరుతుంది.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
 </div>
 
@@ -1859,7 +1859,41 @@ async function demoSubmit(e){
   msg.textContent='Membership request #'+reqId+' created. UTR and screenshot submitted; admin verification is pending.';document.getElementById('paymentForm').reset();await fmLoadMembershipPayments();
  }catch(err){msg.textContent='Submission failed: '+(err.message||err);}finally{btn.disabled=false;}
 }
-async function fmLoadMembershipPayments(){const body=document.getElementById('paymentRows');if(!body)return;try{const j=await fmPaymentCall('membership_payment_list');body.innerHTML=(j.requests||[]).map(x=>'<tr><td>#'+shopEsc(x.id||'—')+'</td><td>'+shopEsc(x.plan_name)+'</td><td>'+shopMoney(x.amount)+'</td><td>'+shopEsc(x.transaction_reference||'—')+'</td><td><span class="badge '+(x.status==='approved'?'approved':x.status==='rejected'?'rejected':x.status==='cancelled'?'rejected':'pending')+'">'+shopEsc(String(x.status).toUpperCase())+'</span>'+(x.admin_note?'<div class="hint">'+shopEsc(x.admin_note)+'</div>':'')+'</td></tr>').join('')||'<tr><td colspan="5">No payment requests yet.</td></tr>';}catch(e){body.innerHTML='<tr><td colspan="4">'+shopEsc(e.message)+'</td></tr>';}}
+async function fmLoadMembershipPayments(){
+ const body=document.getElementById('paymentRows');if(!body)return;
+ body.innerHTML='<tr><td colspan="5">Loading membership payment history…</td></tr>';
+ let commonRows=null,commonError=null,requestRows=null,requestError=null;
+ // First read the same UPI transaction ledger that receives the submitted UTR + screenshot.
+ try{
+  const {data:{session}}=await fmShopClient.auth.getSession();
+  if(session?.user?.id){
+   const {data,error}=await fmShopClient.from('fm_common_payment_transactions')
+    .select('txn_ref,payment_type,amount,status,utr_number,created_at')
+    .eq('user_id',session.user.id).eq('payment_type','membership')
+    .order('created_at',{ascending:false}).limit(30);
+   if(error)throw error;commonRows=Array.isArray(data)?data:[];
+  }else commonRows=[];
+ }catch(e){commonError=e;}
+ if(commonRows?.length){
+  const labelStatus=v=>{const st=String(v||'').toLowerCase();if(st==='submitted')return 'PAYMENT PROCESSING · PENDING APPROVAL';if(['paid','approved'].includes(st))return 'APPROVED';if(st==='rejected')return 'REJECTED';if(st==='cancelled')return 'CANCELLED';if(st==='pending')return 'PENDING';return st.toUpperCase()||'PENDING';};
+  const planName=amount=>{const btn=[...document.querySelectorAll('#fmMembershipPlanChoices .planchoice')].find(x=>Number(x.dataset.plan)===Number(amount));return btn?.querySelector('h3')?.textContent?.trim()||'Membership';};
+  body.innerHTML=commonRows.map(x=>{
+   const st=String(x.status||'').toLowerCase();
+   if(['rejected','cancelled'].includes(st)){try{localStorage.removeItem('fm_membership_pending_request_'+String(Number(x.amount)));}catch(_){}}
+   const cls=['approved','paid'].includes(st)?'approved':['rejected','cancelled'].includes(st)?'rejected':'pending';
+   const date=x.created_at?new Date(x.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}):'—';
+   return '<tr><td>'+shopEsc(x.txn_ref||'—')+'<div class="hint">'+shopEsc(date)+'</div></td><td>'+shopEsc(planName(x.amount))+'</td><td>'+shopMoney(x.amount)+'</td><td>'+shopEsc(x.utr_number||'Not submitted')+'</td><td><span class="badge '+cls+'">'+shopEsc(labelStatus(st))+'</span></td></tr>';
+  }).join('');
+  return;
+ }
+ // Retain the legacy request list as a fallback for requests not yet represented in the UPI ledger.
+ try{const j=await fmPaymentCall('membership_payment_list');requestRows=j.requests||[];}
+ catch(e){requestError=e;}
+ if(requestRows?.length){
+  body.innerHTML=requestRows.map(x=>'<tr><td>#'+shopEsc(x.id||'—')+'</td><td>'+shopEsc(x.plan_name||'Membership')+'</td><td>'+shopMoney(x.amount)+'</td><td>'+shopEsc(x.transaction_reference||'—')+'</td><td><span class="badge '+(x.status==='approved'?'approved':x.status==='rejected'?'rejected':x.status==='cancelled'?'rejected':'pending')+'">'+shopEsc(String(x.status).toUpperCase())+'</span>'+(x.admin_note?'<div class="hint">'+shopEsc(x.admin_note)+'</div>':'')+'</td></tr>').join('');
+ }else if(commonError&&requestError){body.innerHTML='<tr><td colspan="5">Could not load payment history: '+shopEsc(requestError.message||commonError.message)+'</td></tr>';}
+ else body.innerHTML='<tr><td colspan="5">No membership payment requests yet.</td></tr>';
+}
 document.querySelectorAll('[data-page="plans"]').forEach(b=>b.addEventListener('click',fmLoadMembershipPayments));
 
 function showWalletHistory(walletName){fmRenderWalletHistory(walletName||'All');}
@@ -1914,21 +1948,6 @@ async function fmLoadMyOffers(){
     const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
     return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
-  // Login-time reminders: coupon expiry and Spin Gift purchase deadline.
-  const reminderParts=[];
-  const expiringCoupons=joined.filter(x=>x.status==='available'&&x.coupon?.ends_at&&new Date(x.coupon.ends_at)>new Date());
-  expiringCoupons.forEach(x=>{const end=new Date(x.coupon.ends_at);const hrs=(end-Date.now())/3600000;if(hrs<=72)reminderParts.push('⚠️ Your coupon '+(x.coupon.code||'')+' will expire on '+end.toLocaleString('en-IN')+'. Please use it before expiry.');});
-  const [{data:paidGiftPlays,error:pgErr},{data:freeGiftPlays,error:fgErr},{data:giftCatalog,error:gcErr}]=await Promise.all([
-   fmShopClient.from('fm_spin_plays').select('id,user_id,reward_type,reward_value,played_at').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(50),
-   fmShopClient.from('fm_free_spin_plays').select('id,user_id,reward_type,reward_value,played_at').eq('user_id',session.user.id).eq('reward_type','product').order('played_at',{ascending:false}).limit(50),
-   fmShopClient.from('fm_gift_catalog').select('name,minimum_purchase_amount,purchase_validity_days,image_url')
-  ]);
-  if(pgErr)throw pgErr;if(fgErr)throw fgErr;if(gcErr)throw gcErr;
-  const giftMap=new Map((giftCatalog||[]).map(g=>[String(g.name||'').trim().toLowerCase(),g]));
-  [...(paidGiftPlays||[]),...(freeGiftPlays||[])].forEach(p=>{const g=giftMap.get(String(p.reward_value||'').trim().toLowerCase());if(!g)return;const days=Math.max(1,Number(g.purchase_validity_days||15));const expiry=new Date(new Date(p.played_at).getTime()+days*86400000);const left=expiry-Date.now();if(left>0){reminderParts.push('🎁 Your gift '+g.name+' will expire on '+expiry.toLocaleString('en-IN')+'. Complete one paid and delivered purchase of ₹'+Number(g.minimum_purchase_amount||0).toLocaleString('en-IN')+' in a single bill before expiry to claim it.');}});
-  let reminder=document.getElementById('fmLoginExpiryReminder');
-  if(!reminder){reminder=document.createElement('div');reminder.id='fmLoginExpiryReminder';reminder.style.cssText='padding:12px;margin:10px 0;border:1px solid #e5c56b;border-radius:12px;background:#fff9e8;color:#6c4d0a;white-space:pre-line';offerBox.parentElement.insertBefore(reminder,offerBox.nextSibling);}
-  reminder.textContent=reminderParts.join('\n');reminder.style.display=reminderParts.length?'block':'none';
   const spinBtn=document.getElementById('fmSpinButton');
   const {data:plays,error:pe}=spinTable?(spinScope==='plan'?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at,membership_activation_id').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',onlyActivation?.id||-1).order('played_at',{ascending:true}):await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true})):{data:[],error:null};if(pe)throw pe;
   window.fmWelcomeSpinConfig=cfg.data||null;window.fmMemberSpinPlays=plays||[];
@@ -2325,6 +2344,20 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 .fm-upi-userbox button{padding:10px 14px;border:0;border-radius:9px;background:#176c45;color:#fff;font-weight:700;margin:4px}
 </style>
 
+<style>
+#fmPaymentProcessingNotice,#fmPlanActivatedNotice{display:none;position:fixed;inset:0;z-index:10020;background:rgba(8,24,15,.62);align-items:center;justify-content:center;padding:18px}
+.fm-global-notice-box{width:min(100%,430px);background:#fff;border-radius:18px;padding:24px 20px;text-align:center;box-shadow:0 18px 55px rgba(0,0,0,.28);color:#183328}
+.fm-global-notice-box h2{margin:8px 0 10px;font-size:21px}
+.fm-global-notice-box p{font-size:14px;line-height:1.6;color:#5e7066;margin:0 0 18px}
+.fm-global-notice-box button{min-width:120px;padding:11px 18px;border:0;border-radius:10px;background:#168447;color:#fff;font-weight:800}
+.fm-global-notice-icon{font-size:42px;line-height:1.2}
+</style>
+<div id="fmPaymentProcessingNotice" role="dialog" aria-modal="true" aria-labelledby="fmPaymentProcessingTitle">
+ <div class="fm-global-notice-box"><div class="fm-global-notice-icon">⏳</div><h2 id="fmPaymentProcessingTitle">Payment Processing</h2><p>Your UTR and payment screenshot were submitted successfully. Please allow <b>5–10 minutes</b> for Admin verification. You can continue browsing Fresh-Mart. Your membership activates only after the payment is approved.</p><button type="button" onclick="fmClosePaymentProcessingNotice()">Close</button></div>
+</div>
+<div id="fmPlanActivatedNotice" role="dialog" aria-modal="true" aria-labelledby="fmPlanActivatedTitle">
+ <div class="fm-global-notice-box"><div class="fm-global-notice-icon">🎉</div><h2 id="fmPlanActivatedTitle">Your Plan Activated!</h2><p id="fmPlanActivatedText">Your Fresh-Mart membership plan has been activated successfully. Your membership benefits are now available.</p><button type="button" onclick="fmClosePlanActivatedNotice()">Close</button></div>
+</div>
 <div id="fmUpiUserModal"><div class="fm-upi-userbox">
  <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">UPI QR Payment</h2><button type="button" onclick="fmUpiUserClose()">Close</button></div>
  <p style="font-size:12px;color:#64756b">Select the payment type and enter the existing pending Order / Membership / Daily Fresh request ID. Amount is fetched securely from the server; you cannot edit it here.</p>
@@ -2343,6 +2376,61 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 let fmUpiCurrentTxn=null;
 let fmUpiLastContext=null;
 let fmUpiModalHistoryActive=false;
+let fmMembershipActivationTimer=null;
+let fmMembershipActivationUserId=null;
+let fmMembershipActivationBusy=false;
+function fmShowPaymentProcessingNotice(){const el=document.getElementById('fmPaymentProcessingNotice');if(el)el.style.display='flex';}
+function fmClosePaymentProcessingNotice(){const el=document.getElementById('fmPaymentProcessingNotice');if(el)el.style.display='none';}
+function fmShowPlanActivatedNotice(){const el=document.getElementById('fmPlanActivatedNotice');if(el)el.style.display='flex';}
+function fmClosePlanActivatedNotice(){const el=document.getElementById('fmPlanActivatedNotice');if(el)el.style.display='none';}
+async function fmCheckMembershipActivation(userId){
+ if(!userId||!fmShopClient||fmMembershipActivationBusy)return;
+ fmMembershipActivationBusy=true;
+ try{
+  // Use the same secured RPC that powers the member's Plan & Allocation display.
+  const session=await getMemberSession();
+  if(!session?.user?.id||session.user.id!==userId)return;
+  const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_user_membership_allocation_v1',{
+   method:'POST',
+   headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
+   body:'{}'
+  });
+  const payload=await response.json().catch(()=>null);
+  if(!response.ok)throw new Error(payload?.message||payload?.error||'Activation status check failed ('+response.status+').');
+  const activation=payload?.activation||null;
+  if(!activation?.id||String(activation.status||'active').toLowerCase()!=='active')return;
+  const activationId=String(activation.id);
+  const key='fm_seen_membership_activations_'+userId;
+  let saved=null;
+  try{const raw=localStorage.getItem(key);saved=raw?JSON.parse(raw):null;}catch(_){saved=null;}
+  // First visit sets a baseline, so an old active plan does not trigger a false welcome popup.
+  if(!Array.isArray(saved)){
+   localStorage.setItem(key,JSON.stringify([activationId]));
+   return;
+  }
+  if(!saved.map(String).includes(activationId)){
+   localStorage.setItem(key,JSON.stringify([...new Set([...saved.map(String),activationId])].slice(-100)));
+   fmShowPlanActivatedNotice();
+   // Refresh dashboard and release only the newly activated plan's cached request.
+   await fmLoadMemberPlanSplit(userId,session.access_token);
+   const activatedAmount=Number(fmCurrentActivationForPlan?.plan_amount)||Number(activation.plan_amount)||0;
+   if(activatedAmount>0)localStorage.removeItem('fm_membership_pending_request_'+String(activatedAmount));
+  }
+ }catch(e){console.warn('Membership activation status check failed:',e);}
+ finally{fmMembershipActivationBusy=false;}
+}
+function fmStartMembershipActivationWatcher(userId){
+ if(!userId||!fmShopClient)return;
+ if(fmMembershipActivationUserId===userId&&fmMembershipActivationTimer)return;
+ if(fmMembershipActivationTimer)clearInterval(fmMembershipActivationTimer);
+ fmMembershipActivationUserId=userId;
+ fmCheckMembershipActivation(userId);
+ fmMembershipActivationTimer=setInterval(()=>fmCheckMembershipActivation(userId),12000);
+ if(!window.fmMembershipActivationVisibilityBound){
+  window.fmMembershipActivationVisibilityBound=true;
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&fmMembershipActivationUserId)fmCheckMembershipActivation(fmMembershipActivationUserId);});
+ }
+}
 function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function fmRefreshUpiVisibility(){try{if(!fmShopClient)return false;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;return data?.upi_enabled===true&&data?.manual_verification===true;}catch(e){console.warn('UPI visibility check failed; keeping UPI hidden.',e);return false;}}
 async function fmUpiUserOpen(){
@@ -2397,11 +2485,67 @@ async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  return data;
 }
 async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='';area.innerHTML='';try{const type=document.getElementById('fmUpiType').value,source=document.getElementById('fmUpiSource').value.trim();if(!source)throw new Error('Enter an existing pending Order / Request ID.');fmUpiLastContext={type,sourceId:source};const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:source});if(error)throw error;if(!data?.id)throw new Error('Payment preparation failed.');fmUpiCurrentTxn=data;const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Fresh Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);area.innerHTML=`<b>Pay exactly ₹${Number(data.amount).toFixed(2)}</b><br><img src="${qr}" alt="UPI QR" width="260" height="260" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(data.payee_name)}</b><br>${fmUpiEsc(data.upi_id)}</p><p>Reference: ${fmUpiEsc(data.txn_ref)}</p><a href="${uri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='Pay first, then enter UTR and upload screenshot.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to prepare payment: '+e.message;}}
-async function fmUpiSubmitProof(){const msg=document.getElementById('fmUpiUserMsg');try{if(!fmUpiCurrentTxn?.id)throw new Error('Generate QR first.');const paymentType=document.getElementById('fmUpiType').value;const paymentSource=document.getElementById('fmUpiSource').value.trim();const utr=document.getElementById('fmUpiUtr').value.trim(),file=document.getElementById('fmUpiProofFile').files[0];if(!utr||!file)throw new Error('UTR and screenshot are required.');if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');const session=await getMemberSession();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;msg.textContent='Uploading screenshot…';const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(ue)throw ue;const {data,error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});if(error)throw error;msg.textContent='Payment submitted. Admin verification is pending.';document.getElementById('fmUpiProofArea').style.display='none';document.getElementById('fmUpiQrArea').innerHTML='';document.getElementById('fmUpiUtr').value='';document.getElementById('fmUpiProofFile').value='';fmUpiCurrentTxn=null;fmUpiLastContext=null;const paymentModal=document.getElementById('fmUpiUserModal');if(paymentModal)paymentModal.style.display='none';fmUpiModalHistoryActive=false;history.replaceState({fmUserPage:'plans',fmRoot:true},'',location.pathname+location.search+'#plans');if(paymentType==='membership'){const amt=Number(document.getElementById('payAmount')?.value||0);if(amt>0)localStorage.removeItem('fm_membership_pending_request_'+String(amt));}await fmUpiMyPayments();if(paymentType==='membership'){const m=document.getElementById('payMessage');if(m)m.textContent='Membership payment submitted successfully. Admin bank verification is pending.';await fmLoadMembershipPayments();}else if(paymentType==='daily_fresh'){const m=document.getElementById('fmDFUserMsg');if(m)m.textContent='Daily Fresh payment submitted successfully. Admin bank verification is pending.';await fmDFUserLoad();}else if(paymentType==='grocery'){await loadMyGroceryOrders();}}catch(e){msg.textContent='Submit failed: '+e.message;}}
+async function fmUpiSubmitProof(){
+ const msg=document.getElementById('fmUpiUserMsg');
+ const submitBtn=document.querySelector('#fmUpiProofArea button[onclick="fmUpiSubmitProof()"]');
+ if(submitBtn)submitBtn.disabled=true;
+ try{
+  if(!fmUpiCurrentTxn?.id)throw new Error('Generate QR first.');
+  const paymentType=document.getElementById('fmUpiType').value;
+  const utr=document.getElementById('fmUpiUtr').value.trim();
+  const file=document.getElementById('fmUpiProofFile').files[0];
+  if(!utr||!file)throw new Error('UTR and screenshot are required.');
+  if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');
+  const session=await getMemberSession();
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;
+  msg.textContent='Uploading screenshot and submitting payment…';
+  const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});
+  if(ue)throw ue;
+  const {error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});
+  if(error)throw error;
+
+  // Keep the prepared request ID cached while it is awaiting admin review; this prevents duplicate requests.
+  fmUpiCurrentTxn=null;
+  fmUpiLastContext=null;
+  const paymentModal=document.getElementById('fmUpiUserModal');if(paymentModal)paymentModal.style.display='none';
+  fmUpiModalHistoryActive=false;
+  history.replaceState({fmUserPage:paymentType==='daily_fresh'?'plans':'plans',fmRoot:true},'',location.pathname+location.search+'#plans');
+  await fmUpiMyPayments();
+  if(paymentType==='membership'){
+   const m=document.getElementById('payMessage');if(m)m.textContent='Payment submitted successfully. Status: Processing — pending Admin verification.';
+   await fmLoadMembershipPayments();
+   fmShowPaymentProcessingNotice();
+  }else if(paymentType==='daily_fresh'){
+   const m=document.getElementById('fmDFUserMsg');if(m)m.textContent='Daily Fresh payment submitted successfully. Admin verification is pending.';
+   await fmDFUserLoad();
+  }else if(paymentType==='grocery'){
+   await loadMyGroceryOrders();
+  }
+  document.getElementById('fmUpiProofArea').style.display='none';
+  document.getElementById('fmUpiQrArea').innerHTML='';
+  document.getElementById('fmUpiUtr').value='';
+  document.getElementById('fmUpiProofFile').value='';
+ }catch(e){
+  msg.textContent='Submit failed: '+(e.message||e);
+ }finally{
+  if(submitBtn)submitBtn.disabled=false;
+ }
+}
 async function fmUpiMyPayments(){const el=document.getElementById('fmUpiMyRows');if(!el)return;try{const {data:{session}}=await fmShopClient.auth.getSession();if(!session){el.textContent='Login required';return;}const {data,error}=await fmShopClient.from('fm_common_payment_transactions').select('txn_ref,payment_type,amount,status,utr_number,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;el.innerHTML=(data||[]).map(x=>{const st=String(x.status||'').toLowerCase();const label=st==='submitted'?'Submitted – Pending for Approval':(['paid','approved'].includes(st)?'Approved':st==='rejected'?'Rejected':st==='cancelled'?'Cancelled':st==='pending'?'Pending':st);return `<div style="padding:8px;border:1px solid #e2e9e4;border-radius:8px;margin:6px 0">₹${Number(x.amount).toFixed(2)} · ${fmUpiEsc(x.payment_type)}<br>Ref: ${fmUpiEsc(x.txn_ref)}<br>Status: <b>${fmUpiEsc(label)}</b></div>`;}).join('')||'No payment requests yet.';}catch(e){el.textContent='Could not load payments: '+e.message;}}
 </script>
 <script>
-document.addEventListener('DOMContentLoaded',()=>{setTimeout(fmRefreshUpiVisibility,900);setTimeout(fmRestoreCheckoutAfterRefresh,1200);});
+document.addEventListener('DOMContentLoaded',()=>{
+ setTimeout(fmRefreshUpiVisibility,900);
+ setTimeout(fmRestoreCheckoutAfterRefresh,1200);
+ setTimeout(async()=>{
+  try{
+   await fmLoadMembershipPayments();
+   const session=await getMemberSession();
+   if(session?.user?.id)fmStartMembershipActivationWatcher(session.user.id);
+  }catch(e){console.warn('Membership page initialization:',e);}
+ },1800);
+});
 window.addEventListener('pageshow',()=>{if(location.hash==='#checkout')setTimeout(fmRestoreCheckoutAfterRefresh,500);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(fmRefreshUpiVisibility,200);});
 </script>
