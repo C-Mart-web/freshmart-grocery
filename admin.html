@@ -148,7 +148,8 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
  <p id="fmImageLibraryMsg" class="hint" aria-live="polite"></p>
  <div class="tablewrap"><table><thead><tr><th>Preview</th><th>Code</th><th>Label</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmImageLibraryRows"><tr><td colspan="5" class="empty">Loading image library…</td></tr></tbody></table></div>
 </div>
-<div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Category & Subcategory Manager</h2><button class="btn btn-outline btn-sm" onclick="fmLoadCategories()">Refresh</button></div><div class="formgrid"><div class="field"><label>New Category</label><input id="fmNewCategory" placeholder="e.g. Grocery"></div><div class="field"><label>Category Icon / Emoji</label><input id="fmNewCategoryIcon" placeholder="🛒" maxlength="8"></div><div class="field"><label>Subcategory under</label><select id="fmSubCategoryParent"><option value="">Select category</option></select></div><div class="field"><label>New Subcategory</label><input id="fmNewSubcategory" placeholder="e.g. Cooking Oil"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" onclick="fmAddCategory()">Add Category</button><button class="btn btn-outline" onclick="fmAddSubcategory()">Add Subcategory</button></div><p id="fmCategoryMsg" class="hint" aria-live="polite"></p><div class="tablewrap"><table><thead><tr><th>Category</th><th>Subcategories</th><th>Status</th></tr></thead><tbody id="fmCategoryRows"><tr><td colspan="3" class="empty">Load categories after SQL setup.</td></tr></tbody></table></div></div>
+<div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Category & Subcategory Manager</h2><button class="btn btn-outline btn-sm" onclick="fmLoadCategories()">Refresh</button></div><div class="formgrid"><div class="field"><label>New Category</label><input id="fmNewCategory" placeholder="e.g. Grocery"></div><div class="field"><label>Category Icon / Emoji (optional)</label><input id="fmNewCategoryIcon" placeholder="🛒" maxlength="8"></div>
+<div class="field"><label>Or Upload Category Image (JPG / PNG / WEBP · max 2 MB)</label><input id="fmNewCategoryIconFile" type="file" accept="image/jpeg,image/png,image/webp" onchange="fmCategoryIconPreview(this)"><div id="fmCategoryIconPreview" class="hint">Image upload చేస్తే Emoji బదులుగా Image కనిపిస్తుంది.</div></div><div class="field"><label>Subcategory under</label><select id="fmSubCategoryParent"><option value="">Select category</option></select></div><div class="field"><label>New Subcategory</label><input id="fmNewSubcategory" placeholder="e.g. Cooking Oil"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" onclick="fmAddCategory()">Add Category</button><button class="btn btn-outline" onclick="fmAddSubcategory()">Add Subcategory</button></div><p id="fmCategoryMsg" class="hint" aria-live="polite"></p><div class="tablewrap"><table><thead><tr><th>Icon / Image</th><th>Category</th><th>Subcategories</th><th>Status</th><th>Change Image</th></tr></thead><tbody id="fmCategoryRows"><tr><td colspan="5" class="empty">Load categories after SQL setup.</td></tr></tbody></table></div></div>
 <div class="card"><div class="searchrow"><input id="productSearch" placeholder="Search product name or SKU" oninput="renderAdminProducts()"><select id="productCategoryFilter" onchange="renderAdminProducts()"><option value="">All categories</option></select><button class="btn btn-outline" onclick="loadAdminProducts()">Refresh</button></div><p id="productListMsg" class="hint" aria-live="polite">Loading products…</p><div class="tablewrap"><table><thead><tr><th>Image</th><th>Product</th><th>Category</th><th>SKU / Barcode</th><th>Retail / Wholesale</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminProductRows"><tr><td colspan="8" class="empty">Loading products…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="plans">
@@ -785,8 +786,73 @@ function fmFillProductSubcategorySelect(selected=''){
  subSel.innerHTML='<option value="">No subcategory / Select</option>'+rows.map(x=>'<option value="'+escapeHtml(x.subcategory_name)+'">'+escapeHtml(x.subcategory_name)+'</option>').join('');
  subSel.value=rows.some(x=>x.subcategory_name===selected)?selected:'';
 }
-async function fmLoadCategories(){const msg=document.getElementById('fmCategoryMsg');try{const {data,error}=await fmSupabase.from('fm_product_categories').select('id,category_name,is_active').order('category_name');if(error)throw error;fmAdminCats=data||[];const {data:subs,error:se}=await fmSupabase.from('fm_product_subcategories').select('id,category_id,subcategory_name,is_active').order('subcategory_name');if(se)throw se;fmAdminSubcats=subs||[];fmFillProductCategorySelect(fmPendingProductCategory||document.getElementById('productCategory')?.selectedOptions?.[0]?.textContent||'',fmPendingProductSubcategory||document.getElementById('productSubcategory')?.value||'');fmPendingProductCategory='';fmPendingProductSubcategory='';const sel=document.getElementById('fmSubCategoryParent');sel.innerHTML='<option value="">Select category</option>'+fmAdminCats.map(c=>`<option value="${c.id}">${escapeHtml(c.category_name)}</option>`).join('');document.getElementById('fmCategoryRows').innerHTML=fmAdminCats.map(c=>`<tr><td>${escapeHtml(c.category_name)}</td><td>${fmAdminSubcats.filter(s=>String(s.category_id)===String(c.id)).map(s=>escapeHtml(s.subcategory_name)).join(', ')||'—'}</td><td>${c.is_active?'Active':'Inactive'}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">No categories yet.</td></tr>';msg.textContent='Categories and subcategories loaded.';}catch(e){msg.textContent='Category load failed: '+e.message;}}
-async function fmAddCategory(){const name=document.getElementById('fmNewCategory').value.trim(),msg=document.getElementById('fmCategoryMsg');if(!name){msg.textContent='Enter a category name.';return;}try{const {error}=await fmSupabase.from('fm_product_categories').insert({category_name:name,icon:document.getElementById('fmNewCategoryIcon').value.trim()||'🛒',is_active:true});if(error)throw error;document.getElementById('fmNewCategory').value='';msg.textContent='Category added.';await fmLoadCategories();}catch(e){msg.textContent='Could not add category: '+e.message;}}
+function fmCategoryIconIsUrl(value){return /^https?:\/\//i.test(String(value||''));}
+function fmCategoryIconMarkup(value){
+ const v=String(value||'🛒');
+ return fmCategoryIconIsUrl(v)?'<img src="'+escapeHtml(v)+'" alt="Category icon" style="width:38px;height:38px;object-fit:contain;border-radius:9px;background:#f5fbf6;padding:3px">':'<span style="font-size:25px">'+escapeHtml(v)+'</span>';
+}
+function fmCategoryIconPreview(input){
+ const file=input?.files?.[0],host=document.getElementById('fmCategoryIconPreview');if(!host)return;
+ if(!file){host.textContent='Image upload చేస్తే Emoji బదులుగా Image కనిపిస్తుంది.';return;}
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type)){input.value='';host.textContent='JPG, PNG లేదా WEBP మాత్రమే.';return;}
+ if(file.size>2*1024*1024){input.value='';host.textContent='Image 2 MB లోపు ఉండాలి.';return;}
+ const reader=new FileReader();reader.onload=()=>{host.innerHTML='<img src="'+reader.result+'" style="width:54px;height:54px;object-fit:contain;border:1px solid #dbe8de;border-radius:9px;padding:4px"><span class="hint"> Preview</span>';};reader.readAsDataURL(file);
+}
+async function fmUploadCategoryIcon(file,categoryId){
+ if(!file)return null;
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Category image must be JPG, PNG or WEBP.');
+ if(file.size>2*1024*1024)throw new Error('Category image must be 2 MB or smaller.');
+ const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Admin sign-in required.');
+ const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+ const safeId=String(categoryId||'new').replace(/[^a-zA-Z0-9_-]/g,'');
+ const path='category-icons/'+safeId+'-'+Date.now()+'.'+ext;
+ const {data:stored,error:ue}=await fmSupabase.storage.from('fm-product-images').upload(path,file,{contentType:file.type,upsert:false});
+ if(ue)throw ue;
+ return {url:fmSupabase.storage.from('fm-product-images').getPublicUrl(stored.path).data.publicUrl,path:stored.path};
+}
+async function fmLoadCategories(){
+ const msg=document.getElementById('fmCategoryMsg');
+ try{
+  const {data,error}=await fmSupabase.from('fm_product_categories').select('id,category_name,icon,is_active').order('category_name');if(error)throw error;
+  fmAdminCats=data||[];
+  const {data:subs,error:se}=await fmSupabase.from('fm_product_subcategories').select('id,category_id,subcategory_name,is_active').order('subcategory_name');if(se)throw se;
+  fmAdminSubcats=subs||[];
+  fmFillProductCategorySelect(fmPendingProductCategory||document.getElementById('productCategory')?.selectedOptions?.[0]?.textContent||'',fmPendingProductSubcategory||document.getElementById('productSubcategory')?.value||'');
+  fmPendingProductCategory='';fmPendingProductSubcategory='';
+  const sel=document.getElementById('fmSubCategoryParent');
+  sel.innerHTML='<option value="">Select category</option>'+fmAdminCats.map(c=>`<option value="${c.id}">${escapeHtml(c.category_name)}</option>`).join('');
+  document.getElementById('fmCategoryRows').innerHTML=fmAdminCats.map(c=>`<tr>
+   <td>${fmCategoryIconMarkup(c.icon)}</td><td>${escapeHtml(c.category_name)}</td>
+   <td>${fmAdminSubcats.filter(x=>String(x.category_id)===String(c.id)).map(x=>escapeHtml(x.subcategory_name)).join(', ')||'—'}</td>
+   <td>${c.is_active?'Active':'Inactive'}</td>
+   <td><label class="btn btn-outline btn-sm" style="display:inline-block">Change Image<input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="fmReplaceCategoryIcon('${c.id}',this)"></label></td>
+  </tr>`).join('')||'<tr><td colspan="5" class="empty">No categories yet.</td></tr>';
+  msg.textContent='Categories and subcategories loaded.';
+ }catch(e){msg.textContent='Category load failed: '+e.message;}
+}
+async function fmReplaceCategoryIcon(id,input){
+ const msg=document.getElementById('fmCategoryMsg'),file=input?.files?.[0];if(!file)return;
+ try{
+  msg.textContent='Uploading category image…';
+  const uploaded=await fmUploadCategoryIcon(file,id);
+  const {error}=await fmSupabase.from('fm_product_categories').update({icon:uploaded.url}).eq('id',id);
+  if(error){await fmSupabase.storage.from('fm-product-images').remove([uploaded.path]);throw error;}
+  msg.textContent='Category image updated successfully.';await fmLoadCategories();
+ }catch(e){msg.textContent='Category image upload failed: '+e.message;}
+}
+async function fmAddCategory(){
+ const name=document.getElementById('fmNewCategory').value.trim(),emoji=document.getElementById('fmNewCategoryIcon').value.trim()||'🛒',file=document.getElementById('fmNewCategoryIconFile')?.files?.[0],msg=document.getElementById('fmCategoryMsg');
+ if(!name){msg.textContent='Enter a category name.';return;}
+ let uploaded=null;
+ try{
+  let icon=emoji;if(file){uploaded=await fmUploadCategoryIcon(file,'new');icon=uploaded.url;}
+  const {error}=await fmSupabase.from('fm_product_categories').insert({category_name:name,icon,is_active:true});
+  if(error){if(uploaded)await fmSupabase.storage.from('fm-product-images').remove([uploaded.path]);throw error;}
+  document.getElementById('fmNewCategory').value='';document.getElementById('fmNewCategoryIcon').value='';document.getElementById('fmNewCategoryIconFile').value='';
+  document.getElementById('fmCategoryIconPreview').textContent='Image upload చేస్తే Emoji బదులుగా Image కనిపిస్తుంది.';
+  msg.textContent='Category added successfully.';await fmLoadCategories();
+ }catch(e){msg.textContent='Could not add category: '+e.message;}
+}
 async function fmAddSubcategory(){const category_id=document.getElementById('fmSubCategoryParent').value,name=document.getElementById('fmNewSubcategory').value.trim(),msg=document.getElementById('fmCategoryMsg');if(!category_id||!name){msg.textContent='Choose a category and enter subcategory name.';return;}try{const {error}=await fmSupabase.from('fm_product_subcategories').insert({category_id,subcategory_name:name,is_active:true});if(error)throw error;document.getElementById('fmNewSubcategory').value='';msg.textContent='Subcategory added.';await fmLoadCategories();}catch(e){msg.textContent='Could not add subcategory: '+e.message;}}
 
 let fmPageBannerConfig={};
