@@ -472,28 +472,27 @@ async function loadMembers(){
   const memberIds=rows.map(m=>m.id).filter(Boolean);
   let networkRows=[],activationRows=[],dailyRows=[],membershipPlanMap=new Map(),warnings=[];
   if(memberIds.length){
-   const [netResult,activationResult,dailyResult]=await Promise.all([
+   const [netResult,membershipRpcResult,dailyResult]=await Promise.all([
     fmSupabase.from('fm_network_members').select('user_id,sponsor_id').in('user_id',memberIds),
-    fmSupabase.from('fm_plan_roi_activations')
-     .select('id,user_id,plan_id,plan_amount,status,start_date,end_date,created_at')
-     .in('user_id',memberIds).order('created_at',{ascending:false}).limit(2000),
+    fmSupabase.rpc('fm_admin_member_membership_plans_v1',{p_user_ids:memberIds}),
     fmSupabase.from('fm_daily_fresh_subscriptions')
      .select('*').in('user_id',memberIds).order('created_at',{ascending:false}).limit(2000)
    ]);
    if(netResult.error)warnings.push('Referral details: '+netResult.error.message);
    else networkRows=netResult.data||[];
-   if(activationResult.error)warnings.push('Membership details: '+activationResult.error.message);
-   else activationRows=activationResult.data||[];
+   if(membershipRpcResult.error)warnings.push('Membership details: '+membershipRpcResult.error.message);
+   else activationRows=(membershipRpcResult.data||[]).map(a=>({
+    id:a.activation_id,user_id:a.user_id,plan_id:a.plan_id,
+    plan_amount:a.plan_amount,status:a.status,
+    start_date:a.start_date,end_date:a.end_date,created_at:a.created_at,
+    _rpc_is_active:a.is_active,plan_name:a.plan_name
+   }));
    if(dailyResult.error)warnings.push('Daily Fresh details: '+dailyResult.error.message);
    else dailyRows=dailyResult.data||[];
   }
-  const planIds=[...new Set(activationRows.map(a=>a.plan_id).filter(Boolean).map(String))];
-  if(planIds.length){
-   const {data:plans,error:plansError}=await fmSupabase.from('fm_membership_plans')
-    .select('id,plan_name,plan_amount').in('id',planIds);
-   if(plansError)warnings.push('Membership plan names: '+plansError.message);
-   else membershipPlanMap=new Map((plans||[]).map(p=>[String(p.id),p]));
-  }
+  membershipPlanMap=new Map(activationRows.map(a=>[
+   String(a.plan_id),{id:a.plan_id,plan_name:a.plan_name,plan_amount:a.plan_amount}
+  ]));
   const sponsorIds=[...new Set(networkRows.map(n=>n.sponsor_id).filter(Boolean).map(String))];
   let sponsorMap=new Map();
   if(sponsorIds.length){
@@ -504,9 +503,11 @@ async function loadMembers(){
   }
   const now=Date.now();
   const indiaDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  const isMembershipActive=a=>String(a.status||'').toLowerCase()==='active'
+  const isMembershipActive=a=>a._rpc_is_active===true || (
+   String(a.status||'').toLowerCase()==='active'
    &&(!a.start_date||String(a.start_date).slice(0,10)<=indiaDate)
-   &&(!a.end_date||String(a.end_date).slice(0,10)>=indiaDate);
+   &&(!a.end_date||String(a.end_date).slice(0,10)>=indiaDate)
+  );
   const isDailyFreshActive=d=>String(d.status||'').toLowerCase()==='active'
    &&(!d.starts_at||new Date(d.starts_at).getTime()<=now)
    &&(!d.ends_at||new Date(d.ends_at).getTime()>now);
@@ -527,7 +528,7 @@ async function loadMembers(){
    const labels=[];
    activeMemberships.forEach(a=>{
     const p=membershipPlanMap.get(String(a.plan_id));
-    const label=p?.plan_name||('Membership ₹'+Number(a.plan_amount||0).toLocaleString('en-IN'));
+    const label=p?.plan_name||a.plan_name||('Membership ₹'+Number(a.plan_amount||0).toLocaleString('en-IN'));
     if(!labels.includes(label+' · Active'))labels.push(label+' · Active');
    });
    activeFresh.forEach(d=>{
@@ -538,7 +539,7 @@ async function loadMembers(){
    if(!labels.length){
     if(memberships[0]){
      const a=memberships[0],p=membershipPlanMap.get(String(a.plan_id));
-     labels.push((p?.plan_name||('Membership ₹'+Number(a.plan_amount||0).toLocaleString('en-IN')))
+     labels.push((p?.plan_name||a.plan_name||('Membership ₹'+Number(a.plan_amount||0).toLocaleString('en-IN')))
        +' · '+(a.status||'Inactive'));
     }
     if(freshSubs[0]){
