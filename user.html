@@ -228,7 +228,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="team">
   <div class="welcome"><div><h1>My Team 👥</h1><p>Manage your referral links and view your team summary.</p></div></div>
   <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value" id="teamDirectCount">—</div><div class="stat-note">Members you invited</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value" id="teamLeftCount">—</div><div class="stat-note">Active / registered members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value" id="teamRightCount">—</div><div class="stat-note">Active / registered members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value" id="teamActiveCount">—</div><div class="stat-note">Active accounts in your team</div></div></div>
-  <div class="card" style="margin-bottom:16px"><h2 style="font-size:19px">Joined Members</h2><p id="teamLoadMessage" class="hint" role="status">Loading your team…</p><div class="tablewrap"><table><thead><tr><th>Member</th><th>Fresh-Mart ID</th><th>Placement</th><th>Status</th></tr></thead><tbody id="joinedMembersRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
+  <div class="card" style="margin-bottom:16px"><h2 style="font-size:19px">Joined Members</h2><p id="teamLoadMessage" class="hint" role="status">Loading your team…</p><div class="tablewrap"><table><thead><tr><th>Member</th><th>Fresh-Mart ID</th><th>Placement</th><th>Plans</th><th>Status</th></tr></thead><tbody id="joinedMembersRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div></div>
   <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Your referral links will use the username of the account currently logged in.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="Loading account..." maxlength="60" autocomplete="off" readonly></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Checking your signed-in account…</div></div>
   <div class="twocol"><div class="card"><h2 style="font-size:17px;color:#168447">⬅️ Left Referral Link</h2><p class="hint">Members using this link request LEFT placement. Spillover stays inside this left branch.</p><input id="leftReferralLink" readonly aria-label="Left referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('left')">Copy Left Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('left')">WhatsApp Share</button></div></div><div class="card"><h2 style="font-size:17px;color:#168447">➡️ Right Referral Link</h2><p class="hint">Members using this link request RIGHT placement. Spillover stays inside this right branch.</p><input id="rightReferralLink" readonly aria-label="Right referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('right')">Copy Right Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('right')">WhatsApp Share</button></div></div></div>
 </section>
@@ -271,6 +271,13 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
       <div style="background:#fff;color:#183126;border-radius:12px;padding:13px"><div class="small">ROI duration</div><div class="stat-value" id="fmSplitDays" style="margin:7px 0 0">—</div></div>
     </div>
     <p id="fmPlanSplitDates" style="margin:12px 0 0;color:#e6ffed;font-size:11px"></p>
+  </div>
+  <div class="card" id="fmDailyFreshPlanCard" style="margin-bottom:16px;border:1px solid #cfe8d6;background:#f7fcf8">
+    <div class="section-head">
+      <h2 style="font-size:18px;margin:0">My Daily Fresh Plan 🥗</h2>
+      <span class="badge pending" id="fmDailyFreshPlanStatus">CHECKING</span>
+    </div>
+    <div id="fmDailyFreshPlanDetails" class="hint">Checking your Daily Fresh subscription…</div>
   </div>
   <div class="card" id="fmWalletBinarySummary" style="margin:0 0 16px;border:1px solid #cfe8d6;background:#f3fff6">
     <div class="section-head"><h2 style="font-size:17px;margin:0">My Binary Carry Forward Points ⚖️</h2><button class="link" type="button" onclick="fmLoadBinaryPoints()">Refresh</button></div>
@@ -518,15 +525,43 @@ async function loadTeamData(accessToken){
   const data=await res.json();
   if(!res.ok||!data.success) throw new Error(data.error||'Team data could not be loaded ('+res.status+').');
   const c=data.counts||{};
+  const members=Array.isArray(data.members)?data.members:[];
+  const hasPlanFlags=members.some(m=>
+   ['membership_active','is_membership_active','daily_fresh_active','is_daily_fresh_active'].some(k=>typeof m[k]==='boolean')
+  );
+  const planActive=m=>m.membership_active===true||m.is_membership_active===true||m.daily_fresh_active===true||m.is_daily_fresh_active===true;
   document.getElementById('teamDirectCount').textContent=Number(c.direct||0);
   document.getElementById('teamLeftCount').textContent=String(Number(c.leftActive||0))+' / '+String(Number(c.leftRegistered||0));
   document.getElementById('teamRightCount').textContent=String(Number(c.rightActive||0))+' / '+String(Number(c.rightRegistered||0));
-  document.getElementById('teamActiveCount').textContent=Number(c.activeTotal||0);
-  const members=Array.isArray(data.members)?data.members:[];
-  if(!members.length){body.innerHTML='<tr><td colspan="4">No team members have joined yet.</td></tr>';}
-  else body.innerHTML=members.map(m=>'<tr><td>'+escapeTeamText(m.display_name||m.username||'Member')+'</td><td>'+escapeTeamText(m.user_code||'—')+'</td><td>'+escapeTeamText(m.placement||'—')+'</td><td>'+escapeTeamText(String(m.account_status||'unknown').toUpperCase())+'</td></tr>').join('');
-  msg.textContent='Team data updated successfully.';
- }catch(e){console.error('Team load error',e);msg.textContent='Team data could not be loaded: '+(e.message||'Unknown error')+'. Deploy the updated fm-auth Edge Function and check its logs.';body.innerHTML='<tr><td colspan="4">Team data unavailable.</td></tr>';}
+  document.getElementById('teamActiveCount').textContent=hasPlanFlags?members.filter(planActive).length:Number(c.activeTotal||0);
+  if(!members.length){
+   body.innerHTML='<tr><td colspan="5">No team members have joined yet.</td></tr>';
+  }else{
+   body.innerHTML=members.map(m=>{
+    const hasMembership=m.membership_active===true||m.is_membership_active===true;
+    const hasDaily=m.daily_fresh_active===true||m.is_daily_fresh_active===true;
+    const labels=[];
+    const membershipName=m.membership_plan_name||m.membership_plan||m.plan_name;
+    const dailyName=m.daily_fresh_plan_name||m.daily_fresh_plan||m.daily_fresh_category_name;
+    if(hasMembership)labels.push((membershipName||'Membership')+' · Active');
+    if(hasDaily)labels.push((dailyName||'Daily Fresh')+' · Active');
+    if(!labels.length&&Array.isArray(m.plan_labels))labels.push(...m.plan_labels);
+    if(!labels.length&&Array.isArray(m.plans))labels.push(...m.plans.map(p=>typeof p==='string'?p:(p.name||p.plan_name||p.label||'Plan')));
+    const planHtml=labels.length?labels.map(x=>'<span class="badge approved" style="display:inline-block;margin:2px">'+escapeTeamText(x)+'</span>').join('<br>')
+      :'<span class="hint">'+(hasPlanFlags?'No active plan':'Plan details pending team-service update')+'</span>';
+    const status=(hasPlanFlags?(planActive(m)?'ACTIVE':'INACTIVE'):String(m.account_status||'unknown').toUpperCase());
+    const statusHtml='<span class="badge '+(status==='ACTIVE'?'approved':status==='BLOCKED'?'rejected':'pending')+'">'+escapeTeamText(status)+'</span>';
+    return '<tr><td>'+escapeTeamText(m.display_name||m.username||'Member')+'</td><td>'+escapeTeamText(m.user_code||'—')+'</td><td>'+escapeTeamText(m.placement||'—')+'</td><td>'+planHtml+'</td><td>'+statusHtml+'</td></tr>';
+   }).join('');
+  }
+  msg.textContent=hasPlanFlags
+   ?'Team data updated. Active status is based on Membership OR Daily Fresh.'
+   :'Team data loaded. Plan-wise status/count needs the clever-service team action to return membership_active and daily_fresh_active for each member.';
+ }catch(e){
+  console.error('Team load error',e);
+  msg.textContent='Team data could not be loaded: '+(e.message||'Unknown error')+'. Check the clever-service Edge Function and its logs.';
+  body.innerHTML='<tr><td colspan="5">Team data unavailable.</td></tr>';
+ }
 }
 function escapeTeamText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -780,80 +815,99 @@ async function fmLoadMemberPlanSplit(userId,token){
  const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
  const money=n=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
  const dash=id=>document.getElementById(id);
+ const dailyStatus=dash('fmDailyFreshPlanStatus');
+ const dailyDetails=dash('fmDailyFreshPlanDetails');
+ const setBadge=(node,active,label)=>{if(!node)return;node.textContent=label;node.className='badge '+(active?'approved':'pending');};
  try{
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'};
   const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_user_membership_allocation_v1',{method:'POST',headers,body:'{}'});
   const payload=await response.json().catch(()=>null);
   if(!response.ok)throw new Error(payload?.message||payload?.error||'Secure membership lookup failed ('+response.status+').');
+
   const a=payload?.activation||null;
-  fmCurrentActivationForPlan=a;
+  const indiaDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const membershipActive=!!a && String(a.status||'active').toLowerCase()==='active'
+   &&(!a.start_date||String(a.start_date).slice(0,10)<=indiaDate)
+   &&(!a.end_date||String(a.end_date).slice(0,10)>=indiaDate);
+  fmCurrentActivationForPlan=membershipActive?a:null;
   fmUpdatePlanTypeLabels();
-  // Account is ACTIVE when either Membership OR Daily Fresh is active.
+
   const nowIso=new Date().toISOString();
   const {data:dailyRows,error:dailyErr}=await fmShopClient.from('fm_daily_fresh_subscriptions')
-   .select('id,category_name,starts_at,ends_at,status,amount_paid').eq('user_id',userId).eq('status','active')
-   .lte('starts_at',nowIso).gte('ends_at',nowIso).order('ends_at',{ascending:false}).limit(1);
+   .select('id,category_name,category_code,duration_months,starts_at,ends_at,status,amount_paid,created_at')
+   .eq('user_id',userId).eq('status','active')
+   .lte('starts_at',nowIso).gt('ends_at',nowIso)
+   .order('ends_at',{ascending:false}).limit(20);
   if(dailyErr)throw dailyErr;
-  const dailyActive=(dailyRows||[])[0]||null;
-  if(!a){
-   if(dailyActive){
-    if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='DAILY FRESH ACTIVE';el.fmPlanSplitMessage.textContent=(dailyActive.category_name||'Daily Fresh')+' subscription is active. Membership allocation is not active.';}
-    if(dash('accountStatus'))dash('accountStatus').textContent='● ACTIVE';
-    if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent=dailyActive.category_name||'Daily Fresh';
-    if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='Daily Fresh active · Expires '+new Date(dailyActive.ends_at).toLocaleDateString('en-IN');
-    if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent=money(dailyActive.amount_paid);
-    if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Your Daily Fresh plan is active!';
-    if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Your Daily Fresh subscription is active. Enjoy your scheduled deliveries and benefits.';
-    if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='View Daily Fresh →';
-    if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='Daily Fresh subscription expires on '+new Date(dailyActive.ends_at).toLocaleDateString('en-IN')+'.';
-    return;
+  const activeDailyRows=dailyRows||[];
+  const dailyActive=activeDailyRows[0]||null;
+  const accountActive=membershipActive||!!dailyActive;
+
+  if(membershipActive){
+   const amount=Number(a.plan_amount)||0,company=Number(a.company_subscription)||0;
+   const shopping=Number(a.shopping_wallet_allocation)||0,roi=Number(a.roi_allocation)||0;
+   const days=Number(a.roi_days)||0,daily=Number(a.daily_roi_amount)||0;
+   fmUpdateRoiProgress(a);
+   setBadge(el.fmPlanSplitStatus,true,'MEMBERSHIP ACTIVE');
+   if(el.fmPlanSplitMessage)el.fmPlanSplitMessage.textContent=(a.plan_name||'Membership plan')+' · Approved membership allocation.';
+   if(el.fmSplitPlanAmount)el.fmSplitPlanAmount.textContent=money(amount);
+   if(el.fmSplitCompany)el.fmSplitCompany.textContent=money(company);
+   if(el.fmSplitShopping)el.fmSplitShopping.textContent=money(shopping);
+   if(el.fmSplitRoi)el.fmSplitRoi.textContent=money(roi);
+   if(el.fmSplitDailyRoi)el.fmSplitDailyRoi.textContent=money(daily);
+   if(el.fmSplitDays)el.fmSplitDays.textContent=days+' days';
+   if(el.fmPlanSplitDates)el.fmPlanSplitDates.textContent='ROI period: '+(a.start_date||'—')+' to '+(a.end_date||'—')+'. Company subscription is an allocation, not a user wallet balance.';
+  }else{
+   setBadge(el.fmPlanSplitStatus,false,'NOT ACTIVE');
+   if(el.fmPlanSplitMessage)el.fmPlanSplitMessage.textContent='No active Membership plan. Your Daily Fresh status is shown separately below.';
+   ['fmSplitPlanAmount','fmSplitCompany','fmSplitShopping','fmSplitRoi','fmSplitDailyRoi','fmSplitDays'].forEach(id=>{if(dash(id))dash(id).textContent='—';});
+   if(el.fmPlanSplitDates)el.fmPlanSplitDates.textContent='Membership plan is not active.';
+  }
+
+  if(dailyActive){
+   setBadge(dailyStatus,true,'DAILY FRESH ACTIVE');
+   if(dailyDetails){
+    dailyDetails.innerHTML=activeDailyRows.map(d=>{
+     const label=shopEsc(d.category_name||d.category_code||'Daily Fresh');
+     const duration=Number(d.duration_months)||0;
+     const start=d.starts_at?new Date(d.starts_at).toLocaleDateString('en-IN'):'—';
+     const end=d.ends_at?new Date(d.ends_at).toLocaleDateString('en-IN'):'—';
+     return `<div style="background:#fff;border:1px solid #dceee1;border-radius:11px;padding:12px;margin:8px 0">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b style="color:#183126">${label}${duration?' · '+duration+' Month(s)':''}</b><span class="badge approved">ACTIVE</span></div>
+      <div style="font-size:13px;color:#52675b;margin-top:7px">Plan Amount: <b>${money(d.amount_paid)}</b></div>
+      <div class="hint" style="margin-top:5px">Start: ${start} · Expiry: ${end}</div>
+     </div>`;
+    }).join('');
    }
-   if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='NO ACTIVE PLAN';el.fmPlanSplitMessage.textContent=payload?.message||'No active Membership or Daily Fresh plan was found.';}
-   if(dash('accountStatus'))dash('accountStatus').textContent='● INACTIVE';
-   if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='No active plan';
-   if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='No approved Membership or Daily Fresh activation was found.';
-   if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent='—';
-   if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Choose your Fresh-Mart plan';
-   if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Your payment becomes active after administrator approval and successful activation.';
-   if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='Choose a Plan →';
-   if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='Your account becomes active after either Membership or Daily Fresh is approved and activated.';
-   return;
+  }else{
+   setBadge(dailyStatus,false,'NOT ACTIVE');
+   if(dailyDetails)dailyDetails.textContent='No active Daily Fresh subscription.';
   }
-  const amount=Number(a.plan_amount)||0,company=Number(a.company_subscription)||0;
-  const shopping=Number(a.shopping_wallet_allocation)||0,roi=Number(a.roi_allocation)||0;
-  const days=Number(a.roi_days)||0,daily=Number(a.daily_roi_amount)||0;
-  fmUpdateRoiProgress(a);
-  const status=String(a.status||'active').toUpperCase();
-  if(el.fmPlanSplitStatus){
-   el.fmPlanSplitStatus.textContent=status;
-   el.fmPlanSplitMessage.textContent=(a.plan_name||'Membership plan')+' · Allocation from your approved activation.';
-   el.fmSplitPlanAmount.textContent=money(amount);
-   el.fmSplitCompany.textContent=money(company);
-   el.fmSplitShopping.textContent=money(shopping);
-   el.fmSplitRoi.textContent=money(roi);
-   el.fmSplitDailyRoi.textContent=money(daily);
-   el.fmSplitDays.textContent=days+' days';
-   el.fmPlanSplitDates.textContent='ROI period: '+(a.start_date||'—')+' to '+(a.end_date||'—')+'. Company subscription is an allocation, not a user wallet balance.';
-  }
-  if(dash('accountStatus'))dash('accountStatus').textContent='● '+status;
-  if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent=a.plan_name||'Active membership';
-  if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='Membership active · ROI '+days+' days · Daily ROI '+money(daily);
-  if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent=money(amount);
-  if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Your membership is active!';
-  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent=(a.plan_name||'Membership plan')+' · Company subscription '+money(company)+' · Shopping allocation '+money(shopping)+'.';
-  if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='View Membership →';
-  if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='ROI allocation '+money(roi)+' · '+money(daily)+' per day for '+days+' days.';
+
+  if(dash('accountStatus'))dash('accountStatus').textContent=accountActive?'● ACTIVE':'● INACTIVE';
+  const activePlanNames=[];
+  if(membershipActive)activePlanNames.push(a.plan_name||'Membership');
+  if(dailyActive)activePlanNames.push((dailyActive.category_name||'Daily Fresh')+(dailyActive.duration_months?' · '+dailyActive.duration_months+' Month(s)':''));
+  if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent=activePlanNames.join(' + ')||'No active plan';
+  if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent=accountActive?'Active plans: '+activePlanNames.join(' + '):'No approved Membership or Daily Fresh plan is active.';
+  if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent=membershipActive?money(a.plan_amount):dailyActive?money(dailyActive.amount_paid):'—';
+  if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent=accountActive?'Your Fresh-Mart plan is active!':'Choose your Fresh-Mart plan';
+  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent=accountActive?'Active: '+activePlanNames.join(' + ')+'. Enjoy your Fresh-Mart benefits.':'Your payment becomes active after administrator approval and successful activation.';
+  if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent=accountActive?'View Active Plans →':'Choose a Plan →';
+  if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent=accountActive?'Your account remains ACTIVE while at least one plan is active.':'Your account is INACTIVE because neither plan is active.';
  }catch(e){
-  console.warn('Membership allocation display:',e);
-  if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='UNAVAILABLE';el.fmPlanSplitMessage.textContent='Membership data could not load: '+(e.message||'Please refresh or contact support.');}
+  console.warn('Membership / Daily Fresh plan display:',e);
+  setBadge(el.fmPlanSplitStatus,false,'UNAVAILABLE');
+  if(el.fmPlanSplitMessage)el.fmPlanSplitMessage.textContent='Membership details could not be verified: '+(e.message||'Please refresh or contact support.');
+  setBadge(dailyStatus,false,'UNAVAILABLE');
+  if(dailyDetails)dailyDetails.textContent='Daily Fresh details could not be verified: '+(e.message||'Please refresh or contact support.');
   if(dash('accountStatus'))dash('accountStatus').textContent='● STATUS UNAVAILABLE';
-  if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='Could not verify membership';
-  if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent=e.message||'Secure membership lookup failed.';
-  if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Membership status unavailable';
-  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Please refresh or contact Fresh-Mart support. No membership status is being guessed.';
+  if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='Could not verify plans';
+  if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent=e.message||'Secure plan lookup failed.';
+  if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Plan status unavailable';
+  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Please refresh or contact Fresh-Mart support. No plan status is being guessed.';
  }
 }
-
 async function fmLoadRecentActivity(token){
  const tbody=document.getElementById('fmRecentActivityRows');
  if(!tbody)return;
@@ -954,6 +1008,7 @@ async function loadSignedInMember(){
     const node=document.getElementById(id);if(node)node.textContent='Unavailable';
    });
   });
+  window.fmUserAccessToken=session.access_token;
   loadTeamData(session.access_token);
   const profileRes=await fetch(SUPABASE_URL+'/rest/v1/fm_profiles?id=eq.'+encodeURIComponent(session.user.id)+'&select=id,username,user_code,display_name,account_status,account_type',{headers});
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
@@ -1761,6 +1816,7 @@ function showPage(id,fromHistory=false){
  if(currentPage && currentPage!=='checkout' && id==='checkout')window.fmLastNonCheckoutPage=currentPage;
  fmToggleMobileMenu(false);
  if(id==='rewards' && fmGlobalRewardUserId && fmGlobalRewardAccessToken){loadMyMatchingSlabs(fmGlobalRewardUserId,fmGlobalRewardAccessToken);}
+ if(id==='team' && window.fmUserAccessToken){loadTeamData(window.fmUserAccessToken);}
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
  document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
  if(!fromHistory){history.pushState({fmUserPage:id},'', '#'+encodeURIComponent(id));}
