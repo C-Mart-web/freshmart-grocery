@@ -90,7 +90,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </style>
 <style>
 /* Fresh-Mart first-login spin wheel */
-#fmSpinWelcomeModal{display:none;position:fixed;inset:0;z-index:10050;background:rgba(5,20,12,.72);padding:14px;align-items:center;justify-content:center;overflow:auto}
+#fmSpinWelcomeModal{display:none;position:fixed;inset:0;z-index:10010;background:rgba(5,20,12,.72);padding:14px;align-items:center;justify-content:center;overflow:auto}
 #fmSpinWelcomeModal.open{display:flex}
 .fm-spin-welcome-box{width:min(100%,440px);background:#fff;border-radius:22px;padding:20px 16px 18px;text-align:center;box-shadow:0 18px 60px #0005;position:relative}
 .fm-spin-wheel-wrap{width:min(78vw,310px);height:min(78vw,310px);max-width:310px;max-height:310px;margin:16px auto 12px;position:relative}
@@ -370,13 +370,13 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div id="fmSpinResultPopup" class="fm-spin-result-pop" aria-live="assertive"><div class="fm-win-icon">🏆</div><h2>Congratulations!</h2><p>You won</p><img id="fmSpinWonGiftImage" alt="Gift prize" style="display:none;max-width:180px;max-height:150px;object-fit:contain;border-radius:14px;margin:8px auto"><div class="fm-win-prize" id="fmSpinWonPrize">Special Reward</div><p id="fmSpinWonDetails">Your reward has been added to Coupons &amp; Offers.</p><button type="button" class="btn btn-green" id="fmSpinResultAction" onclick="fmSpinResultContinue()">View My Coupons</button></div>
   <div style="font-size:34px">🎉</div>
   <h2 id="fmSpinWelcomeTitle" style="margin:4px 0;color:#126b3b">Welcome to Fresh-Mart!</h2>
-  <p class="hint" style="margin:0">Your welcome reward is waiting. Free members get one spin; eligible plan members get their plan activation spin.</p>
+  <p class="hint" style="margin:0">Spin the wheel & get the chance to win prizes! Your available spin depends on your active plan and Admin settings.</p>
   <div class="fm-spin-wheel-wrap">
    <div class="fm-spin-pointer"></div>
    <div class="fm-spin-wheel" id="fmWelcomeSpinWheel"></div>
    <button class="fm-spin-wheel-center" id="fmWelcomeSpinAction" type="button" onclick="fmPlayWelcomeSpin()">SPIN</button>
   </div>
-  <p id="fmWelcomeSpinMessage" class="hint" aria-live="polite">One-time spin for Free Members; plan members follow their selected plan settings.</p>
+  <p id="fmWelcomeSpinMessage" class="hint" aria-live="polite">Spin the wheel & get the chance to win prizes!</p>
   <button type="button" class="btn btn-outline" id="fmWelcomeSpinLater" onclick="fmCloseWelcomeSpin()">Spin Later</button>
  </div>
 </div>
@@ -788,16 +788,35 @@ async function fmLoadMemberPlanSplit(userId,token){
   const a=payload?.activation||null;
   fmCurrentActivationForPlan=a;
   fmUpdatePlanTypeLabels();
+  // Account is ACTIVE when either Membership OR Daily Fresh is active.
+  const nowIso=new Date().toISOString();
+  const {data:dailyRows,error:dailyErr}=await fmShopClient.from('fm_daily_fresh_subscriptions')
+   .select('id,category_name,starts_at,ends_at,status,amount_paid').eq('user_id',userId).eq('status','active')
+   .lte('starts_at',nowIso).gte('ends_at',nowIso).order('ends_at',{ascending:false}).limit(1);
+  if(dailyErr)throw dailyErr;
+  const dailyActive=(dailyRows||[])[0]||null;
   if(!a){
-   if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='NO ACTIVE PLAN';el.fmPlanSplitMessage.textContent=payload?.message||'No active membership activation was found for this account.';}
+   if(dailyActive){
+    if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='DAILY FRESH ACTIVE';el.fmPlanSplitMessage.textContent=(dailyActive.category_name||'Daily Fresh')+' subscription is active. Membership allocation is not active.';}
+    if(dash('accountStatus'))dash('accountStatus').textContent='● ACTIVE';
+    if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent=dailyActive.category_name||'Daily Fresh';
+    if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='Daily Fresh active · Expires '+new Date(dailyActive.ends_at).toLocaleDateString('en-IN');
+    if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent=money(dailyActive.amount_paid);
+    if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Your Daily Fresh plan is active!';
+    if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Your Daily Fresh subscription is active. Enjoy your scheduled deliveries and benefits.';
+    if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='View Daily Fresh →';
+    if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='Daily Fresh subscription expires on '+new Date(dailyActive.ends_at).toLocaleDateString('en-IN')+'.';
+    return;
+   }
+   if(el.fmPlanSplitStatus){el.fmPlanSplitStatus.textContent='NO ACTIVE PLAN';el.fmPlanSplitMessage.textContent=payload?.message||'No active Membership or Daily Fresh plan was found.';}
    if(dash('accountStatus'))dash('accountStatus').textContent='● INACTIVE';
    if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='No active plan';
-   if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='No approved activation record was found.';
+   if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='No approved Membership or Daily Fresh activation was found.';
    if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent='—';
    if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Choose your Fresh-Mart plan';
    if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Your payment becomes active after administrator approval and successful activation.';
    if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='Choose a Plan →';
-   if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='If your payment request says APPROVED, contact support to verify its activation record.';
+   if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='Your account becomes active after either Membership or Daily Fresh is approved and activated.';
    return;
   }
   const amount=Number(a.plan_amount)||0,company=Number(a.company_subscription)||0;
@@ -1856,7 +1875,7 @@ async function demoSubmit(e){
   const result=await fmPaymentCall('membership_payment_submit',{plan_id:Number(selected.dataset.planId||selected.getAttribute('data-plan-id')||0),amount,transaction_reference:'PENDING-UPI',payment_date:new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'}),payment_method:'upi',proof_path:path});
   const reqId=result?.request?.id;if(!reqId)throw new Error('Membership request was created but its request ID was not returned. Contact Admin before retrying.');
   await fmCommonStartPayment('membership',String(reqId),file,txn);
-  msg.textContent='Membership request #'+reqId+' created. UTR and screenshot submitted; admin verification is pending.';document.getElementById('paymentForm').reset();await fmLoadMembershipPayments();
+  msg.textContent='Membership request #'+reqId+' created. UTR and screenshot submitted; admin verification is pending.';document.getElementById('paymentForm').reset();await fmLoadMembershipPayments();fmShowPaymentProcessingNotice('membership');
  }catch(err){msg.textContent='Submission failed: '+(err.message||err);}finally{btn.disabled=false;}
 }
 async function fmLoadMembershipPayments(){
@@ -2388,44 +2407,69 @@ let fmUpiModalHistoryActive=false;
 let fmMembershipActivationTimer=null;
 let fmMembershipActivationUserId=null;
 let fmMembershipActivationBusy=false;
-function fmShowPaymentProcessingNotice(){const el=document.getElementById('fmPaymentProcessingNotice');if(el)el.style.display='flex';}
+function fmShowPaymentProcessingNotice(type){
+ const el=document.getElementById('fmPaymentProcessingNotice');
+ const p=el?.querySelector('.fm-global-notice-box p');
+ const label=type==='daily_fresh'?'Daily Fresh subscription':type==='membership'?'Membership plan':'payment';
+ if(p)p.innerHTML='Your UTR and payment screenshot were submitted successfully for your <b>'+label+'</b>. Please wait <b>5–10 minutes</b> while Admin verifies your payment. You can continue browsing Fresh-Mart. Your plan becomes active immediately after Admin approval.';
+ if(el)el.style.display='flex';
+}
 function fmClosePaymentProcessingNotice(){const el=document.getElementById('fmPaymentProcessingNotice');if(el)el.style.display='none';}
-function fmShowPlanActivatedNotice(){const el=document.getElementById('fmPlanActivatedNotice');if(el)el.style.display='flex';}
+function fmShowPlanActivatedNotice(type){
+ const el=document.getElementById('fmPlanActivatedNotice');
+ const p=document.getElementById('fmPlanActivatedText');
+ if(p)p.textContent=(type==='Daily Fresh'?'Your Daily Fresh subscription':'Your Membership plan')+' has been activated successfully. Your Fresh-Mart account is now ACTIVE. Spin the wheel & get the chance to win prizes!';
+ if(el)el.style.display='flex';
+}
 function fmClosePlanActivatedNotice(){const el=document.getElementById('fmPlanActivatedNotice');if(el)el.style.display='none';}
 async function fmCheckMembershipActivation(userId){
  if(!userId||!fmShopClient||fmMembershipActivationBusy)return;
  fmMembershipActivationBusy=true;
  try{
-  // Use the same secured RPC that powers the member's Plan & Allocation display.
   const session=await getMemberSession();
   if(!session?.user?.id||session.user.id!==userId)return;
   const response=await fetch(SUPABASE_URL+'/rest/v1/rpc/fm_user_membership_allocation_v1',{
-   method:'POST',
-   headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
-   body:'{}'
+   method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:'{}'
   });
   const payload=await response.json().catch(()=>null);
-  if(!response.ok)throw new Error(payload?.message||payload?.error||'Activation status check failed ('+response.status+').');
+  if(!response.ok)throw new Error(payload?.message||payload?.error||'Membership status check failed ('+response.status+').');
   const activation=payload?.activation||null;
-  if(!activation?.id||String(activation.status||'active').toLowerCase()!=='active')return;
-  const activationId=String(activation.id);
   const key='fm_seen_membership_activations_'+userId;
-  let saved=null;
-  try{const raw=localStorage.getItem(key);saved=raw?JSON.parse(raw):null;}catch(_){saved=null;}
-  // First visit sets a baseline, so an old active plan does not trigger a false welcome popup.
-  if(!Array.isArray(saved)){
-   localStorage.setItem(key,JSON.stringify([activationId]));
-   return;
+  let saved=[];try{saved=JSON.parse(localStorage.getItem(key)||'[]');}catch(_){saved=[];}
+  if(!Array.isArray(saved))saved=[];
+  if(activation?.id&&String(activation.status||'active').toLowerCase()==='active'){
+   const id=String(activation.id);
+   if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify([id]));
+   else if(!saved.map(String).includes(id)){
+    localStorage.setItem(key,JSON.stringify([...new Set([...saved.map(String),id])].slice(-100)));
+    fmShowPlanActivatedNotice('Membership');
+    await fmLoadMemberPlanSplit(userId,session.access_token);
+    const amount=Number(activation.plan_amount)||0;if(amount>0)localStorage.removeItem('fm_membership_pending_request_'+String(amount));
+    setTimeout(()=>fmStartMembershipActivationSpin(id,activation.plan_id),900);
+   }
   }
-  if(!saved.map(String).includes(activationId)){
-   localStorage.setItem(key,JSON.stringify([...new Set([...saved.map(String),activationId])].slice(-100)));
-   fmShowPlanActivatedNotice();
-   // Refresh dashboard and release only the newly activated plan's cached request.
-   await fmLoadMemberPlanSplit(userId,session.access_token);
-   const activatedAmount=Number(fmCurrentActivationForPlan?.plan_amount)||Number(activation.plan_amount)||0;
-   if(activatedAmount>0)localStorage.removeItem('fm_membership_pending_request_'+String(activatedAmount));
+  // Daily Fresh independently activates the member account and gets the same approval popup.
+  const nowIso=new Date().toISOString();
+  const {data:dailyRows,error:dailyErr}=await fmShopClient.from('fm_daily_fresh_subscriptions')
+   .select('id,category_name,starts_at,ends_at,status').eq('user_id',userId).eq('status','active')
+   .lte('starts_at',nowIso).gte('ends_at',nowIso).order('created_at',{ascending:false}).limit(20);
+  if(dailyErr)throw dailyErr;
+  const dailyKey='fm_seen_daily_fresh_subscriptions_'+userId;
+  let dailySaved=[];try{dailySaved=JSON.parse(localStorage.getItem(dailyKey)||'[]');}catch(_){dailySaved=[];}
+  if(!Array.isArray(dailySaved))dailySaved=[];
+  const dailyIds=(dailyRows||[]).map(x=>String(x.id));
+  if(!localStorage.getItem(dailyKey))localStorage.setItem(dailyKey,JSON.stringify(dailyIds));
+  else{
+   const fresh=(dailyRows||[]).find(x=>!dailySaved.map(String).includes(String(x.id)));
+   if(fresh){
+    localStorage.setItem(dailyKey,JSON.stringify([...new Set([...dailySaved.map(String),...dailyIds])].slice(-100)));
+    fmShowPlanActivatedNotice('Daily Fresh');
+    await fmLoadMemberPlanSplit(userId,session.access_token);
+    if(typeof fmDFUserLoad==='function')await fmDFUserLoad();
+   }
   }
- }catch(e){console.warn('Membership activation status check failed:',e);}
+  if(activation?.id||(dailyRows||[]).length){const badge=document.getElementById('accountStatus');if(badge)badge.textContent='● ACTIVE';}
+ }catch(e){console.warn('Plan activation status check failed:',e);}
  finally{fmMembershipActivationBusy=false;}
 }
 function fmStartMembershipActivationWatcher(userId){
@@ -2524,9 +2568,10 @@ async function fmUpiSubmitProof(){
   if(paymentType==='membership'){
    const m=document.getElementById('payMessage');if(m)m.textContent='Payment submitted successfully. Status: Processing — pending Admin verification.';
    await fmLoadMembershipPayments();
-   fmShowPaymentProcessingNotice();
+   fmShowPaymentProcessingNotice('membership');
   }else if(paymentType==='daily_fresh'){
    const m=document.getElementById('fmDFUserMsg');if(m)m.textContent='Daily Fresh payment submitted successfully. Admin verification is pending.';
+   fmShowPaymentProcessingNotice('daily_fresh');
    await fmDFUserLoad();
   }else if(paymentType==='grocery'){
    await loadMyGroceryOrders();
