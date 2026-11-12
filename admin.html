@@ -485,7 +485,7 @@ async function loadMembers(){
     id:a.activation_id,user_id:a.user_id,plan_id:a.plan_id,
     plan_amount:a.plan_amount,status:a.status,
     start_date:a.start_date,end_date:a.end_date,created_at:a.created_at,
-    _rpc_is_active:a.is_active,plan_name:a.plan_name
+    _rpc_is_active:a.is_active===true,plan_name:a.plan_name
    }));
    if(dailyResult.error)warnings.push('Daily Fresh details: '+dailyResult.error.message);
    else dailyRows=dailyResult.data||[];
