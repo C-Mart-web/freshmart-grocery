@@ -108,6 +108,22 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  @keyframes fmTeamSplit{0%,100%{transform:translateY(-2px) scale(1.12)}30%{transform:translate(-3px,-3px) scale(1.16)}65%{transform:translate(3px,-3px) scale(1.16)}}
  @keyframes fmBankWithdraw{0%,100%{transform:translateY(-2px) scale(1.12)}35%{transform:translateY(2px) scale(1.1)}65%{transform:translateY(-5px) scale(1.18)}}
 }
+
+/* Space-saving grocery search and compact category cards */
+.fm-grocery-welcome{margin-bottom:10px!important}
+.fm-shop-search-top{display:flex;align-items:center;gap:7px;margin:0 0 12px;padding:5px;background:#fff;border:1px solid #dbe8de;border-radius:13px;box-shadow:0 2px 8px rgba(24,80,45,.05)}
+.fm-shop-search-top input{flex:1;min-width:0;width:100%;border:0!important;outline:none!important;background:transparent;padding:10px 11px;font-size:15px;color:#20382b}
+.fm-shop-search-top button{flex:0 0 42px;width:42px;height:40px;border:0;border-radius:10px;background:#e8f5eb;color:#168447;font-size:19px;display:grid;place-items:center;cursor:pointer}
+.fm-shop-search-top button:active{transform:scale(.94)}
+.fm-category-strip-wrap{padding:8px 9px 9px!important;margin-bottom:10px!important}
+.fm-category-strip-head{margin-bottom:7px!important;font-size:12px!important}
+.fm-category-strip{gap:8px!important;padding:1px 1px 4px!important}
+.fm-category-tile{flex-basis:76px!important;min-width:76px!important;min-height:82px!important;padding:6px 4px!important;gap:4px!important;border-radius:12px!important}
+.fm-category-tile .fm-cat-visual{width:42px!important;height:39px!important;font-size:25px!important;border-radius:9px!important}
+.fm-category-tile b{font-size:10px!important;line-height:1.15!important}
+.fm-category-tile small{font-size:9px!important;line-height:1.1!important}
+@media(max-width:680px){.fm-category-strip-wrap{padding:8px 8px 8px!important;margin-bottom:9px!important}.fm-category-tile{flex-basis:76px!important;min-width:76px!important;min-height:82px!important}.fm-category-tile .fm-cat-visual{width:42px!important;height:39px!important}}
+
 </style>
 <style>
 /* Fresh-Mart first-login spin wheel */
@@ -188,11 +204,14 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   </div>
 </section>
 <section class="page" id="groceries">
-  <div class="welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
+  <div class="welcome fm-grocery-welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
+  <div class="fm-shop-search-top"><input id="shopProductSearch" placeholder="Search groceries…" oninput="renderFreshMartProducts()" aria-label="Search groceries"><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
+  <select id="shopVoiceLanguage" aria-label="Voice search language" hidden><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select>
+  <select id="shopProductCategory" onchange="renderFreshMartProducts()" hidden><option value="">All categories</option></select>
   <div class="fm-page-banner" id="fmBannerGroceries" style="display:none"></div>
   <div class="fm-category-strip-wrap"><div class="fm-category-strip-head"><b>Shop by Category</b><span>Explore all</span></div><div id="fmShopCategoryCards" class="fm-category-strip"><div class="hint">Loading categories…</div></div></div>
   <div class="fm-page-banner" id="fmBannerGroceriesBottom" style="display:none"></div>
-  <div class="card" id="fmMemberDiscountBanner" style="display:none;margin-bottom:12px;background:#f0faf3;border-color:#cfe8d6"><b style="color:#168447">🎉 Your Membership Self Purchase Discount</b><p id="fmMemberDiscountText" class="hint" style="margin:6px 0 0"></p></div><div class="card"><div class="section-head"><h2>Available Products</h2><button class="link" type="button" onclick="loadFreshMartProducts()">Refresh</button></div><div class="searchrow" style="display:flex;gap:7px;margin:10px 0;flex-wrap:wrap"><input id="shopProductSearch" placeholder="Search groceries…" oninput="renderFreshMartProducts()" style="flex:1;min-width:125px;padding:11px;border:1px solid #dbe8de;border-radius:10px"><select id="shopVoiceLanguage" aria-label="Voice search language" style="padding:9px 5px;border:1px solid #dbe8de;border-radius:10px;font-size:12px"><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search" style="border:0;border-radius:10px;background:#e8f5eb;color:#168447;padding:8px 12px;font-size:18px">🎤</button><select id="shopProductCategory" onchange="renderFreshMartProducts()" style="padding:11px;border:1px solid #dbe8de;border-radius:10px"><option value="">All categories</option></select></div><p id="shopVoiceMessage" class="hint" style="margin:0 0 8px"></p><p id="shopProductMsg" class="hint">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div></div>
+  <div class="card" id="fmMemberDiscountBanner" style="display:none;margin-bottom:12px;background:#f0faf3;border-color:#cfe8d6"><b style="color:#168447">🎉 Your Membership Self Purchase Discount</b><p id="fmMemberDiscountText" class="hint" style="margin:6px 0 0"></p></div><div class="card"><div class="section-head"><h2>Available Products</h2><button class="link" type="button" onclick="loadFreshMartProducts()">Refresh</button></div><p id="shopVoiceMessage" class="hint" style="margin:0 0 8px"></p><p id="shopProductMsg" class="hint">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div></div>
   
   
 </section>
