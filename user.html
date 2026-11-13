@@ -2833,6 +2833,28 @@ document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 }
 </style>
 
+
+<style id="fm-home-offer-banner-compact-size">
+/* Compact home offer banner: reduce its vertical footprint on mobile. */
+#fmHomeOffers{margin:2px 0 15px!important}
+#fmHomeOffersTrack{gap:10px!important;padding:1px 1px 6px!important}
+#fmHomeOffersTrack .fm-home-offer{
+ flex:0 0 88%!important;
+ width:88%!important;
+ min-width:88%!important;
+ height:112px!important;
+ max-height:112px!important;
+ border-radius:14px!important;
+}
+#fmHomeOffersTrack .fm-home-offer img{
+ width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important
+}
+#fmHomeOffersDots{padding-top:2px!important}
+@media(min-width:681px){
+ #fmHomeOffersTrack .fm-home-offer{flex-basis:58%!important;width:58%!important;min-width:58%!important;height:150px!important;max-height:150px!important}
+}
+</style>
+
 </body>
 
 <style>
@@ -3409,6 +3431,28 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
 #fmHomeOffersTrack .fm-home-offer-copy{display:none!important}
 @media(min-width:681px){
  #fmHomeOffersTrack .fm-home-offer{flex-basis:62%!important;width:62%!important;min-width:62%!important;height:205px!important}
+}
+</style>
+
+
+<style id="fm-home-offer-banner-compact-size">
+/* Compact home offer banner: reduce its vertical footprint on mobile. */
+#fmHomeOffers{margin:2px 0 15px!important}
+#fmHomeOffersTrack{gap:10px!important;padding:1px 1px 6px!important}
+#fmHomeOffersTrack .fm-home-offer{
+ flex:0 0 88%!important;
+ width:88%!important;
+ min-width:88%!important;
+ height:112px!important;
+ max-height:112px!important;
+ border-radius:14px!important;
+}
+#fmHomeOffersTrack .fm-home-offer img{
+ width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important
+}
+#fmHomeOffersDots{padding-top:2px!important}
+@media(min-width:681px){
+ #fmHomeOffersTrack .fm-home-offer{flex-basis:58%!important;width:58%!important;min-width:58%!important;height:150px!important;max-height:150px!important}
 }
 </style>
 
