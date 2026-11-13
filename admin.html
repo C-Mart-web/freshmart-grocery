@@ -247,6 +247,26 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
  <p id="fmBannerMsg" class="hint" aria-live="polite"></p><div id="fmBannerPreview" style="margin-top:10px"></div>
 </div>
 
+
+<div class="card" id="fmGroceryHomeOfferManager" style="margin-bottom:16px;border:1px solid #bfe4ca">
+ <div class="section-head"><h2>🥬 Grocery Home Offer Slider</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmHomeOfferLoad()">Refresh</button></div>
+ <p class="hint">Home page lo discount banners carousel laga display avutayi. Banner click chesthe ikkada select chesina Product IDs matrame user ki kanipistayi. Up to 5 offers manage cheyyachu.</p>
+ <div class="formgrid">
+  <div class="field"><label>Offer Slot</label><select id="fmHomeOfferSlot"><option value="0">Offer 1</option><option value="1">Offer 2</option><option value="2">Offer 3</option><option value="3">Offer 4</option><option value="4">Offer 5</option></select></div>
+  <div class="field"><label>Offer Banner Image (JPG / PNG / WEBP · max 3 MB)</label><input id="fmHomeOfferFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+  <div class="field"><label>Title</label><input id="fmHomeOfferTitle" maxlength="60" placeholder="Discount"></div>
+  <div class="field"><label>Discount Text</label><input id="fmHomeOfferDiscount" maxlength="30" placeholder="25% OFF"></div>
+  <div class="field"><label>Subtitle</label><input id="fmHomeOfferSubtitle" maxlength="100" placeholder="All Vegetables & Fruits"></div>
+  <div class="field"><label>Image Alt Text</label><input id="fmHomeOfferAlt" maxlength="100" placeholder="Fresh vegetables offer"></div>
+  <div class="field" style="grid-column:1/-1"><label>Product IDs for this offer (comma separated)</label><input id="fmHomeOfferProductIds" placeholder="Example: 12, 18, 25"><small class="hint">Supabase fm_products table lo unna product ID values enter cheyyandi. Empty ga unte click chesinappudu all products chupistayi.</small></div>
+  <div class="field"><label>Status</label><select id="fmHomeOfferEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+ </div>
+ <div id="fmHomeOfferPreview" class="previewbox"><span class="hint">Offer preview will appear here.</span></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="fmHomeOfferSave()">Upload & Save Offer</button><button class="btn btn-outline" type="button" onclick="fmHomeOfferDelete()">Delete This Offer</button></div>
+ <p id="fmHomeOfferMsg" class="hint" aria-live="polite"></p>
+ <div id="fmHomeOfferList" class="hint" style="margin-top:8px"></div>
+</div>
+
 <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Withdrawal Settings</h2><button class="btn btn-outline btn-sm" onclick="fmAdminLoadWithdrawalSettings()">Refresh</button></div><p class="hint">These settings control the User Panel withdrawal dropdown. Requests debit Income Wallet immediately; rejection refunds the full amount.</p><div class="formgrid"><div class="field"><label>Withdrawals</label><select id="fmWdEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label>Minimum Amount (₹)</label><select id="fmWdMin"><option>100</option><option>200</option><option>500</option><option>1000</option><option>2000</option><option>5000</option><option value="custom">Custom</option></select></div><div class="field"><label>Maximum Amount (₹)</label><select id="fmWdMax"><option>1000</option><option>2000</option><option>5000</option><option>10000</option><option>25000</option><option>50000</option><option value="custom">Custom</option></select></div><div class="field"><label>Withdrawal Charge</label><select id="fmWdCharge"><option value="0">0%</option><option value="5">5%</option><option value="10">10%</option><option value="15">15%</option><option value="custom">Custom</option></select></div><div class="field" id="fmWdMinCustomWrap" style="display:none"><label>Custom Minimum (₹)</label><input id="fmWdMinCustom" type="number" min="1" value="100"></div><div class="field" id="fmWdMaxCustomWrap" style="display:none"><label>Custom Maximum (₹)</label><input id="fmWdMaxCustom" type="number" min="1" value="50000"></div><div class="field" id="fmWdChargeCustomWrap" style="display:none"><label>Custom Charge (%)</label><input id="fmWdChargeCustom" type="number" min="0" max="100" step="0.01" value="10"></div><div class="field"><label>Custom Amount in User Panel</label><select id="fmWdCustomAllowed"><option value="true">Allowed</option><option value="false">Not Allowed</option></select></div></div><button class="btn btn-green" style="margin-top:14px" onclick="fmAdminSaveWithdrawalSettings()">Save Withdrawal Settings</button><p id="fmWdSettingsMsg" class="hint" aria-live="polite"></p></div>
 
 <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Default Delivery Settings</h2></div><div class="formgrid"><div class="field"><label><input type="checkbox" id="fmExpressEnabled" checked> Express Delivery Enabled</label></div><div class="field"><label>Express delivery minutes</label><input type="number" id="fmExpressMinutes" min="1" max="240" value="10"></div><div class="field"><label>Express Start Time</label><input type="time" id="fmExpressStart" value="10:00"></div><div class="field"><label>Express End Time</label><input type="time" id="fmExpressEnd" value="21:00"></div><div class="field"><label><input type="checkbox" id="fmSlotsEnabled" checked> Scheduled Slots Enabled</label></div><div class="field"><label>Default Delivery Charge (₹)</label><input type="number" id="fmDefaultCharge" min="0" step="0.01" value="0"></div></div><button class="btn btn-green" style="margin-top:12px" onclick="fmSaveDeliveryDefaults()">Save Default Delivery Settings</button><p id="fmDeliveryMsg" class="hint"></p></div>
@@ -2048,6 +2068,75 @@ async function fmUpiAdminSave(){const m=document.getElementById('fmUpiAdminMsg')
 async function fmUpiAdminLoad(){const el=document.getElementById('fmUpiAdminRows');if(!el)return;el.textContent='Loading…';try{const {data,error}=await fmSupabase.from('fm_common_payment_transactions').select('*').order('created_at',{ascending:false}).limit(100);if(error)throw error;const rows=await Promise.all((data||[]).map(async x=>{let proof='Screenshot not submitted';if(x.screenshot_path){const {data:signed,error:se}=await fmSupabase.storage.from('fm-payment-proofs').createSignedUrl(x.screenshot_path,3600);proof=!se&&signed?.signedUrl?`<a href="${fmUpiEsc(signed.signedUrl)}" target="_blank" rel="noopener">View payment screenshot (1 hour)</a>`:'Screenshot link unavailable / permission denied';}return `<div class="fm-upi-row"><b>${fmUpiEsc(x.payment_type)} · ₹${Number(x.amount).toFixed(2)}</b><br>Ref: ${fmUpiEsc(x.txn_ref)}<br>Source ID: ${fmUpiEsc(x.source_id||'—')}<br>User: ${fmUpiEsc(x.user_id)}<br>Status: ${fmUpiEsc(String(x.status||"").toLowerCase()==="submitted"?"Submitted – Pending for Approval":(["paid","approved"].includes(String(x.status||"").toLowerCase())?"Approved":String(x.status||"").toUpperCase()))}<br>UTR: ${fmUpiEsc(x.utr_number||'Not submitted')}<br>${proof}<br><small>Created: ${fmUpiEsc(new Date(x.created_at).toLocaleString('en-IN'))}</small><br>${x.status==='submitted'?`<button onclick="fmUpiAdminReview('${x.id}','paid')">Approve after bank verification</button><button onclick="fmUpiAdminReview('${x.id}','rejected')" style="background:#a83232">Reject</button>`:''}</div>`;}));el.innerHTML=rows.join('')||'No payment requests found.';}catch(e){el.textContent='Load error: '+e.message;}}
 async function fmUpiAdminReview(id,decision){const note=prompt('Admin note (optional):')||'';if(decision==='paid'&&!confirm('Have you verified this exact UTR and amount in the bank / UPI statement? Approve payment now?'))return;if(decision==='rejected'&&!confirm('Reject this payment request?'))return;try{const {data,error}=await fmSupabase.rpc('fm_common_payment_admin_review_v1',{p_transaction_id:id,p_decision:decision,p_admin_note:note});if(error)throw error;if(data?.success===false)throw new Error(data.message||'Payment review failed');await fmUpiAdminLoad();alert('Payment '+decision+'. '+(decision==='paid'?'The member panel will show the activation popup automatically. ':'')+(data?.message||''));}catch(e){alert('Review failed: '+e.message);}}
 function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+let fmGroceryHomeOffersAdmin=[];
+function fmHomeOfferRenderPreview(){
+ const i=Number(document.getElementById('fmHomeOfferSlot')?.value||0),o=fmGroceryHomeOffersAdmin[i]||{};
+ const host=document.getElementById('fmHomeOfferPreview');if(!host)return;
+ host.innerHTML=o.image_url?'<img src="'+escapeHtml(o.image_url)+'" style="max-width:100%;max-height:170px;border-radius:12px;object-fit:contain"><p class="hint">'+(o.enabled===false?'Disabled':'Enabled')+'</p>':'<span class="hint">No image saved in this slot. Choose an image to create the offer.</span>';
+ document.getElementById('fmHomeOfferTitle').value=o.title||'Discount';
+ document.getElementById('fmHomeOfferDiscount').value=o.discount_text||'';
+ document.getElementById('fmHomeOfferSubtitle').value=o.subtitle||'';
+ document.getElementById('fmHomeOfferAlt').value=o.alt||'';
+ document.getElementById('fmHomeOfferProductIds').value=Array.isArray(o.product_ids)?o.product_ids.join(', '):'';
+ document.getElementById('fmHomeOfferEnabled').value=o.enabled===false?'false':'true';
+}
+function fmHomeOfferRenderList(){
+ const host=document.getElementById('fmHomeOfferList');if(!host)return;
+ host.innerHTML='<b>Saved offers:</b> '+fmGroceryHomeOffersAdmin.map((o,i)=>o&&o.image_url?('Offer '+(i+1)+' — '+escapeHtml(o.title||'Discount')+' ('+(o.enabled===false?'Disabled':'Enabled')+')'):'Offer '+(i+1)+' — Empty').join(' · ');
+}
+async function fmHomeOfferLoad(){
+ const msg=document.getElementById('fmHomeOfferMsg');
+ try{
+  const {data,error}=await fmSupabase.from('fm_store_settings').select('setting_value').eq('setting_key','grocery_home_offers').maybeSingle();
+  if(error)throw error;
+  const arr=data?.setting_value?.offers;
+  fmGroceryHomeOffersAdmin=Array.isArray(arr)?arr.slice(0,5):[];
+  while(fmGroceryHomeOffersAdmin.length<5)fmGroceryHomeOffersAdmin.push(null);
+  fmHomeOfferRenderPreview();fmHomeOfferRenderList();
+  if(msg)msg.textContent='Saved offers loaded.';
+ }catch(e){if(msg)msg.textContent='Could not load offers: '+e.message;}
+}
+document.getElementById('fmHomeOfferSlot')?.addEventListener('change',fmHomeOfferRenderPreview);
+async function fmHomeOfferSave(){
+ const msg=document.getElementById('fmHomeOfferMsg'),slot=Number(document.getElementById('fmHomeOfferSlot').value),file=document.getElementById('fmHomeOfferFile').files[0];
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Admin sign-in required.');
+  const old=fmGroceryHomeOffersAdmin[slot]||{};let imageUrl=old.image_url||'';
+  if(file){
+   if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP image.');
+   if(file.size>3*1024*1024)throw new Error('Offer image must be 3 MB or smaller.');
+   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path='home-offers/offer-'+(slot+1)+'-'+Date.now()+'.'+ext;
+   const {data,error}=await fmSupabase.storage.from('fm-product-images').upload(path,file,{contentType:file.type,upsert:false});if(error)throw error;
+   imageUrl=fmSupabase.storage.from('fm-product-images').getPublicUrl(data.path).data.publicUrl;
+  }
+  if(!imageUrl)throw new Error('Please choose an offer banner image.');
+  const raw=document.getElementById('fmHomeOfferProductIds').value.trim();
+  const productIds=raw?raw.split(',').map(x=>x.trim()).filter(Boolean):[];
+  fmGroceryHomeOffersAdmin[slot]={
+   image_url:imageUrl,title:document.getElementById('fmHomeOfferTitle').value.trim()||'Special Offer',
+   discount_text:document.getElementById('fmHomeOfferDiscount').value.trim(),
+   subtitle:document.getElementById('fmHomeOfferSubtitle').value.trim(),
+   alt:document.getElementById('fmHomeOfferAlt').value.trim()||'Rupee Mart grocery offer',
+   product_ids:productIds,enabled:document.getElementById('fmHomeOfferEnabled').value==='true'
+  };
+  const {error}=await fmSupabase.from('fm_store_settings').upsert({setting_key:'grocery_home_offers',setting_value:{offers:fmGroceryHomeOffersAdmin.filter(Boolean)},updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'setting_key'});if(error)throw error;
+  document.getElementById('fmHomeOfferFile').value='';fmHomeOfferRenderPreview();fmHomeOfferRenderList();
+  msg.textContent='Offer '+(slot+1)+' saved successfully.';msg.style.color='#168447';
+ }catch(e){msg.textContent='Offer save failed: '+e.message;msg.style.color='#b72e2e';}
+}
+async function fmHomeOfferDelete(){
+ const msg=document.getElementById('fmHomeOfferMsg'),slot=Number(document.getElementById('fmHomeOfferSlot').value);
+ try{
+  const {data:{session}}=await fmSupabase.auth.getSession();if(!session)throw new Error('Admin sign-in required.');
+  fmGroceryHomeOffersAdmin[slot]=null;
+  const {error}=await fmSupabase.from('fm_store_settings').upsert({setting_key:'grocery_home_offers',setting_value:{offers:fmGroceryHomeOffersAdmin.filter(Boolean)},updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'setting_key'});if(error)throw error;
+  fmHomeOfferRenderPreview();fmHomeOfferRenderList();msg.textContent='Offer '+(slot+1)+' deleted.';msg.style.color='#168447';
+ }catch(e){msg.textContent='Delete failed: '+e.message;msg.style.color='#b72e2e';}
+}
+
+
+setTimeout(()=>{if(typeof fmHomeOfferLoad==='function')fmHomeOfferLoad();},1200);
 </script>
 
 </body>

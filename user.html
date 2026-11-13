@@ -182,6 +182,34 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   }
 }
 
+
+/* Rupee Mart grocery home: compact image-category pills inspired by modern grocery apps */
+.fm-category-strip-wrap{padding:0!important;margin:17px 0 19px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.fm-category-strip-head{font-size:18px!important;margin:0 2px 12px!important;color:#20382b}
+.fm-category-strip-head span{font-size:12px!important}
+.fm-category-strip{gap:10px!important;padding:2px 1px 8px!important;scrollbar-width:none}
+.fm-category-strip::-webkit-scrollbar{display:none}
+.fm-category-tile{flex:0 0 auto!important;min-width:0!important;min-height:0!important;height:70px!important;border:1px solid transparent!important;border-radius:40px!important;padding:7px 15px 7px 8px!important;background:#fff!important;box-shadow:0 5px 18px rgba(20,90,50,.055);display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;white-space:nowrap!important}
+.fm-category-tile .fm-cat-visual{width:48px!important;height:48px!important;flex:0 0 48px!important;border-radius:50%!important;background:#e5f6e9!important;font-size:25px!important}
+.fm-category-tile b{font-size:13px!important;font-weight:750!important}
+.fm-category-tile small{display:none!important}
+.fm-category-tile.fm-category-active,.fm-category-tile:focus-visible{border-color:#168447!important;background:#f1fbf4!important;outline:none;box-shadow:0 0 0 2px rgba(22,132,71,.08)}
+.fm-home-offers{margin:4px 0 21px;overflow:hidden}
+.fm-home-offers-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 1px 8px}
+.fm-home-offers-track::-webkit-scrollbar{display:none}
+.fm-home-offer{position:relative;flex:0 0 88%;min-width:88%;height:174px;border-radius:19px;overflow:hidden;scroll-snap-align:center;background:linear-gradient(110deg,#38b832,#168447);color:#fff;box-shadow:0 10px 24px rgba(22,132,71,.17);border:0;padding:0;text-align:left}
+.fm-home-offer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fm-home-offer:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(17,135,57,.96) 0%,rgba(30,167,65,.88) 48%,rgba(30,167,65,.04) 100%)}
+.fm-home-offer-copy{position:absolute;z-index:1;left:18px;top:18px;max-width:58%;display:flex;flex-direction:column;gap:4px}
+.fm-home-offer-kicker{font-size:13px;font-weight:800;letter-spacing:.2px}
+.fm-home-offer-discount{font-size:39px;line-height:1.02;font-weight:950}
+.fm-home-offer-subtitle{font-size:12px;line-height:1.3;font-weight:650}
+.fm-home-offer-cta{display:inline-flex;margin-top:7px;padding:7px 14px;border-radius:6px;background:#fff;color:#24713d;font-size:11px;font-weight:850;width:max-content}
+.fm-home-offers-dots{display:flex;justify-content:center;gap:6px;padding-top:3px}
+.fm-home-offers-dots button{width:7px;height:7px;border:0;border-radius:50%;background:#d8e4dc;padding:0}
+.fm-home-offers-dots button.active{width:23px;border-radius:8px;background:#35ad5a}
+@media(min-width:681px){.fm-home-offer{flex-basis:62%;min-width:62%;height:205px}.fm-home-offer-copy{left:26px;top:25px}.fm-home-offer-discount{font-size:48px}}
+@media(max-width:680px){.fm-category-strip-wrap{padding:0!important;margin:15px 0 17px!important}.fm-category-strip-head{font-size:17px!important;margin-bottom:10px!important}.fm-category-tile{height:62px!important;padding:6px 13px 6px 6px!important;gap:7px!important}.fm-category-tile .fm-cat-visual{width:43px!important;height:43px!important;flex-basis:43px!important}.fm-category-tile b{font-size:12px!important}.fm-home-offer{height:158px;flex-basis:91%;min-width:91%;border-radius:17px}.fm-home-offer-copy{left:15px;top:16px;max-width:62%}.fm-home-offer-discount{font-size:35px}.fm-home-offer-kicker{font-size:12px}.fm-home-offer-subtitle{font-size:11px}.fm-home-offer-cta{font-size:10px;padding:6px 12px}}
 </style>
 <style>
 /* Rupee Mart first-login spin wheel */
@@ -263,10 +291,14 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="groceries">
   <div class="welcome fm-grocery-welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
-  <div class="fm-shop-search-top"><input id="shopProductSearch" placeholder="Search groceries…" oninput="renderFreshMartProducts()" aria-label="Search groceries"><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
+  <div class="fm-shop-search-top"><input id="shopProductSearch" placeholder="Search groceries…" oninput="window.fmActiveHomeOfferProductIds=null;window.fmActiveHomeOfferTitle='';renderFreshMartProducts()" aria-label="Search groceries"><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
   <select id="shopVoiceLanguage" aria-label="Voice search language" hidden><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select>
   <select id="shopProductCategory" onchange="renderFreshMartProducts()" hidden><option value="">All categories</option></select>
   <div class="fm-page-banner" id="fmBannerGroceries" style="display:none"></div>
+  <section class="fm-home-offers" id="fmHomeOffers" style="display:none" aria-label="Special offers">
+   <div class="fm-home-offers-track" id="fmHomeOffersTrack"></div>
+   <div class="fm-home-offers-dots" id="fmHomeOffersDots"></div>
+  </section>
   <div class="fm-category-strip-wrap"><div class="fm-category-strip-head"><b>Shop by Category</b><span>Explore all</span></div><div id="fmShopCategoryCards" class="fm-category-strip"><div class="hint">Loading categories…</div></div></div>
   <div class="fm-page-banner" id="fmBannerGroceriesBottom" style="display:none"></div>
   <div class="card" id="fmMemberDiscountBanner" style="display:none;margin-bottom:12px;background:#f0faf3;border-color:#cfe8d6"><b style="color:#168447">🎉 Your Membership Self Purchase Discount</b><p id="fmMemberDiscountText" class="hint" style="margin:6px 0 0"></p></div><div class="card"><div class="section-head"><h2 id="shopProductsHeading">All Products</h2></div><p id="shopVoiceMessage" class="hint" style="margin:0 0 8px"></p><p id="shopProductMsg" class="hint" style="display:none">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div></div>
@@ -554,7 +586,7 @@ function fmRenderCategoryCards(){
  if(!cats.length){host.innerHTML='<span class="hint">Categories will appear here after admin adds them.</span>';return;}
  host.innerHTML=cats.map((cat,i)=>{const name=cat.name,t=fmCategoryTranslations(name),c=fmCategoryPalette[i%fmCategoryPalette.length],icon=cat.icon||fmShopProducts.find(p=>p.fm_product_categories?.category_name===name)?.fm_product_categories?.icon||t.icon,count=fmShopProducts.filter(p=>p.fm_product_categories?.category_name===name).length;
  return '<button type="button" class="fm-category-tile" style="--cat-a:'+c[0]+';--cat-b:'+c[1]+'" data-fm-category="'+shopEsc(name)+'"><span class="fm-cat-visual">'+shopEsc(icon)+'</span><b>'+shopEsc(name)+'</b><small>'+t.te+' · '+t.hi+'</small><small>'+count+' products</small></button>';}).join('');
- host.querySelectorAll('[data-fm-category]').forEach(b=>b.addEventListener('click',()=>{const s=document.getElementById('shopProductCategory');if(s){s.value=b.dataset.fmCategory;renderFreshMartProducts();}document.getElementById('shopProductSearch')?.scrollIntoView({behavior:'smooth',block:'center'});}));
+ host.querySelectorAll('[data-fm-category]').forEach(b=>b.addEventListener('click',()=>{const s=document.getElementById('shopProductCategory');if(s){s.value=b.dataset.fmCategory;window.fmActiveHomeOfferProductIds=null;window.fmActiveHomeOfferTitle='';host.querySelectorAll('[data-fm-category]').forEach(x=>x.classList.toggle('fm-category-active',x===b));renderFreshMartProducts();}document.getElementById('shopProductSearch')?.scrollIntoView({behavior:'smooth',block:'center'});}));
 }
 async function fmLoadPageBanners(){
  if(!fmShopClient)return;const ids={dashboard:'fmBannerDashboard',groceries:'fmBannerGroceries',plans:'fmBannerPlans',rewards:'fmBannerRewards'};
@@ -562,6 +594,55 @@ async function fmLoadPageBanners(){
  Object.entries(ids).forEach(([page,id])=>{const el=document.getElementById(id),b=cfg[page];if(!el)return;if(!b||b.enabled===false||!b.image_url){el.style.display='none';return;}
  const img=document.createElement('img');img.src=b.image_url;img.alt=b.alt||'Rupee Mart offer';img.loading='lazy';if(b.link_url){const link=document.createElement('a');link.href=b.link_url;link.target='_blank';link.rel='noopener';link.appendChild(img);el.replaceChildren(link);}else el.replaceChildren(img);el.style.display='block';});
  }catch(e){console.warn('Page banners unavailable:',e.message||e);}
+}
+
+
+let fmGroceryHomeOfferConfig=[];
+window.fmActiveHomeOfferProductIds=null;
+window.fmActiveHomeOfferTitle='';
+function fmRenderHomeOffers(){
+ const host=document.getElementById('fmHomeOffers'),track=document.getElementById('fmHomeOffersTrack'),dots=document.getElementById('fmHomeOffersDots');
+ if(!host||!track||!dots)return;
+ const offers=(Array.isArray(fmGroceryHomeOfferConfig)?fmGroceryHomeOfferConfig:[]).filter(x=>x&&x.enabled!==false&&x.image_url);
+ if(!offers.length){host.style.display='none';return;}
+ host.style.display='block';
+ track.innerHTML=offers.map((o,i)=>'<button type="button" class="fm-home-offer" data-fm-home-offer="'+i+'" aria-label="'+shopEsc(o.title||'View offer')+'">'+
+ '<img src="'+shopEsc(o.image_url)+'" alt="'+shopEsc(o.alt||o.title||'Rupee Mart offer')+'" loading="lazy">'+
+ '<span class="fm-home-offer-copy"><span class="fm-home-offer-kicker">'+shopEsc(o.title||'Special Offer')+'</span>'+
+ '<span class="fm-home-offer-discount">'+shopEsc(o.discount_text||'')+'</span>'+
+ '<span class="fm-home-offer-subtitle">'+shopEsc(o.subtitle||'Shop now')+'</span>'+
+ '<span class="fm-home-offer-cta">See Details</span></span></button>').join('');
+ dots.innerHTML=offers.map((_,i)=>'<button type="button" data-fm-offer-dot="'+i+'" class="'+(i===0?'active':'')+'" aria-label="Offer '+(i+1)+'"></button>').join('');
+ track.querySelectorAll('[data-fm-home-offer]').forEach(btn=>btn.addEventListener('click',()=>{
+  const o=offers[Number(btn.dataset.fmHomeOffer)]||{};
+  const ids=Array.isArray(o.product_ids)?o.product_ids.map(String).filter(Boolean):[];
+  window.fmActiveHomeOfferProductIds=ids.length?ids:null;
+  window.fmActiveHomeOfferTitle=o.title||'Offer Products';
+  const search=document.getElementById('shopProductSearch');if(search)search.value='';
+  const cat=document.getElementById('shopProductCategory');if(cat)cat.value='';
+  const heading=document.getElementById('shopProductsHeading');if(heading)heading.textContent=o.title||'Offer Products';
+  renderFreshMartProducts();
+  document.getElementById('freshMartProductGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
+ }));
+ dots.querySelectorAll('button').forEach(dot=>dot.addEventListener('click',()=>{
+  const target=track.querySelectorAll('.fm-home-offer')[Number(dot.dataset.fmOfferDot)];
+  target?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+ }));
+ track.addEventListener('scroll',()=>{
+  const cards=[...track.querySelectorAll('.fm-home-offer')];if(!cards.length)return;
+  const center=track.scrollLeft+track.clientWidth/2;
+  let best=0,dist=Infinity;cards.forEach((c,i)=>{const d=Math.abs(c.offsetLeft+c.offsetWidth/2-center);if(d<dist){dist=d;best=i;}});
+  dots.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===best));
+ },{passive:true});
+}
+async function fmLoadGroceryHomeOffers(){
+ if(!fmShopClient)return;
+ try{
+  const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','grocery_home_offers').maybeSingle();
+  if(error)throw error;
+  fmGroceryHomeOfferConfig=Array.isArray(data?.setting_value?.offers)?data.setting_value.offers:[];
+  fmRenderHomeOffers();
+ }catch(e){console.warn('Grocery home offers unavailable:',e.message||e);}
 }
 
 async function loadFreshMartProducts(){
@@ -595,9 +676,9 @@ function fmProductCartQty(p){const vs=fmVariants(p);return fmShopCartQty(p.id,''
 function renderFreshMartProducts(){
  const grid=document.getElementById('freshMartProductGrid');if(!grid)return;
  const q=fmSearchNorm(document.getElementById('shopProductSearch')?.value||''),cat=document.getElementById('shopProductCategory')?.value||'';
- const heading=document.getElementById('shopProductsHeading');if(heading)heading.textContent=cat||'All Products';
+ const heading=document.getElementById('shopProductsHeading');if(heading)heading.textContent=cat||window.fmActiveHomeOfferTitle||'All Products';
  const terms=q.split(/\s+/).filter(Boolean);
- const rows=fmShopProducts.map(p=>{const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>(!cat||(x.p.fm_product_categories?.category_name||'')===cat)&&(!q||x.hits>0)).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
+ const rows=fmShopProducts.map(p=>{const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,p.fm_product_categories?.category_name,...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>(!window.fmActiveHomeOfferProductIds||window.fmActiveHomeOfferProductIds.includes(String(x.p.id)))&&(!cat||(x.p.fm_product_categories?.category_name||'')===cat)&&(!q||x.hits>0)).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits).map(x=>x.p);
  grid.innerHTML=rows.length?rows.map(p=>{
   const id=String(p.id),allVariants=fmVariants(p),vs=fmChildVariants(p),baseVariant=fmBaseVariant(p),baseAvailable=!!baseVariant,legacyBaseAvailable=!allVariants.length&&Number(p.stock_quantity||0)>0,v=fmGetSelectedVariant(p),price=fmVariantPrice(p,v),mrp=Number(v?.mrp??p.mrp??0),points=fmVariantRewardPoints(p,v),qty=fmShopCartQty(id,v?.id||'');
   const imgs=(p.fm_product_images||[]).map(x=>x.image_url).filter(Boolean);if(!imgs.length&&p.image_url)imgs.push(p.image_url);
@@ -1915,7 +1996,7 @@ function showPage(id,fromHistory=false){
 const fmNavTips={dashboard:['Home','See your account overview, plan status and wallet summary.','⌂'],groceries:['Shop','Browse groceries, search products and add items to your cart.','🛍️'],cart:['Cart','Review quantities, apply coupons and proceed to checkout.','🛒'],orders:['Orders','Track your orders, payment status and delivery updates.','📦'],wallets:['Wallet','Check Shopping Wallet, Income Wallet and balances.','💳'],team:['My Team','View your referrals, team members and binary details.','👥'],withdrawals:['Withdraw','Submit a withdrawal and check previous requests.','↗']};
 function fmUpdateNavCoach(page){ /* Floating navigation coach intentionally removed. */ }
 function fmHideNavCoach(){const box=document.getElementById('fmNavCoach');if(box)box.style.display='none';}
-document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='groceries')loadFreshMartProducts();if(b.dataset.page==='cart')fmRenderCart();if(b.dataset.page==='orders')loadMyGroceryOrders();if(b.dataset.page==='withdrawals'){fmLoadPayoutDetails();fmLoadWithdrawalInfo();fmLoadWithdrawalHistory();}}));
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{showPage(b.dataset.page);if(b.dataset.page==='groceries')fmLoadGroceryHomeOffers();loadFreshMartProducts();if(b.dataset.page==='cart')fmRenderCart();if(b.dataset.page==='orders')loadMyGroceryOrders();if(b.dataset.page==='withdrawals'){fmLoadPayoutDetails();fmLoadWithdrawalInfo();fmLoadWithdrawalHistory();}}));
 loadFreshMartProducts();
 // Voice search in the member shop. Language is selectable for reliable recognition.
 (function(){const btn=document.getElementById('shopVoiceSearchBtn'),lang=document.getElementById('shopVoiceLanguage'),msg=document.getElementById('shopVoiceMessage'),field=document.getElementById('shopProductSearch');if(!btn||!field)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){btn.disabled=true;btn.style.opacity='.45';if(msg)msg.textContent='Voice search is not supported in this browser. Try Chrome.';return;}btn.addEventListener('click',()=>{try{const rec=new SR();rec.lang=lang?.value||'en-IN';rec.continuous=false;rec.interimResults=false;btn.textContent='…';if(msg)msg.textContent='Listening… Speak now.';rec.onresult=e=>{const spoken=e.results?.[0]?.[0]?.transcript||'';field.value=spoken;renderFreshMartProducts();if(msg)msg.textContent=spoken?'Voice search: '+spoken:''};rec.onerror=e=>{if(msg)msg.textContent=e.error==='not-allowed'?'Please allow microphone access.':'Voice search failed. Please try again.'};rec.onend=()=>{btn.textContent='🎤'};rec.start();}catch(e){btn.textContent='🎤';if(msg)msg.textContent='Allow microphone access and try again.'}})})();
