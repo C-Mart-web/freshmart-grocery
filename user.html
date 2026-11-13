@@ -299,6 +299,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
    <div class="fm-home-offers-track" id="fmHomeOffersTrack"></div>
    <div class="fm-home-offers-dots" id="fmHomeOffersDots"></div>
   </section>
+  <section class="fm-featured-rail" id="fmFeaturedProductsRail" style="display:none"><div class="section-head"><h2 id="fmFeaturedProductsHeading">Featured Products</h2><span class="small">Swipe to explore</span></div><div class="fm-featured-track" id="fmFeaturedProductsTrack"></div></section>
   <div class="fm-category-strip-wrap"><div class="fm-category-strip-head"><b>Shop by Category</b><span>Explore all</span></div><div id="fmShopCategoryCards" class="fm-category-strip"><div class="hint">Loading categories…</div></div></div>
   <div class="fm-page-banner" id="fmBannerGroceriesBottom" style="display:none"></div>
   <div class="card" id="fmMemberDiscountBanner" style="display:none;margin-bottom:12px;background:#f0faf3;border-color:#cfe8d6"><b style="color:#168447">🎉 Your Membership Self Purchase Discount</b><p id="fmMemberDiscountText" class="hint" style="margin:6px 0 0"></p></div><div class="card"><div class="section-head"><h2 id="shopProductsHeading">All Products</h2></div><p id="shopVoiceMessage" class="hint" style="margin:0 0 8px"></p><p id="shopProductMsg" class="hint" style="display:none">Loading products…</p><div id="freshMartProductGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px"></div></div>
@@ -2628,6 +2629,41 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 })();
 </script>
 
+
+<script>
+/* Admin-configured featured products for grocery home. */
+async function fmLoadFeaturedProducts(){
+ const host=document.getElementById('fmFeaturedProductsRail'),track=document.getElementById('fmFeaturedProductsTrack');
+ if(!host||!track||!fmShopClient)return;
+ try{
+  const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','home_featured_products').maybeSingle();
+  if(error)throw error;
+  const cfg=data?.setting_value||{},ids=Array.isArray(cfg.product_ids)?cfg.product_ids.map(String):[];
+  if(cfg.enabled===false||!ids.length){host.style.display='none';return;}
+  const products=(fmShopProducts||[]).filter(p=>ids.includes(String(p.id)));
+  if(!products.length){host.style.display='none';return;}
+  const h=document.getElementById('fmFeaturedProductsHeading');if(h)h.textContent=cfg.heading||'Featured Products';
+  track.innerHTML=products.map(p=>{
+   const v=typeof fmGetSelectedVariant==='function'?fmGetSelectedVariant(p):null;
+   const price=typeof fmVariantPrice==='function'?fmVariantPrice(p,v):Number(p.retail_price??p.offer_price??0);
+   const img=(p.fm_product_images||[]).map(x=>x.image_url).filter(Boolean)[0]||p.image_url||'';
+   return '<article class="fm-featured-item"><img src="'+shopEsc(img)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy"><div class="fm-featured-info"><b>'+shopEsc(p.product_name)+'</b><strong>₹'+Number(price||0).toLocaleString('en-IN',{maximumFractionDigits:2})+'</strong><button type="button" class="btn btn-outline" style="width:100%;padding:7px;margin-top:7px;font-size:11px" data-fm-featured-add="'+shopEsc(p.id)+'">View Product</button></div></article>';
+  }).join('');
+  track.querySelectorAll('[data-fm-featured-add]').forEach(btn=>btn.addEventListener('click',()=>{
+   const id=String(btn.dataset.fmFeaturedAdd),p=fmShopProducts.find(x=>String(x.id)===id);if(!p)return;
+   window.fmActiveHomeOfferProductIds=[id];window.fmActiveHomeOfferTitle=p.product_name;
+   const cat=document.getElementById('shopProductCategory');if(cat)cat.value='';
+   const search=document.getElementById('shopProductSearch');if(search)search.value='';
+   renderFreshMartProducts();document.getElementById('freshMartProductGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+  host.style.display='block';
+ }catch(e){console.warn('Featured products unavailable:',e.message||e);host.style.display='none';}
+}
+const fmFeaturedWrappedOriginalLoadProducts2026=loadFreshMartProducts;
+loadFreshMartProducts=async function(){await fmFeaturedWrappedOriginalLoadProducts2026();await fmLoadFeaturedProducts();};
+document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
+</script>
+
 </body>
 
 <style>
@@ -3047,5 +3083,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
   }
 })();
 </script>
+
+
+
 </body>
 </html>
