@@ -2664,6 +2664,133 @@ loadFreshMartProducts=async function(){await fmFeaturedWrappedOriginalLoadProduc
 document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 </script>
 
+
+<style id="fm-featured-horizontal-reference-style">
+/* Featured products: compact horizontal swipe carousel like the reference design. */
+#fmFeaturedProductsRail{
+  display:block;
+  width:100%;
+  min-width:0;
+  margin:18px 0 22px;
+  overflow:hidden;
+}
+#fmFeaturedProductsRail .section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 12px;
+  padding:0 2px;
+}
+#fmFeaturedProductsRail .section-head h2{
+  margin:0;
+  font-size:20px;
+  line-height:1.25;
+  font-weight:800;
+  color:#18231d;
+}
+#fmFeaturedProductsRail .section-head .small{
+  white-space:nowrap;
+  color:#168447;
+  font-size:11px;
+  font-weight:700;
+}
+#fmFeaturedProductsTrack{
+  display:flex !important;
+  flex-flow:row nowrap !important;
+  align-items:stretch;
+  gap:14px;
+  width:100%;
+  max-width:100%;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  padding:2px 2px 12px;
+  scroll-snap-type:x mandatory;
+  scroll-padding-left:2px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scrollbar-width:none;
+}
+#fmFeaturedProductsTrack::-webkit-scrollbar{display:none}
+#fmFeaturedProductsTrack .fm-featured-item{
+  display:flex !important;
+  flex:0 0 250px !important;
+  width:250px !important;
+  min-width:250px !important;
+  max-width:250px !important;
+  flex-direction:column;
+  align-self:stretch;
+  overflow:hidden;
+  scroll-snap-align:start;
+  border:1px solid #e7ece8;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(20,70,40,.10);
+}
+#fmFeaturedProductsTrack .fm-featured-item>img{
+  display:block;
+  width:100% !important;
+  height:142px !important;
+  min-height:142px;
+  max-height:142px;
+  object-fit:cover !important;
+  background:#f4f8f5;
+}
+#fmFeaturedProductsTrack .fm-featured-info{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  align-items:stretch;
+  gap:7px;
+  min-width:0;
+  padding:11px 12px 12px;
+}
+#fmFeaturedProductsTrack .fm-featured-info>b{
+  display:block;
+  min-height:0;
+  color:#18231d;
+  font-size:16px;
+  line-height:1.3;
+  font-weight:750;
+  overflow-wrap:anywhere;
+}
+#fmFeaturedProductsTrack .fm-featured-info>strong{
+  display:block;
+  color:#168447;
+  font-size:17px;
+  line-height:1.2;
+  font-weight:850;
+}
+#fmFeaturedProductsTrack .fm-featured-info button{
+  width:100%;
+  min-height:40px;
+  margin-top:auto !important;
+  padding:8px 10px !important;
+  border:0;
+  border-radius:9px;
+  background:#168447;
+  color:#fff;
+  font-size:13px !important;
+  font-weight:800;
+}
+@media(max-width:680px){
+  #fmFeaturedProductsRail{margin:15px 0 19px}
+  #fmFeaturedProductsRail .section-head h2{font-size:19px}
+  #fmFeaturedProductsTrack{gap:11px;padding-bottom:10px}
+  #fmFeaturedProductsTrack .fm-featured-item{
+    flex-basis: min(76vw,270px) !important;
+    width:min(76vw,270px) !important;
+    min-width:min(76vw,270px) !important;
+    max-width:min(76vw,270px) !important;
+  }
+  #fmFeaturedProductsTrack .fm-featured-item>img{
+    height:138px !important;
+    min-height:138px;
+    max-height:138px;
+  }
+}
+</style>
+
 </body>
 
 <style>
@@ -3085,6 +3212,133 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
 </script>
 
 
+
+
+<style id="fm-featured-horizontal-reference-style">
+/* Featured products: compact horizontal swipe carousel like the reference design. */
+#fmFeaturedProductsRail{
+  display:block;
+  width:100%;
+  min-width:0;
+  margin:18px 0 22px;
+  overflow:hidden;
+}
+#fmFeaturedProductsRail .section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 12px;
+  padding:0 2px;
+}
+#fmFeaturedProductsRail .section-head h2{
+  margin:0;
+  font-size:20px;
+  line-height:1.25;
+  font-weight:800;
+  color:#18231d;
+}
+#fmFeaturedProductsRail .section-head .small{
+  white-space:nowrap;
+  color:#168447;
+  font-size:11px;
+  font-weight:700;
+}
+#fmFeaturedProductsTrack{
+  display:flex !important;
+  flex-flow:row nowrap !important;
+  align-items:stretch;
+  gap:14px;
+  width:100%;
+  max-width:100%;
+  overflow-x:auto !important;
+  overflow-y:hidden !important;
+  padding:2px 2px 12px;
+  scroll-snap-type:x mandatory;
+  scroll-padding-left:2px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scrollbar-width:none;
+}
+#fmFeaturedProductsTrack::-webkit-scrollbar{display:none}
+#fmFeaturedProductsTrack .fm-featured-item{
+  display:flex !important;
+  flex:0 0 250px !important;
+  width:250px !important;
+  min-width:250px !important;
+  max-width:250px !important;
+  flex-direction:column;
+  align-self:stretch;
+  overflow:hidden;
+  scroll-snap-align:start;
+  border:1px solid #e7ece8;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(20,70,40,.10);
+}
+#fmFeaturedProductsTrack .fm-featured-item>img{
+  display:block;
+  width:100% !important;
+  height:142px !important;
+  min-height:142px;
+  max-height:142px;
+  object-fit:cover !important;
+  background:#f4f8f5;
+}
+#fmFeaturedProductsTrack .fm-featured-info{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  align-items:stretch;
+  gap:7px;
+  min-width:0;
+  padding:11px 12px 12px;
+}
+#fmFeaturedProductsTrack .fm-featured-info>b{
+  display:block;
+  min-height:0;
+  color:#18231d;
+  font-size:16px;
+  line-height:1.3;
+  font-weight:750;
+  overflow-wrap:anywhere;
+}
+#fmFeaturedProductsTrack .fm-featured-info>strong{
+  display:block;
+  color:#168447;
+  font-size:17px;
+  line-height:1.2;
+  font-weight:850;
+}
+#fmFeaturedProductsTrack .fm-featured-info button{
+  width:100%;
+  min-height:40px;
+  margin-top:auto !important;
+  padding:8px 10px !important;
+  border:0;
+  border-radius:9px;
+  background:#168447;
+  color:#fff;
+  font-size:13px !important;
+  font-weight:800;
+}
+@media(max-width:680px){
+  #fmFeaturedProductsRail{margin:15px 0 19px}
+  #fmFeaturedProductsRail .section-head h2{font-size:19px}
+  #fmFeaturedProductsTrack{gap:11px;padding-bottom:10px}
+  #fmFeaturedProductsTrack .fm-featured-item{
+    flex-basis: min(76vw,270px) !important;
+    width:min(76vw,270px) !important;
+    min-width:min(76vw,270px) !important;
+    max-width:min(76vw,270px) !important;
+  }
+  #fmFeaturedProductsTrack .fm-featured-item>img{
+    height:138px !important;
+    min-height:138px;
+    max-height:138px;
+  }
+}
+</style>
 
 </body>
 </html>
