@@ -2632,30 +2632,43 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 
 <script>
 /* Admin-configured featured products for grocery home. */
-async function fmLoadFeaturedProducts(){
+let fmHomeFeaturedCache={heading:'Featured Products',ids:[],enabled:false};
+function fmRenderFeaturedProducts(){
  const host=document.getElementById('fmFeaturedProductsRail'),track=document.getElementById('fmFeaturedProductsTrack');
- if(!host||!track||!fmShopClient)return;
+ if(!host||!track)return;
+ const cfg=fmHomeFeaturedCache||{},ids=cfg.ids||[];
+ const products=(fmShopProducts||[]).filter(p=>ids.includes(String(p.id)));
+ if(!cfg.enabled||!products.length){host.style.display='none';return;}
+ const h=document.getElementById('fmFeaturedProductsHeading');if(h)h.textContent=cfg.heading||'Featured Products';
+ track.innerHTML=products.map(p=>{
+  const v=typeof fmGetSelectedVariant==='function'?fmGetSelectedVariant(p):null;
+  const variantId=v?.id||'';
+  const qty=typeof fmShopCartQty==='function'?fmShopCartQty(p.id,variantId):0;
+  const price=typeof fmVariantPrice==='function'?fmVariantPrice(p,v):Number(p.retail_price??p.offer_price??0);
+  const img=(p.fm_product_images||[]).map(x=>x.image_url).filter(Boolean)[0]||p.image_url||'';
+  const control=qty>0
+   ? '<button type="button" class="fm-featured-qty-btn" data-fm-featured-minus="'+shopEsc(p.id)+'" data-variant-id="'+shopEsc(variantId)+'">−</button><span class="fm-featured-qty-value">'+qty+'</span><button type="button" class="fm-featured-qty-btn" data-fm-featured-plus="'+shopEsc(p.id)+'" data-variant-id="'+shopEsc(variantId)+'">+</button>'
+   : '<button type="button" class="fm-featured-add-cart" data-fm-featured-plus="'+shopEsc(p.id)+'" data-variant-id="'+shopEsc(variantId)+'">＋ Add to cart</button>';
+  return '<article class="fm-featured-item"><img src="'+shopEsc(img)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy"><div class="fm-featured-info"><b>'+shopEsc(p.product_name)+'</b><strong>₹'+Number(price||0).toLocaleString('en-IN',{maximumFractionDigits:2})+'</strong><div class="fm-featured-cart-control" data-featured-control="'+shopEsc(p.id)+'">'+control+'</div></div></article>';
+ }).join('');
+ track.querySelectorAll('[data-fm-featured-plus],[data-fm-featured-minus]').forEach(btn=>btn.addEventListener('click',()=>{
+  const id=String(btn.dataset.fmFeaturedPlus||btn.dataset.fmFeaturedMinus),variantId=String(btn.dataset.variantId||'');
+  const p=fmShopProducts.find(x=>String(x.id)===id);if(!p)return;
+  const delta=btn.hasAttribute('data-fm-featured-minus')?-1:1;
+  fmShopChangeQty(id,delta,variantId);
+  fmRenderFeaturedProducts();
+ }));
+ host.style.display='block';
+}
+async function fmLoadFeaturedProducts(){
+ const host=document.getElementById('fmFeaturedProductsRail');
+ if(!host||!fmShopClient)return;
  try{
   const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','home_featured_products').maybeSingle();
   if(error)throw error;
   const cfg=data?.setting_value||{},ids=Array.isArray(cfg.product_ids)?cfg.product_ids.map(String):[];
-  if(cfg.enabled===false||!ids.length){host.style.display='none';return;}
-  const products=(fmShopProducts||[]).filter(p=>ids.includes(String(p.id)));
-  if(!products.length){host.style.display='none';return;}
-  const h=document.getElementById('fmFeaturedProductsHeading');if(h)h.textContent=cfg.heading||'Featured Products';
-  track.innerHTML=products.map(p=>{
-   const v=typeof fmGetSelectedVariant==='function'?fmGetSelectedVariant(p):null;
-   const price=typeof fmVariantPrice==='function'?fmVariantPrice(p,v):Number(p.retail_price??p.offer_price??0);
-   const img=(p.fm_product_images||[]).map(x=>x.image_url).filter(Boolean)[0]||p.image_url||'';
-   return '<article class="fm-featured-item"><img src="'+shopEsc(img)+'" alt="'+shopEsc(p.product_name)+'" loading="lazy"><div class="fm-featured-info"><b>'+shopEsc(p.product_name)+'</b><strong>₹'+Number(price||0).toLocaleString('en-IN',{maximumFractionDigits:2})+'</strong><div class="fm-featured-cart-control" data-featured-control="'+shopEsc(p.id)+'"><button type="button" class="fm-featured-add-cart" data-fm-featured-plus="'+shopEsc(p.id)+'">＋ Add to cart</button></div></div></article>';
-  }).join('');
-  track.querySelectorAll('[data-fm-featured-plus]').forEach(btn=>btn.addEventListener('click',()=>{
-   const id=String(btn.dataset.fmFeaturedPlus),p=fmShopProducts.find(x=>String(x.id)===id);if(!p)return;
-   const variant=typeof fmGetSelectedVariant==='function'?fmGetSelectedVariant(p):null;
-   const variantId=variant?.id||'';
-   fmShopChangeQty(id,1,variantId);fmRenderFeaturedProducts();
-  }));
-  host.style.display='block';
+  fmHomeFeaturedCache={heading:cfg.heading||'Featured Products',ids,enabled:cfg.enabled!==false};
+  fmRenderFeaturedProducts();
  }catch(e){console.warn('Featured products unavailable:',e.message||e);host.style.display='none';}
 }
 const fmFeaturedWrappedOriginalLoadProducts2026=loadFreshMartProducts;
@@ -2778,6 +2791,24 @@ document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
  #fmFeaturedProductsTrack .fm-featured-item>img{
   height:88px!important;min-height:88px!important;max-height:88px!important;
  }
+}
+</style>
+
+
+<style id="fm-featured-live-quantity-controls">
+#fmFeaturedProductsTrack .fm-featured-cart-control{display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;min-height:30px!important}
+#fmFeaturedProductsTrack .fm-featured-cart-control .fm-featured-qty-btn{
+ width:27px!important;height:27px!important;min-width:27px!important;min-height:27px!important;
+ padding:0!important;border:1px solid #d9eadf!important;border-radius:7px!important;
+ background:#f0faf3!important;color:#168447!important;font-size:18px!important;font-weight:900!important;line-height:1!important
+}
+#fmFeaturedProductsTrack .fm-featured-cart-control .fm-featured-qty-value{
+ min-width:18px!important;text-align:center!important;font-size:13px!important;font-weight:850!important;color:#183b28!important
+}
+#fmFeaturedProductsTrack .fm-featured-cart-control .fm-featured-add-cart{
+ width:100%!important;height:27px!important;min-height:27px!important;padding:4px 5px!important;
+ border:0!important;border-radius:7px!important;background:#168447!important;color:#fff!important;
+ font-size:10px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important
 }
 </style>
 
@@ -3318,6 +3349,24 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
  #fmFeaturedProductsTrack .fm-featured-item>img{
   height:88px!important;min-height:88px!important;max-height:88px!important;
  }
+}
+</style>
+
+
+<style id="fm-featured-live-quantity-controls">
+#fmFeaturedProductsTrack .fm-featured-cart-control{display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;min-height:30px!important}
+#fmFeaturedProductsTrack .fm-featured-cart-control .fm-featured-qty-btn{
+ width:27px!important;height:27px!important;min-width:27px!important;min-height:27px!important;
+ padding:0!important;border:1px solid #d9eadf!important;border-radius:7px!important;
+ background:#f0faf3!important;color:#168447!important;font-size:18px!important;font-weight:900!important;line-height:1!important
+}
+#fmFeaturedProductsTrack .fm-featured-cart-control .fm-featured-qty-value{
+ min-width:18px!important;text-align:center!important;font-size:13px!important;font-weight:850!important;color:#183b28!important
+}
+#fmFeaturedProductsTrack .fm-featured-cart-control .fm-featured-add-cart{
+ width:100%!important;height:27px!important;min-height:27px!important;padding:4px 5px!important;
+ border:0!important;border-radius:7px!important;background:#168447!important;color:#fff!important;
+ font-size:10px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important
 }
 </style>
 
