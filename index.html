@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f7f9f5">
-<title>Fresh-Mart | Groceries delivered fresh</title>
+<title>Rupee Mart | Groceries delivered fresh</title>
 <style>
 :root{--green:#168447;--deep:#0c5d35;--lime:#d8f36a;--yellow:#f7ef85;--ink:#17231c;--muted:#718078;--line:#e7ece7;--bg:#f7f9f5;--white:#fff;--shadow:0 8px 28px #183b2010}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}a{color:inherit;text-decoration:none}button,input{font:inherit}button{cursor:pointer}
@@ -35,7 +35,7 @@
 <body>
 <header class="topbar">
  <div class="topinner">
-  <a class="brand" href="index.html" aria-label="Fresh-Mart home"><div class="brandmark">🛒</div><div class="brandname">Fresh<span>-Mart</span></div></a>
+  <a class="brand" href="index.html" aria-label="Rupee Mart home"><div class="brandmark">🛒</div><div class="brandname">Fresh<span>-Mart</span></div></a>
   <div class="delivery"><small>Delivering to</small> <strong id="deliveryPlace">Your location</strong> <button type="button" id="changeLocation">Change</button></div>
   <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search for atta, milk, vegetables..." aria-label="Search products"><select id="voiceLanguage" class="voice-lang" aria-label="Voice search language"><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select><button id="voiceSearchBtn" class="voice-btn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
   <div class="actions"><a class="action" href="login.html">Login</a><a class="action primary" href="register.html">Join / Register</a><button class="action" type="button" id="indexCartButton" aria-label="Open Cart">🛒 <span class="cartcount" id="cartCount">0</span></button></div>
@@ -43,19 +43,19 @@
 </header>
 <main class="container" id="home">
  <section class="hero">
-  <div class="hero-copy"><div class="eyebrow">Freshness at your doorstep</div><h1>Daily essentials.<br>Delivered with care.</h1><p>Shop groceries, fruits, vegetables and household essentials from Fresh-Mart.</p><a class="hero-cta" href="#popular">Start shopping&nbsp; →</a></div>
+  <div class="hero-copy"><div class="eyebrow">Freshness at your doorstep</div><h1>Daily essentials.<br>Delivered with care.</h1><p>Shop groceries, fruits, vegetables and household essentials from Rupee Mart.</p><a class="hero-cta" href="#popular">Start shopping&nbsp; →</a></div>
   <div class="hero-art"><div class="basket">🧺</div><div class="floating float-one">🥬 Fresh picks</div><div class="floating float-two">🚚 Home delivery</div></div>
  </section>
  <div class="section-head"><div><h2>Shop by category</h2><p>Everything you need for your home</p></div><a class="seeall" href="#categories">View all</a></div>
  <section class="category-grid" id="categories"><div class="empty" style="display:block;grid-column:1/-1">Loading categories…</div></section>
  
-<section id="fmLiveOffers" style="margin:18px 0"><div class="section-head"><div><h2>Fresh-Mart Offers & Deals 🎁</h2><p>Latest offers curated for you</p></div></div><div id="fmLiveOfferGrid" class="offer-strip"><div class="offer green"><div><small>Loading</small><h3>Fresh offers</h3><p>Fetching live campaigns…</p></div><div class="offer-icon">🎁</div></div></div></section>
+<section id="fmLiveOffers" style="margin:18px 0"><div class="section-head"><div><h2>Rupee Mart Offers & Deals 🎁</h2><p>Latest offers curated for you</p></div></div><div id="fmLiveOfferGrid" class="offer-strip"><div class="offer green"><div><small>Loading</small><h3>Fresh offers</h3><p>Fetching live campaigns…</p></div><div class="offer-icon">🎁</div></div></div></section>
 
   <section class="offer-strip">
   <div class="offer green"><div><small>Fresh every day</small><h3>Farm fresh<br>vegetables</h3><p>Goodness for your family</p></div><div class="offer-icon">🥕</div></div>
   <div class="offer yellow"><div><small>Stock up & save</small><h3>Daily needs<br>made easy</h3><p>Shop your essentials</p></div><div class="offer-icon">🛍️</div></div>
  </section>
- <div class="section-head" id="popular"><div><h2>Popular picks</h2><p>Customer favourites at Fresh-Mart</p></div><a class="seeall" href="login.html">My account →</a></div>
+ <div class="section-head" id="popular"><div><h2>Popular picks</h2><p>Customer favourites at Rupee Mart</p></div><a class="seeall" href="login.html">My account →</a></div>
  <section class="product-grid" id="productGrid"><div class="empty" style="display:block;grid-column:1/-1">Loading live products…</div></section>
  <div class="empty" id="emptyState">No matching products found. Try another search.</div><div id="liveProductStatus" style="font-size:12px;color:#718078;text-align:center;margin:10px 0" aria-live="polite"></div>
  <section class="benefits">
@@ -65,7 +65,7 @@
  </section>
 <section id="indexCartView" class="cart-view" style="display:none;max-width:760px;margin:18px auto 90px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px"><div class="section-head"><div><h2>My Cart 🛒</h2><p>Review products and quantities</p></div><button class="action" id="indexContinueShopping" type="button">Continue Shopping</button></div><div id="indexCartRows"></div><div style="display:flex;justify-content:space-between;padding:16px 0;font-weight:850"><span>Subtotal</span><strong id="indexCartSubtotal">₹0</strong></div><button class="hero-cta" id="indexProceedCheckout" type="button" style="width:100%;justify-content:center">Proceed to Checkout</button></section>
 </main>
-<footer class="footer"><div class="footer-inner"><div><div class="brandname">🛒 Fresh<span style="color:#b8e77b">-Mart</span></div><p>Good Food · Better Life</p><p>© Fresh-Mart. All rights reserved.</p></div><div class="footer-links"><a href="register.html">Create account</a><a href="user.html">My account</a></div></div></footer>
+<footer class="footer"><div class="footer-inner"><div><div class="brandname">🛒 Fresh<span style="color:#b8e77b">-Mart</span></div><p>Good Food · Better Life</p><p>© Rupee Mart. All rights reserved.</p></div><div class="footer-links"><a href="register.html">Create account</a><a href="user.html">My account</a></div></div></footer>
 <nav class="bottom-nav" aria-label="Main navigation"><a class="active" href="#home" data-index-view="home"><span>⌂</span>Home</a><a href="#categories" data-index-view="categories"><span>▦</span>Categories</a><a href="#cart" data-index-view="cart"><span>🛒</span>Cart <small id="mobileCartCount">0</small></a><a href="login.html"><span>♙</span>Account</a></nav>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -213,7 +213,7 @@
      originalEmptyParent.insertBefore(empty,originalEmptyNext);
      originalStatusParent.insertBefore(status,originalStatusNext);
      popular.querySelector('h2').textContent='Popular picks';
-     popular.querySelector('p').textContent='Customer favourites at Fresh-Mart';
+     popular.querySelector('p').textContent='Customer favourites at Rupee Mart';
    }
    renderProducts(list);
    if(searching){ requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'})); }
@@ -249,7 +249,7 @@
  else{voiceBtn.addEventListener('click',()=>{try{const rec=new SpeechRecognition();rec.lang=voiceLang.value;rec.continuous=false;rec.interimResults=false;voiceBtn.classList.add('listening');voiceBtn.textContent='…';rec.onresult=e=>{const spoken=e.results?.[0]?.[0]?.transcript||'';if(spoken){search.value=spoken;filterProducts();showToast('Searching: '+spoken)}};rec.onerror=e=>showToast(e.error==='not-allowed'?'Please allow microphone access.':'Voice search failed. Please try again.');rec.onend=()=>{voiceBtn.classList.remove('listening');voiceBtn.textContent='🎤'};rec.start();}catch(e){voiceBtn.classList.remove('listening');voiceBtn.textContent='🎤';showToast('Voice search could not start. Use HTTPS Chrome and allow microphone.')}})}
 
  document.getElementById('changeLocation').addEventListener('click',()=>{const pin=prompt('Enter your 6-digit delivery pincode:');if(pin===null)return;if(!/^[0-9]{6}$/.test(pin)){showToast('Please enter a valid 6-digit pincode');return}document.getElementById('deliveryPlace').textContent='Pincode '+pin;showToast('Location selected for this browsing session')});
- async function loadFreshMartOffers(){const box=document.getElementById('fmLiveOfferGrid');if(!box||!db)return;try{const {data,error}=await db.from('fm_offer_campaigns').select('id,title,description,offer_type,badge_text,discount_type,discount_value,starts_at,ends_at,is_active,sort_order').eq('is_active',true).order('sort_order').limit(8);if(error)throw error;const now=Date.now(),rows=(data||[]).filter(x=>(!x.starts_at||new Date(x.starts_at).getTime()<=now)&&(!x.ends_at||new Date(x.ends_at).getTime()>=now));box.innerHTML=rows.length?rows.map(x=>'<article class="offer green"><div><small>'+esc(x.badge_text||'SPECIAL OFFER')+'</small><h3>'+esc(x.title)+'</h3><p>'+esc(x.description||'Shop now at Fresh-Mart')+'</p>'+(x.discount_value>0?'<b style="color:#168447">'+(x.discount_type==='percent'?Number(x.discount_value)+'% OFF':'₹'+Number(x.discount_value)+' OFF')+'</b>':'')+'</div><div class="offer-icon">🎁</div></article>').join(''):'<div class="offer yellow"><div><small>Fresh-Mart</small><h3>Offers coming soon</h3><p>Check back for new deals.</p></div><div class="offer-icon">🛍️</div></div>';}catch(e){box.innerHTML='<div class="offer yellow"><div><small>Offers</small><h3>Deals coming soon</h3><p>Refresh to check current offers.</p></div><div class="offer-icon">🎁</div></div>';}}
+ async function loadFreshMartOffers(){const box=document.getElementById('fmLiveOfferGrid');if(!box||!db)return;try{const {data,error}=await db.from('fm_offer_campaigns').select('id,title,description,offer_type,badge_text,discount_type,discount_value,starts_at,ends_at,is_active,sort_order').eq('is_active',true).order('sort_order').limit(8);if(error)throw error;const now=Date.now(),rows=(data||[]).filter(x=>(!x.starts_at||new Date(x.starts_at).getTime()<=now)&&(!x.ends_at||new Date(x.ends_at).getTime()>=now));box.innerHTML=rows.length?rows.map(x=>'<article class="offer green"><div><small>'+esc(x.badge_text||'SPECIAL OFFER')+'</small><h3>'+esc(x.title)+'</h3><p>'+esc(x.description||'Shop now at Rupee Mart')+'</p>'+(x.discount_value>0?'<b style="color:#168447">'+(x.discount_type==='percent'?Number(x.discount_value)+'% OFF':'₹'+Number(x.discount_value)+' OFF')+'</b>':'')+'</div><div class="offer-icon">🎁</div></article>').join(''):'<div class="offer yellow"><div><small>Rupee Mart</small><h3>Offers coming soon</h3><p>Check back for new deals.</p></div><div class="offer-icon">🛍️</div></div>';}catch(e){box.innerHTML='<div class="offer yellow"><div><small>Offers</small><h3>Deals coming soon</h3><p>Refresh to check current offers.</p></div><div class="offer-icon">🎁</div></div>';}}
  loadLiveStore();loadFreshMartOffers();
 })();
 </script>

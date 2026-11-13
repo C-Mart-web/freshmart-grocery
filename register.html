@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fresh-Mart | Create Account</title>
+<title>Rupee Mart | Create Account</title>
 <style>
 :root{--g:#168447;--gd:#0f6b38;--mint:#eaf8ef;--bg:#f5faf6;--text:#183126;--muted:#718078;--line:#dfebe3}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#eaf8ef,#f8fbf8 55%,#e7f5eb);font-family:Arial,Helvetica,sans-serif;color:var(--text);padding:24px 14px}.wrap{max-width:560px;margin:0 auto}.brand{display:flex;justify-content:center;align-items:center;gap:10px;color:var(--g);font-size:24px;font-weight:850;margin:0 0 20px}.logo{width:46px;height:46px;border-radius:15px;background:var(--g);color:white;display:grid;place-items:center;font-size:25px}.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 16px 50px #11663812}.eyebrow{text-transform:uppercase;letter-spacing:1.5px;font-size:11px;font-weight:800;color:var(--g)}h1{font-size:27px;margin:8px 0}.sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 20px}.refbox{background:var(--mint);border:1px solid #cce8d4;border-radius:12px;padding:13px;margin-bottom:18px;font-size:13px;line-height:1.6}.refbox b{color:var(--gd)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.field{margin-bottom:14px}.field label{display:block;font-size:12px;font-weight:750;margin-bottom:7px}.field input,.field select{width:100%;padding:12px 13px;border:1px solid #d9e7dd;border-radius:11px;font:inherit;outline:none;background:#fff}.field input:focus,.field select:focus{border-color:var(--g);box-shadow:0 0 0 3px #16844714}.full{grid-column:1/-1}.passwordnote{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}.primary{width:100%;border:0;background:var(--g);color:white;padding:14px;border-radius:11px;font-size:15px;font-weight:800;margin-top:5px}.message{display:none;padding:11px;border-radius:10px;font-size:13px;line-height:1.45;margin:13px 0}.message.error{display:block;background:#fff0f0;color:#a52828}.message.ok{display:block;background:#eaf8ef;color:#116638}.preview{margin-top:15px;padding:11px;background:#fff8e7;color:#785913;border:1px solid #f1e0ad;border-radius:10px;font-size:11px;line-height:1.5}.foot{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}a{color:var(--g);font-weight:750;text-decoration:none}@media(max-width:480px){.card{padding:20px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.brand{font-size:22px}}
@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="wrap">
- <div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div>
+ <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
  <div class="card">
   <div class="eyebrow">Become a member</div><h1>Create your account</h1><p class="sub">Join through a referral link or register directly. Your account stays inactive until your membership payment is verified.</p>
   <div class="refbox" id="refBox"><b>Direct registration</b><br>No referral link detected. Placement will follow the Super Admin's configured rule after registration is connected.</div>
@@ -29,9 +29,9 @@
    <div id="message" class="message" role="status"></div>
    <button class="primary" type="submit">Create account</button>
   </form>
-  <div class="preview"><b>Setup stage:</b> Registration is processed by the Fresh-Mart secure function. Your account stays INACTIVE until the plan payment is verified by Super Admin.</div>
+  <div class="preview"><b>Setup stage:</b> Registration is processed by the Rupee Mart secure function. Your account stays INACTIVE until the plan payment is verified by Super Admin.</div>
  </div>
- <div class="foot">Already have an account? <a href="login.html">Login</a><br><br>© Fresh-Mart</div>
+ <div class="foot">Already have an account? <a href="login.html">Login</a><br><br>© Rupee Mart</div>
 </div>
 <script>
 const FM_SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
@@ -73,7 +73,7 @@ registerForm.addEventListener('submit',async e=>{
   msg.className='message ok';msg.textContent='Account created successfully. User ID: '+result.profile.user_code+'. Account type: '+(result.profile.account_type||accountType).toUpperCase()+'. Account status: INACTIVE. Redirecting to login…';
   registerForm.reset();
   setTimeout(()=>location.href='login.html?identity='+encodeURIComponent(username),1700);
- }catch(err){msg.className='message error';msg.textContent=err.message||'Could not connect to Fresh-Mart. Please retry.';}
+ }catch(err){msg.className='message error';msg.textContent=err.message||'Could not connect to Rupee Mart. Please retry.';}
  finally{button.disabled=false;button.textContent='Create account';}
 });
 </script>

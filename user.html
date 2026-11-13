@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fresh-Mart | User Panel</title>
+<title>Rupee Mart | User Panel</title>
 <style>
 :root{--green:#168447;--green2:#0f6b38;--mint:#eaf8ef;--pale:#f5fbf6;--text:#183126;--muted:#718078;--line:#e1eee5;--white:#fff;--orange:#f59e0b;--red:#dc4545;--shadow:0 8px 26px rgba(22,132,71,.08)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6faf7;color:var(--text)}button,input{font:inherit}button{cursor:pointer}
@@ -184,7 +184,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 
 </style>
 <style>
-/* Fresh-Mart first-login spin wheel */
+/* Rupee Mart first-login spin wheel */
 #fmSpinWelcomeModal{display:none;position:fixed;inset:0;z-index:10010;background:rgba(5,20,12,.72);padding:14px;align-items:center;justify-content:center;overflow:auto}
 #fmSpinWelcomeModal.open{display:flex}
 .fm-spin-welcome-box{width:min(100%,440px);max-height:calc(100dvh - 28px);overflow:auto;background:#fff;border-radius:22px;padding:20px 16px 18px;text-align:center;box-shadow:0 18px 60px #0005;position:relative;box-sizing:border-box}
@@ -221,7 +221,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <body>
 <header class="topbar">
   <button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button>
-  <div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div>
+  <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
   <div class="topright"><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><button class="signout-btn" type="button" onclick="showPage('cart')" aria-label="Open Cart" style="position:relative;font-size:18px;padding:8px 11px"><span class="fm-top-cart-visual"><span class="fm-cart-goods">🥬🥕</span><span class="fm-cart-basket">🛒</span></span><span id="fmTopCartCount" style="font-size:10px;background:#d8f36a;color:#173a26;border-radius:20px;padding:2px 6px;margin-left:3px">0</span></button><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
 </header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
@@ -239,13 +239,13 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button class="navbtn" data-page="myoffers"><span class="ico">🎁</span>Coupons & Offers</button>
   <div class="navlabel">ACCOUNT</div>
   <button class="navbtn" data-page="profile"><span class="ico">⚙</span>Profile & Support</button>
-  <div class="sidebar-foot"><strong>Fresh-Mart Support</strong><br>Need help with an order or payment?<br><span style="color:var(--green);font-weight:800">Contact support →</span></div>
+  <div class="sidebar-foot"><strong>Rupee Mart Support</strong><br>Need help with an order or payment?<br><span style="color:var(--green);font-weight:800">Contact support →</span></div>
 </aside>
 <main>
 <section class="page active" id="dashboard">
-  <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Fresh-Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● CHECKING PLAN</span></div>
+  <div class="welcome"><div><h1 id="dashboardGreeting">Good day! 🌿</h1><p id="dashboardSub">Welcome to your Rupee Mart member dashboard.</p><p class="hint" id="sponsorInfo" style="margin-top:8px"></p></div><span class="status" id="accountStatus">● CHECKING PLAN</span></div>
   <div class="fm-page-banner" id="fmBannerDashboard" style="display:none"></div>
-  <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Fresh-Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
+  <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Rupee Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
     <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available shopping balance</div><div class="small" style="margin-top:8px">Plan allocation: <b id="fmDashShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="fmDashShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="fmDashShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="fmDashShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmDashIncomeBalance">—</div><div class="stat-note">Total eligible income balance</div></div>
@@ -326,8 +326,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="team">
   <div class="welcome"><div><h1>My Team 👥</h1><p>Manage your referral links and view your team summary.</p></div></div>
   <div class="grid"><div class="card"><div class="stat-head">Direct Referrals <span class="stat-icon">👤</span></div><div class="stat-value" id="teamDirectCount">—</div><div class="stat-note">Members you invited</div></div><div class="card"><div class="stat-head">Left Team <span class="stat-icon">⬅️</span></div><div class="stat-value" id="teamLeftCount">—</div><div class="stat-note">Active / registered members</div></div><div class="card"><div class="stat-head">Right Team <span class="stat-icon">➡️</span></div><div class="stat-value" id="teamRightCount">—</div><div class="stat-note">Active / registered members</div></div><div class="card"><div class="stat-head">Active Members <span class="stat-icon">✅</span></div><div class="stat-value" id="teamActiveCount">—</div><div class="stat-note">Active accounts in your team</div></div></div>
-  <div class="card" style="margin-bottom:16px"><h2 style="font-size:19px">Joined Members</h2><p id="teamLoadMessage" class="hint" role="status">Loading your team…</p><div class="tablewrap"><table><thead><tr><th>Member</th><th>Fresh-Mart ID</th><th>Placement</th><th>Status</th></tr></thead><tbody id="joinedMembersRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
-  <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Your referral links will use the username of the account currently logged in.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Fresh-Mart User ID</label><input id="refIdentity" placeholder="Loading account..." maxlength="60" autocomplete="off" readonly></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Checking your signed-in account…</div></div>
+  <div class="card" style="margin-bottom:16px"><h2 style="font-size:19px">Joined Members</h2><p id="teamLoadMessage" class="hint" role="status">Loading your team…</p><div class="tablewrap"><table><thead><tr><th>Member</th><th>Rupee Mart ID</th><th>Placement</th><th>Status</th></tr></thead><tbody id="joinedMembersRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
+  <div class="card" style="margin-bottom:16px"><h2 style="font-size:17px">Your Referral Links</h2><p class="hint">Your referral links will use the username of the account currently logged in.</p><div class="field" style="margin-top:14px"><label for="refIdentity">Your username / Rupee Mart User ID</label><input id="refIdentity" placeholder="Loading account..." maxlength="60" autocomplete="off" readonly></div><div id="refLinkMessage" class="hint" role="status" style="margin:8px 0 14px">Checking your signed-in account…</div></div>
   <div class="twocol"><div class="card"><h2 style="font-size:17px;color:#168447">⬅️ Left Referral Link</h2><p class="hint">Members using this link request LEFT placement. Spillover stays inside this left branch.</p><input id="leftReferralLink" readonly aria-label="Left referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('left')">Copy Left Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('left')">WhatsApp Share</button></div></div><div class="card"><h2 style="font-size:17px;color:#168447">➡️ Right Referral Link</h2><p class="hint">Members using this link request RIGHT placement. Spillover stays inside this right branch.</p><input id="rightReferralLink" readonly aria-label="Right referral link" style="width:100%;padding:11px;border:1px solid #dbe8de;border-radius:9px;background:#f8fbf8;font-size:12px;margin:8px 0 10px" placeholder="Link will appear here"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="copyReferralLink('right')">Copy Right Link</button><button class="btn btn-outline" type="button" onclick="shareReferralLink('right')">WhatsApp Share</button></div></div></div>
 </section>
 <section class="page" id="rewards"><div class="fm-page-banner" id="fmBannerRewards" style="display:none"></div>
@@ -405,7 +405,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <section class="page" id="orders"><div class="welcome"><div><h1>My Orders 📦</h1><p>Track order confirmation, processing and delivery status.</p></div><button class="btn btn-outline" onclick="loadMyGroceryOrders()">Refresh Orders</button></div><div class="card"><div class="section-head"><h2>Order History</h2><span class="badge approved" id="fmMyOrderCount">0 ORDERS</span></div><div id="fmMyOrdersList" class="hint">Your orders will appear here.</div></div></section>
 <section class="page" id="profile">
   <div class="welcome"><div><h1>Profile & Support</h1><p>Manage your account, delivery addresses and password.</p></div></div>
-  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Fresh-Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Fresh-Mart support.</p></div>
+  <div class="card"><h2 style="font-size:17px">Member profile</h2><div class="formgrid"><div class="field"><label>Full name</label><input id="memberProfileName" readonly placeholder="Will load from your account"></div><div class="field"><label>Username</label><input id="memberProfileUsername" readonly placeholder="Will load from your account"></div><div class="field"><label>Mobile number</label><input id="memberProfileMobile" readonly placeholder="Will load from your account"></div><div class="field"><label>Rupee Mart User ID</label><input id="memberProfileCode" readonly placeholder="Generated after registration"></div></div><p class="hint">For changes to your registered name or mobile number, contact Rupee Mart support.</p></div>
   <div class="card" id="fmBankDetailsCard" style="margin-top:17px"><h2 style="font-size:17px">Bank / UPI Details for Withdrawals</h2>
    <p class="hint">Enter all bank details together. You can save only once; after saving, only Super Admin can make corrections. These details will appear automatically on the Withdrawals page.</p>
    <div class="formgrid">
@@ -456,9 +456,9 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   </div>
 
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Change Password 🔐</h2><p class="hint">Choose a new password with at least 8 characters. Do not share it with anyone.</p><div class="formgrid"><div class="field"><label for="memberNewPassword">New password</label><input id="memberNewPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Enter new password"></div><div class="field"><label for="memberConfirmPassword">Confirm new password</label><input id="memberConfirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Re-enter new password"></div></div><p id="memberPasswordMsg" class="hint" aria-live="polite"></p><button class="btn btn-green" type="button" id="memberChangePasswordBtn" onclick="changeOwnPassword()">Update Password</button></div>
-  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Fresh-Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
+  <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Rupee Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
-<div class="footer-note">© Fresh-Mart · Fresh groceries, smarter shopping.</div>
+<div class="footer-note">© Rupee Mart · Fresh groceries, smarter shopping.</div>
 <section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">Spin attempts follow the limit set by Admin. If you get No Prize / Try Again, you can spin again while attempts remain. Wallet rewards are credited directly to your Shopping Wallet.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" id="fmMyGiftRewardsCard" style="margin-top:14px"><h2>🎁 My Gift Rewards</h2><p class="hint">Your won gifts stay here even if you close the Congratulations window. Check your purchase progress and claim whenever you become eligible.</p><div id="fmMyGiftRewardsList" class="hint">Checking your gift rewards…</div></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
 </div>
 
@@ -467,7 +467,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button id="fmSpinWelcomeClose" type="button" aria-label="Close spin wheel" onclick="fmCloseWelcomeSpin()">×</button>
   <div id="fmSpinResultPopup" class="fm-spin-result-pop" aria-live="assertive"><div class="fm-win-icon">🏆</div><h2>Congratulations!</h2><p>You won</p><img id="fmSpinWonGiftImage" alt="Gift prize" style="display:none;max-width:180px;max-height:150px;object-fit:contain;border-radius:14px;margin:8px auto"><div class="fm-win-prize" id="fmSpinWonPrize">Special Reward</div><p id="fmSpinWonDetails">Your reward has been added to Coupons &amp; Offers.</p><button type="button" class="btn btn-green" id="fmSpinResultAction" onclick="fmSpinResultContinue()">View My Coupons</button></div>
   <div style="font-size:34px">🎉</div>
-  <h2 id="fmSpinWelcomeTitle" style="margin:4px 0;color:#126b3b">Welcome to Fresh-Mart!</h2>
+  <h2 id="fmSpinWelcomeTitle" style="margin:4px 0;color:#126b3b">Welcome to Rupee Mart!</h2>
   <p class="hint" style="margin:0">Spin the wheel & get the chance to win prizes! Your available spin depends on your active plan and Admin settings.</p>
   <div class="fm-spin-wheel-wrap">
    <div class="fm-spin-pointer"></div>
@@ -560,7 +560,7 @@ async function fmLoadPageBanners(){
  if(!fmShopClient)return;const ids={dashboard:'fmBannerDashboard',groceries:'fmBannerGroceries',plans:'fmBannerPlans',rewards:'fmBannerRewards'};
  try{const {data,error}=await fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','page_banners').maybeSingle();if(error)throw error;const cfg=data?.setting_value||{};
  Object.entries(ids).forEach(([page,id])=>{const el=document.getElementById(id),b=cfg[page];if(!el)return;if(!b||b.enabled===false||!b.image_url){el.style.display='none';return;}
- const img=document.createElement('img');img.src=b.image_url;img.alt=b.alt||'Fresh-Mart offer';img.loading='lazy';if(b.link_url){const link=document.createElement('a');link.href=b.link_url;link.target='_blank';link.rel='noopener';link.appendChild(img);el.replaceChildren(link);}else el.replaceChildren(img);el.style.display='block';});
+ const img=document.createElement('img');img.src=b.image_url;img.alt=b.alt||'Rupee Mart offer';img.loading='lazy';if(b.link_url){const link=document.createElement('a');link.href=b.link_url;link.target='_blank';link.rel='noopener';link.appendChild(img);el.replaceChildren(link);}else el.replaceChildren(img);el.style.display='block';});
  }catch(e){console.warn('Page banners unavailable:',e.message||e);}
 }
 
@@ -914,7 +914,7 @@ async function fmLoadMemberPlanSplit(userId,token){
    if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='No active plan';
    if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent='No approved Membership or Daily Fresh activation was found.';
    if(dash('fmDashboardPlanAmount'))dash('fmDashboardPlanAmount').textContent='—';
-   if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Choose your Fresh-Mart plan';
+   if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Choose your Rupee Mart plan';
    if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Your payment becomes active after administrator approval and successful activation.';
    if(dash('fmDashboardPlanAction'))dash('fmDashboardPlanAction').textContent='Choose a Plan →';
    if(dash('fmDashboardPlanNote'))dash('fmDashboardPlanNote').textContent='Your account becomes active after either Membership or Daily Fresh is approved and activated.';
@@ -951,7 +951,7 @@ async function fmLoadMemberPlanSplit(userId,token){
   if(dash('fmDashboardPlanName'))dash('fmDashboardPlanName').textContent='Could not verify membership';
   if(dash('fmDashboardPlanInfo'))dash('fmDashboardPlanInfo').textContent=e.message||'Secure membership lookup failed.';
   if(dash('fmDashboardBannerTitle'))dash('fmDashboardBannerTitle').textContent='Membership status unavailable';
-  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Please refresh or contact Fresh-Mart support. No membership status is being guessed.';
+  if(dash('fmDashboardBannerText'))dash('fmDashboardBannerText').textContent='Please refresh or contact Rupee Mart support. No membership status is being guessed.';
  }
 }
 
@@ -1060,7 +1060,7 @@ async function loadSignedInMember(){
   if(!profileRes.ok) throw new Error('Profile lookup failed ('+profileRes.status+').');
   const profiles=await profileRes.json(); const profile=profiles[0];
   fmShopAccountType=String(profile?.account_type||'retail').toLowerCase();
-  if(!profile){document.getElementById('refLinkMessage').textContent='No Fresh-Mart profile was found for this login.';return;}
+  if(!profile){document.getElementById('refLinkMessage').textContent='No Rupee Mart profile was found for this login.';return;}
    fmLoadMemberPlanDiscount(session.user.id,session.access_token);
   const identity=profile.username||profile.user_code;
   if(!identity){document.getElementById('refLinkMessage').textContent='Your profile has no username/User ID yet. Ask admin to check your profile.';return;}
@@ -1074,7 +1074,7 @@ async function loadSignedInMember(){
    loadDeliveryAddresses();
    loadMyMatchingSlabs(session.user.id,session.access_token);
    document.getElementById('topWelcome').textContent='Welcome, '+display;
-  document.getElementById('topUserCode').textContent=profile.user_code||profile.username||'Fresh-Mart member';
+  document.getElementById('topUserCode').textContent=profile.user_code||profile.username||'Rupee Mart member';
   document.getElementById('userAvatar').textContent=(display.trim().charAt(0)||'F').toUpperCase();
   document.getElementById('dashboardGreeting').textContent='Good day, '+display+'! 🌿';
   document.getElementById('accountStatus').textContent='● '+String(profile.account_status||'inactive').toUpperCase();
@@ -1749,15 +1749,15 @@ loadSignedInMember();
 async function copyReferralLink(side){
  buildReferralLinks();
  const value=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink').value;
- if(!value){alert('First enter your username or Fresh-Mart User ID.');return;}
+ if(!value){alert('First enter your username or Rupee Mart User ID.');return;}
  try{await navigator.clipboard.writeText(value);alert('Copied '+side.toUpperCase()+' referral link.');}
  catch(e){const input=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink');input.focus();input.select();const ok=document.execCommand('copy');alert(ok?'Copied '+side.toUpperCase()+' referral link.':'Please copy the selected link manually.');}
 }
 function shareReferralLink(side){
  buildReferralLinks();
  const value=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink').value;
- if(!value){alert('First enter your username or Fresh-Mart User ID.');return;}
- const text='Join Fresh-Mart using my '+side.toUpperCase()+' referral link: '+value;
+ if(!value){alert('First enter your username or Rupee Mart User ID.');return;}
+ const text='Join Rupee Mart using my '+side.toUpperCase()+' referral link: '+value;
  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
 }
 
@@ -1787,7 +1787,7 @@ async function fmLoadPayoutDetails(){
   if(confirm){confirm.value=has?'': '';confirm.disabled=has;confirm.readOnly=has;}
   if(saveBtn){saveBtn.disabled=has;saveBtn.textContent=has?'Bank Details Already Saved':'Save All Bank Details';saveBtn.style.opacity=has?'.6':'1';}
   if(msg)msg.textContent=has
-   ? 'Your bank details are saved and locked. Contact Fresh-Mart Super Admin if any correction is required.'
+   ? 'Your bank details are saved and locked. Contact Rupee Mart Super Admin if any correction is required.'
    : 'Enter all required bank details and save once. After saving, only Super Admin can edit them.';
   if(summary){
    summary.innerHTML=has
@@ -2025,7 +2025,7 @@ function showWalletHistory(walletName){fmRenderWalletHistory(walletName||'All');
 </script>
 
 <script>
-// Fresh-Mart offers and member rewards module
+// Rupee Mart offers and member rewards module
 function fmOfferEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmOfferMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
 async function fmLoadMyOffers(){
@@ -2080,7 +2080,7 @@ async function fmLoadMyOffers(){
     const c=x.coupon||{};const expired=!!(c.ends_at&&new Date(c.ends_at)<=new Date());
     const status=expired&&x.status==='available'?'EXPIRED':String(x.status||'unknown').toUpperCase();
     const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
-    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Fresh-Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
+    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Rupee Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');
   const {data:plays,error:pe}=spinTable?(spinScope==='plan'?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at,membership_activation_id').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',onlyActivation?.id||-1).order('played_at',{ascending:true}):await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true})):{data:[],error:null};if(pe)throw pe;
@@ -2380,7 +2380,7 @@ function fmDFUserRenderDelivery(s){
   : (current?'You may change your delivery time once in the current calendar month.':'Choose Morning or Evening. Your first selection does not use the monthly change.');
  box.innerHTML=`<div style="padding:14px;border:1px solid #dce9e0;border-radius:13px;background:#fff">
   <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>🚚 Delivery Preferences</b><span class="hint">Subscription delivery</span></div>
-  <p class="hint" style="margin:5px 0 12px">Select one delivery window. Your selected time and address will be visible to Fresh-Mart Admin.</p>
+  <p class="hint" style="margin:5px 0 12px">Select one delivery window. Your selected time and address will be visible to Rupee Mart Admin.</p>
   <div style="font-weight:750;margin-bottom:8px">Choose Delivery Time</div>
   <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">
    <label style="border:1px solid ${current==='morning'?'#168447':'#dce7df'};background:${current==='morning'?'#effaf2':'#fff'};border-radius:11px;padding:12px;display:flex;gap:8px;align-items:center;opacity:${lock&&current!=='morning'?.55:1}">
@@ -2539,7 +2539,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
     }
    }
   }catch(err){
-   console.error('Fresh-Mart navigation error:',id,err);
+   console.error('Rupee Mart navigation error:',id,err);
    const msg=document.getElementById(''+(id==='team'?'teamLoadMessage':id==='orders'?'fmMyOrdersList':id==='wallets'?'fmWalletMessage':'shopLoadMessage'));
    if(msg) msg.textContent='Page opened, but data could not load: '+(err?.message||String(err));
   }
@@ -2591,10 +2591,10 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
 
 </style>
 <div id="fmPaymentProcessingNotice" role="dialog" aria-modal="true" aria-labelledby="fmPaymentProcessingTitle">
- <div class="fm-global-notice-box"><div class="fm-global-notice-icon">⏳</div><h2 id="fmPaymentProcessingTitle">Payment Processing</h2><p>Your UTR and payment screenshot were submitted successfully. Please allow <b>5–10 minutes</b> for Admin verification. You can continue browsing Fresh-Mart. Your membership activates only after the payment is approved.</p><button type="button" onclick="fmClosePaymentProcessingNotice()">Close</button></div>
+ <div class="fm-global-notice-box"><div class="fm-global-notice-icon">⏳</div><h2 id="fmPaymentProcessingTitle">Payment Processing</h2><p>Your UTR and payment screenshot were submitted successfully. Please allow <b>5–10 minutes</b> for Admin verification. You can continue browsing Rupee Mart. Your membership activates only after the payment is approved.</p><button type="button" onclick="fmClosePaymentProcessingNotice()">Close</button></div>
 </div>
 <div id="fmPlanActivatedNotice" role="dialog" aria-modal="true" aria-labelledby="fmPlanActivatedTitle">
- <div class="fm-global-notice-box"><div class="fm-global-notice-icon">🎉</div><h2 id="fmPlanActivatedTitle">Your Plan Activated!</h2><p id="fmPlanActivatedText">Your Fresh-Mart membership plan has been activated successfully. Your membership benefits are now available.</p><button type="button" onclick="fmClosePlanActivatedNotice()">Close</button></div>
+ <div class="fm-global-notice-box"><div class="fm-global-notice-icon">🎉</div><h2 id="fmPlanActivatedTitle">Your Plan Activated!</h2><p id="fmPlanActivatedText">Your Rupee Mart membership plan has been activated successfully. Your membership benefits are now available.</p><button type="button" onclick="fmClosePlanActivatedNotice()">Close</button></div>
 </div>
 <div id="fmUpiUserModal"><div class="fm-upi-userbox">
  <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">UPI QR Payment</h2><button type="button" onclick="fmUpiUserClose()">Close</button></div>
@@ -2621,14 +2621,14 @@ function fmShowPaymentProcessingNotice(type){
  const el=document.getElementById('fmPaymentProcessingNotice');
  const p=el?.querySelector('.fm-global-notice-box p');
  const label=type==='daily_fresh'?'Daily Fresh subscription':type==='membership'?'Membership plan':'payment';
- if(p)p.innerHTML='Your UTR and payment screenshot were submitted successfully for your <b>'+label+'</b>. Please wait <b>5–10 minutes</b> while Admin verifies your payment. You can continue browsing Fresh-Mart. Your plan becomes active immediately after Admin approval.';
+ if(p)p.innerHTML='Your UTR and payment screenshot were submitted successfully for your <b>'+label+'</b>. Please wait <b>5–10 minutes</b> while Admin verifies your payment. You can continue browsing Rupee Mart. Your plan becomes active immediately after Admin approval.';
  if(el)el.style.display='flex';
 }
 function fmClosePaymentProcessingNotice(){const el=document.getElementById('fmPaymentProcessingNotice');if(el)el.style.display='none';}
 function fmShowPlanActivatedNotice(type){
  const el=document.getElementById('fmPlanActivatedNotice');
  const p=document.getElementById('fmPlanActivatedText');
- if(p)p.textContent=(type==='Daily Fresh'?'Your Daily Fresh subscription':'Your Membership plan')+' has been activated successfully. Your Fresh-Mart account is now ACTIVE. Spin the wheel & get the chance to win prizes!';
+ if(p)p.textContent=(type==='Daily Fresh'?'Your Daily Fresh subscription':'Your Membership plan')+' has been activated successfully. Your Rupee Mart account is now ACTIVE. Spin the wheel & get the chance to win prizes!';
  if(el)el.style.display='flex';
 }
 function fmClosePlanActivatedNotice(){const el=document.getElementById('fmPlanActivatedNotice');if(el)el.style.display='none';}
@@ -2734,7 +2734,7 @@ async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:String(sourceId)});if(error)throw error;
  if(!data?.id||!Number(data.amount)||!data.upi_id||!data.payee_name)throw new Error('Payment preparation returned incomplete gateway details.');
  fmUpiCurrentTxn=data;
- const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Fresh Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});
+ const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Rupee Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});
  const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);
  if(type==='daily_fresh'||type==='membership'){
   if(!file)throw new Error('Payment screenshot is required.');
@@ -2747,7 +2747,7 @@ async function fmCommonStartPayment(type,sourceId,file,knownUtr){
  }
  return data;
 }
-async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='';area.innerHTML='';try{const type=document.getElementById('fmUpiType').value,source=document.getElementById('fmUpiSource').value.trim();if(!source)throw new Error('Enter an existing pending Order / Request ID.');fmUpiLastContext={type,sourceId:source};const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:source});if(error)throw error;if(!data?.id)throw new Error('Payment preparation failed.');fmUpiCurrentTxn=data;const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Fresh Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);area.innerHTML=`<b>Pay exactly ₹${Number(data.amount).toFixed(2)}</b><br><img src="${qr}" alt="UPI QR" width="260" height="260" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(data.payee_name)}</b><br>${fmUpiEsc(data.upi_id)}</p><p>Reference: ${fmUpiEsc(data.txn_ref)}</p><a href="${uri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='Pay first, then enter UTR and upload screenshot.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to prepare payment: '+e.message;}}
+async function fmUpiMakeQR(){const msg=document.getElementById('fmUpiUserMsg'),area=document.getElementById('fmUpiQrArea');msg.textContent='';area.innerHTML='';try{const type=document.getElementById('fmUpiType').value,source=document.getElementById('fmUpiSource').value.trim();if(!source)throw new Error('Enter an existing pending Order / Request ID.');fmUpiLastContext={type,sourceId:source};const {data,error}=await fmShopClient.rpc('fm_common_payment_prepare_v1',{p_payment_type:type,p_source_id:source});if(error)throw error;if(!data?.id)throw new Error('Payment preparation failed.');fmUpiCurrentTxn=data;const params=new URLSearchParams({pa:data.upi_id,pn:data.payee_name,am:Number(data.amount).toFixed(2),cu:'INR',tn:(data.upi_note||'Rupee Mart Payment')+' '+data.txn_ref,tr:data.txn_ref});const uri='upi://pay?'+params.toString(),qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&data='+encodeURIComponent(uri);area.innerHTML=`<b>Pay exactly ₹${Number(data.amount).toFixed(2)}</b><br><img src="${qr}" alt="UPI QR" width="260" height="260" style="max-width:100%;border:1px solid #ddd;border-radius:10px"><p><b>${fmUpiEsc(data.payee_name)}</b><br>${fmUpiEsc(data.upi_id)}</p><p>Reference: ${fmUpiEsc(data.txn_ref)}</p><a href="${uri}" style="display:inline-block;padding:10px 14px;background:#176c45;color:white;border-radius:8px;text-decoration:none">Open UPI App</a>`;document.getElementById('fmUpiProofArea').style.display='block';msg.textContent='Pay first, then enter UTR and upload screenshot.';await fmUpiMyPayments();}catch(e){msg.textContent='Unable to prepare payment: '+e.message;}}
 async function fmUpiSubmitProof(){
  const msg=document.getElementById('fmUpiUserMsg');
  const submitBtn=document.querySelector('#fmUpiProofArea button[onclick="fmUpiSubmitProof()"]');
@@ -2852,7 +2852,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
     }
    }
   }catch(err){
-   console.error('Fresh-Mart navigation error:',id,err);
+   console.error('Rupee Mart navigation error:',id,err);
    const msg=document.getElementById(''+(id==='team'?'teamLoadMessage':id==='orders'?'fmMyOrdersList':id==='wallets'?'fmWalletMessage':'shopLoadMessage'));
    if(msg) msg.textContent='Page opened, but data could not load: '+(err?.message||String(err));
   }

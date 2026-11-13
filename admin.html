@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fresh-Mart | Admin Panel</title>
+<title>Rupee Mart | Admin Panel</title>
 <style>
 :root{--green:#168447;--green2:#0f6b38;--mint:#eaf8ef;--pale:#f5fbf6;--text:#183126;--muted:#718078;--line:#e1eee5;--white:#fff;--orange:#f59e0b;--red:#dc4545;--shadow:0 8px 26px rgba(22,132,71,.08)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f6faf7;color:var(--text)}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -48,7 +48,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <style>#fmAreaMap{height:300px;border:1px solid #dbe8de;border-radius:14px;z-index:1;margin:12px 0}.leaflet-container{font:inherit}</style>
 </head>
 <body>
-<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo">🛒</div><span>Fresh-Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="avatar">SA</div></div></header>
+<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="avatar">SA</div></div></header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
 <div class="layout">
 <aside class="sidebar">
@@ -72,8 +72,8 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 </aside>
 <main>
 <section class="page active" id="dashboard">
-<div class="welcome"><div><h1>Admin Dashboard 🌿</h1><p>Manage Fresh-Mart members, payments and grocery operations.</p></div><span class="status">SUPER ADMIN</span></div>
-<div class="banner"><div><h2>Welcome to Fresh-Mart Admin</h2><p>Review payment proofs, manage plans and keep store operations organized.</p></div><div class="bannericon">📊</div></div>
+<div class="welcome"><div><h1>Admin Dashboard 🌿</h1><p>Manage Rupee Mart members, payments and grocery operations.</p></div><span class="status">SUPER ADMIN</span></div>
+<div class="banner"><div><h2>Welcome to Rupee Mart Admin</h2><p>Review payment proofs, manage plans and keep store operations organized.</p></div><div class="bannericon">📊</div></div>
 <div class="grid">
 <div class="card"><div class="stat-head">Total Members <span class="stat-icon">👥</span></div><div class="stat-value" id="totalMembers">—</div><div class="stat-note" id="membersStatus">Connecting to Supabase…</div></div>
 <div class="card"><div class="stat-head">Pending Payments <span class="stat-icon">🧾</span></div><div class="stat-value" id="pendingCount">0</div><div class="stat-note">Demo requests in this browser</div></div>
@@ -100,8 +100,8 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="card"><div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Username</th><th>Mobile</th><th>Referred By</th><th>Account Type</th><th>Plans</th><th>Account Status</th><th>Password</th></tr></thead><tbody id="membersTable"><tr><td colspan="9" class="empty">Loading member records…</td></tr></tbody></table></div></div>
 <div class="card" style="margin-top:16px">
  <div class="section-head"><h2>Member Bank Details</h2><span class="badge approved">SUPER ADMIN ONLY</span></div>
- <p class="hint">Search by Fresh-Mart ID, username, mobile number or member name. Only Super Admin can update saved bank details.</p>
- <div class="searchrow"><input id="fmAdminBankMemberSearch" placeholder="Enter Fresh-Mart ID / username / mobile"><button class="btn btn-green" type="button" onclick="fmAdminFindBankMember()">Find Member</button></div>
+ <p class="hint">Search by Rupee Mart ID, username, mobile number or member name. Only Super Admin can update saved bank details.</p>
+ <div class="searchrow"><input id="fmAdminBankMemberSearch" placeholder="Enter Rupee Mart ID / username / mobile"><button class="btn btn-green" type="button" onclick="fmAdminFindBankMember()">Find Member</button></div>
  <p id="fmAdminBankMemberMsg" class="hint" aria-live="polite"></p>
  <div id="fmAdminBankEditor" style="display:none">
   <p class="hint" id="fmAdminBankMemberLabel"></p>
@@ -122,14 +122,14 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 
 <div class="card" id="fmBulkProductUploadCard" style="margin-bottom:16px;border:1px solid #bfe4ca">
  <div class="section-head"><h2>📥 Bulk Product Upload (Excel)</h2><span class="badge approved">XLSX</span></div>
- <p class="hint">Fresh-Mart template Excel file select చేసి ఒకేసారి Products, Retail/Wholesale prices, Reward Points, Variants మరియు image URLs upload చేయండి.</p>
+ <p class="hint">Rupee Mart template Excel file select చేసి ఒకేసారి Products, Retail/Wholesale prices, Reward Points, Variants మరియు image URLs upload చేయండి.</p>
  <div class="field"><label>Excel File (.xlsx)</label><input id="fmBulkProductFile" type="file" accept=".xlsx,.xls"></div>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
   <button class="btn btn-outline" type="button" onclick="fmBulkDownloadTemplate()">⬇ Download Excel Template</button>
   <button class="btn btn-outline" type="button" onclick="fmBulkPreview()">Preview Excel</button>
   <button class="btn btn-green" type="button" id="fmBulkUploadBtn" onclick="fmBulkUpload()">Upload Products</button>
  </div>
- <p id="fmBulkProductMsg" class="hint" aria-live="polite">Select the Fresh-Mart Bulk Product Upload Template. Category names must already exist in Admin.</p>
+ <p id="fmBulkProductMsg" class="hint" aria-live="polite">Select the Rupee Mart Bulk Product Upload Template. Category names must already exist in Admin.</p>
  <div id="fmBulkPreview" class="tablewrap" style="margin-top:10px"></div>
 </div>
 <div class="card" id="fmProductImageLibraryCard" style="margin-bottom:16px;border:1px solid #bfe4ca">
@@ -268,9 +268,9 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="tablewrap"><table><thead><tr><th>Bill Range</th><th>Delivery Charge</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmSlabRows"><tr><td colspan="4" class="empty">Loading slabs…</td></tr></tbody></table></div>
 <p class="hint">Example: ₹1,000–₹1,999 = ₹75; ₹2,000–₹2,999 = ₹50; ₹3,000+ = Free. Change these values as needed.</p></div>
 <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Daily Delivery Slot Manager</h2></div><p class="hint">Set your regular delivery slots only once. These slots repeat automatically every day. Booking closes 1 hour before each slot starts. Capacity is counted separately for each delivery date.</p><div class="formgrid"><div class="field"><label>Apply to Pincode (blank = all areas)</label><input id="fmSlotPin" maxlength="6" inputmode="numeric" placeholder="Optional 6-digit pincode"></div><div class="field"><label>Slot Label</label><input id="fmSlotLabel" placeholder="Morning Delivery"></div><div class="field"><label>Start</label><input id="fmSlotStart" type="time" value="08:00"></div><div class="field"><label>End</label><input id="fmSlotEnd" type="time" value="10:00"></div><div class="field"><label>Maximum Orders per Day</label><input id="fmSlotCapacity" type="number" min="1" value="20"></div></div><input type="hidden" id="fmSlotEditId" value=""><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button id="fmSlotSaveBtn" class="btn btn-green" type="button" onclick="fmSaveSlot()">＋ Add Daily Slot</button><button id="fmSlotCancelBtn" class="btn btn-outline" type="button" style="display:none" onclick="fmCancelSlotEdit()">Cancel Edit</button></div><p id="fmSlotMsg" class="hint"></p><div class="tablewrap"><table><thead><tr><th>Area</th><th>Daily Slot</th><th>Daily Capacity</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmSlotRows"><tr><td colspan="5" class="empty">Loading daily slots…</td></tr></tbody></table></div></div>
-<div class="card"><div class="formgrid"><div class="field"><label>Portal name</label><input value="Fresh-Mart" readonly></div><div class="field"><label>Primary theme</label><select><option>Green & White</option><option>Blue & White</option></select></div><div class="field"><label>Support email</label><input type="email" placeholder="Support email"></div><div class="field"><label>Support mobile</label><input type="tel" placeholder="Support mobile"></div><div class="field"><label>Payment instructions</label><textarea placeholder="Enter company-approved payment instructions"></textarea></div><div class="field"><label>Maintenance notice</label><textarea placeholder="Optional site notice"></textarea></div></div></div>
+<div class="card"><div class="formgrid"><div class="field"><label>Portal name</label><input value="Rupee Mart" readonly></div><div class="field"><label>Primary theme</label><select><option>Green & White</option><option>Blue & White</option></select></div><div class="field"><label>Support email</label><input type="email" placeholder="Support email"></div><div class="field"><label>Support mobile</label><input type="tel" placeholder="Support mobile"></div><div class="field"><label>Payment instructions</label><textarea placeholder="Enter company-approved payment instructions"></textarea></div><div class="field"><label>Maintenance notice</label><textarea placeholder="Optional site notice"></textarea></div></div></div>
 </section>
-<div class="small" id="dbStatus" style="text-align:center;padding:12px 0 5px">Connecting securely to Fresh-Mart database…</div><div class="small" style="text-align:center;padding:0 0 5px">Fresh-Mart Admin</div>
+<div class="small" id="dbStatus" style="text-align:center;padding:12px 0 5px">Connecting securely to Rupee Mart database…</div><div class="small" style="text-align:center;padding:0 0 5px">Rupee Mart Admin</div>
 <section class="page" id="offers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Manage coupons, offer campaigns, spin rewards and scratch cards.</p></div><button class="btn btn-outline" onclick="fmAdminLoadOffers()">Refresh</button></div><div class="card"><h2>Create Coupon</h2><div class="formgrid"><div class="field"><label>Code</label><input id="fmCouponCode" placeholder="WELCOME10"></div><div class="field"><label>Title</label><input id="fmCouponTitle"></div><div class="field"><label>Discount Type</label><select id="fmCouponType"><option value="percent">Percentage</option><option value="fixed">Fixed Amount</option><option value="free_delivery">Free Delivery</option></select></div><div class="field"><label>Value</label><input id="fmCouponValue" type="number" min="0" value="10"></div><div class="field"><label>Minimum Order</label><input id="fmCouponMin" type="number" min="0" value="0"></div><div class="field"><label>Maximum Discount</label><input id="fmCouponMax" type="number" min="0"></div><div class="field"><label>Per User Limit</label><input id="fmCouponPerUser" type="number" min="1" value="1"></div><div class="field"><label>Usage Limit</label><input id="fmCouponUsage" type="number" min="1"><small class="hint">Maximum total redemptions across all members. Leave blank for unlimited.</small></div>
 <div class="field"><label>Start Date (optional)</label><input id="fmCouponStart" type="date"><small class="hint">Coupon becomes valid from this date. Leave blank to start immediately.</small></div>
 <div class="field"><label>End Date (optional)</label><input id="fmCouponEnd" type="date"><small class="hint">Last valid date. Leave blank for no expiry.</small></div></div><input id="fmCouponDesc" placeholder="Description" style="width:100%;padding:11px;margin-top:10px;border:1px solid #dbe8de;border-radius:10px"><div class="field" style="margin-top:10px"><label>Coupon Terms & Conditions</label><textarea id="fmCouponTerms" placeholder="Usage rules, eligible products, exclusions, validity and other conditions"></textarea></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateCoupon()">Create Coupon</button><p id="fmCouponMsg" class="hint"></p></div><div class="card" style="margin-top:14px"><h2>Create Offer Campaign</h2><div class="formgrid"><div class="field"><label>Title</label><input id="fmOfferTitle"></div><div class="field"><label>Type</label><select id="fmOfferType"><option value="banner">Home Banner</option><option value="category">Special Category</option><option value="product">Product Offer</option><option value="deal">Offer Zone Deal</option></select></div><div class="field"><label>Badge</label><input id="fmOfferBadge" placeholder="UP TO 50% OFF"></div><div class="field"><label>Category Name</label><input id="fmOfferCategory"></div><div class="field"><label>Product ID</label><input id="fmOfferProduct" type="number"></div><div class="field"><label>Discount Type</label><select id="fmOfferDiscountType"><option value="percent">Percentage</option><option value="fixed">Fixed</option></select></div><div class="field"><label>Discount Value</label><input id="fmOfferDiscount" type="number" min="0" value="0"></div><div class="field"><label>Sort Order</label><input id="fmOfferOrder" type="number" value="100"><small class="hint">Smaller numbers appear earlier in the offers list.</small></div>
@@ -307,7 +307,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <p class="hint">Here you can check Free Member, Daily Fresh categories and all membership plans together. This is a view-only summary; use the Spin Wheel Settings above to edit a category or plan.</p>
 <div id="fmPlanSpinOverview" class="tablewrap"><p class="empty">Loading plan-wise spin settings…</p></div>
 </div>
-<div class="card" style="margin-top:14px"><div class="section-head"><h2>🎁 Gift Claim Requests</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminLoadGiftClaims()">Refresh</button></div><p class="hint">Members' gift claims after meeting the minimum purchase condition. Review address and approve/reject.</p><div id="fmGiftClaimsMsg" class="hint"></div><div id="fmGiftClaimsList" class="tablewrap">Loading gift claim requests…</div></div><div class="card" style="margin-top:14px"><h2>Assign Coupon to Member</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmAssignCouponUser" placeholder="Enter member username or FM User ID"><small class="hint">Searches the member profile. Auth UUID is fetched automatically.</small></div><div class="field"><label>Coupon Code</label><input id="fmAssignCouponCode"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignCoupon()">Assign Coupon</button><p id="fmAssignCouponMsg" class="hint"></p><hr><h2>Assign Scratch Card</h2><div class="formgrid"><div class="field"><label>Member Username / Fresh-Mart ID</label><input id="fmScratchUser" placeholder="Enter member username or FM User ID"><small class="hint">Auth UUID is fetched automatically from the member profile.</small></div><div class="field"><label>Reward Type</label><select id="fmScratchType"><option value="wallet">Wallet Amount</option><option value="coupon">Coupon</option><option value="product">Product</option><option value="none">No Prize</option></select></div><div class="field"><label>Reward Value</label><input id="fmScratchValue"></div><div class="field"><label>Reward Label</label><input id="fmScratchLabel"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignScratch()">Assign Scratch Card</button><p id="fmScratchAdminMsg" class="hint"></p><hr><h2>Coupons & Offers List</h2><div id="fmAdminOffersList" class="hint">Loading…</div></div></section></main>
+<div class="card" style="margin-top:14px"><div class="section-head"><h2>🎁 Gift Claim Requests</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmAdminLoadGiftClaims()">Refresh</button></div><p class="hint">Members' gift claims after meeting the minimum purchase condition. Review address and approve/reject.</p><div id="fmGiftClaimsMsg" class="hint"></div><div id="fmGiftClaimsList" class="tablewrap">Loading gift claim requests…</div></div><div class="card" style="margin-top:14px"><h2>Assign Coupon to Member</h2><div class="formgrid"><div class="field"><label>Member Username / Rupee Mart ID</label><input id="fmAssignCouponUser" placeholder="Enter member username or FM User ID"><small class="hint">Searches the member profile. Auth UUID is fetched automatically.</small></div><div class="field"><label>Coupon Code</label><input id="fmAssignCouponCode"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignCoupon()">Assign Coupon</button><p id="fmAssignCouponMsg" class="hint"></p><hr><h2>Assign Scratch Card</h2><div class="formgrid"><div class="field"><label>Member Username / Rupee Mart ID</label><input id="fmScratchUser" placeholder="Enter member username or FM User ID"><small class="hint">Auth UUID is fetched automatically from the member profile.</small></div><div class="field"><label>Reward Type</label><select id="fmScratchType"><option value="wallet">Wallet Amount</option><option value="coupon">Coupon</option><option value="product">Product</option><option value="none">No Prize</option></select></div><div class="field"><label>Reward Value</label><input id="fmScratchValue"></div><div class="field"><label>Reward Label</label><input id="fmScratchLabel"></div></div><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminAssignScratch()">Assign Scratch Card</button><p id="fmScratchAdminMsg" class="hint"></p><hr><h2>Coupons & Offers List</h2><div id="fmAdminOffersList" class="hint">Loading…</div></div></section></main>
 </div>
 <nav class="mobile-nav"><button class="active" data-page="dashboard"><span>⌂</span>Home</button><button data-page="payments"><span>🧾</span>Payments</button><button data-page="orders"><span>📦</span>Orders</button><button data-page="offers"><span>🎁</span>Offers</button><button type="button" onclick="fmToggleMobileMenu(true)"><span>☰</span>More</button></nav>
 
@@ -409,7 +409,7 @@ async function loadFreshMartDashboard(){
    document.getElementById('membersStatus').textContent='Sign-in / database permission needed';
    status.textContent='Admin data could not load: '+(e.message||'Check sign-in and Supabase RLS policies.');
    status.style.color='#b72e2e';
-   console.error('Fresh-Mart dashboard load:',e);
+   console.error('Rupee Mart dashboard load:',e);
  }
 }
 async function fmLoadDashboardBusinessMetrics(){
@@ -571,7 +571,7 @@ async function loadMembers(){
   tbody.innerHTML=`<tr><td colspan="9" class="empty">Could not load members: ${escapeHtml(e.message||'Database error')}</td></tr>`;
   status.textContent='Member list could not be loaded. Check the message in the table and Supabase SELECT permissions.';
   status.style.color='#b72e2e';
-  console.error('Fresh-Mart members load:',e);
+  console.error('Rupee Mart members load:',e);
  }
 }
 async function resetMemberPassword(memberId){
@@ -763,7 +763,7 @@ document.getElementById('productCategory')?.addEventListener('change',()=>fmFill
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 
-// Fresh-Mart commerce administration. Requires freshmart_commerce_setup.sql.
+// Rupee Mart commerce administration. Requires freshmart_commerce_setup.sql.
 
 let fmOrdersCache=[];
 async function fmLoadOrders(){const msg=document.getElementById('fmOrderMsg');if(!msg)return;try{const {data,error}=await fmSupabase.from('fm_grocery_orders').select('id,order_number,customer_name,customer_mobile,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity)').order('created_at',{ascending:false}).limit(500);if(error)throw error;fmOrdersCache=data||[];const pf=document.getElementById('fmOrderPincodeFilter'),old=pf.value,pins=[...new Set(fmOrdersCache.map(o=>String(o.pincode||'')).filter(Boolean))].sort();pf.innerHTML='<option value="">All Pincodes</option>'+pins.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');pf.value=old;fmRenderOrders();msg.textContent=fmOrdersCache.length+' order(s) loaded.';}catch(e){msg.textContent='Orders could not load: '+e.message;}}
@@ -876,7 +876,7 @@ async function fmBannerSave(){
    imageUrl=fmSupabase.storage.from('fm-product-images').getPublicUrl(data.path).data.publicUrl;
   }
   if(!imageUrl)throw new Error('Please select a banner image first.');
-  fmPageBannerConfig[page]={image_url:imageUrl,link_url:document.getElementById('fmBannerLink').value.trim(),alt:document.getElementById('fmBannerAlt').value.trim()||'Fresh-Mart promotional banner',enabled:true};
+  fmPageBannerConfig[page]={image_url:imageUrl,link_url:document.getElementById('fmBannerLink').value.trim(),alt:document.getElementById('fmBannerAlt').value.trim()||'Rupee Mart promotional banner',enabled:true};
   const {error}=await fmSupabase.from('fm_store_settings').upsert({setting_key:'page_banners',setting_value:fmPageBannerConfig,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'setting_key'});if(error)throw error;
   msg.textContent='Banner saved for '+page+'.';msg.style.color='#168447';document.getElementById('fmBannerFile').value='';fmBannerShowPreview();
  }catch(e){msg.textContent='Banner save failed: '+e.message;msg.style.color='#b72e2e';}
@@ -1151,7 +1151,7 @@ async function toggleMatchingSlab(id,active){
 
 calculatePlanPreview();
 
-// Fresh-Mart XLSX bulk product uploader. Uses the same columns and tables as the manual product form.
+// Rupee Mart XLSX bulk product uploader. Uses the same columns and tables as the manual product form.
 let fmBulkRowsCache=[];
 function fmBulkCell(v){return v===undefined||v===null?'':String(v).trim();}
 function fmBulkNum(v,def=0){if(v===''||v===null||v===undefined)return def;const n=Number(v);if(!Number.isFinite(n))throw new Error('Invalid numeric value: '+v);return n;}
@@ -1571,12 +1571,12 @@ async function fmAdminLoadOffers(){
  }catch(e){box.textContent='Could not load offers: '+(e.message||String(e));}
 }
 async function fmFindMemberByIdentity(identity){
- const key=String(identity||'').trim();if(!key)throw new Error('Enter the member username or Fresh-Mart User ID.');
+ const key=String(identity||'').trim();if(!key)throw new Error('Enter the member username or Rupee Mart User ID.');
  let q=await fmSupabase.from('fm_profiles').select('id,username,user_code,display_name').eq('username',key).maybeSingle();
  if(q.error)throw q.error;if(q.data)return q.data;
  q=await fmSupabase.from('fm_profiles').select('id,username,user_code,display_name').eq('user_code',key).maybeSingle();
  if(q.error)throw q.error;if(q.data)return q.data;
- throw new Error('No member found with that username / Fresh-Mart ID.');
+ throw new Error('No member found with that username / Rupee Mart ID.');
 }
 async function fmAdminAssignCoupon(){
  const m=document.getElementById('fmAssignCouponMsg');try{
@@ -1745,7 +1745,7 @@ async function fmAdminFindBankMember(){
   const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Please sign in as Super Admin.');
   const {data:me,error:meErr}=await fmSupabase.from('fm_profiles').select('role').eq('id',session.user.id).maybeSingle();
   if(meErr)throw meErr;if(String(me?.role||'').toLowerCase()!=='super_admin')throw new Error('Only Super Admin can view or edit bank details.');
-  const term=(document.getElementById('fmAdminBankMemberSearch').value||'').trim();if(!term)throw new Error('Enter a Fresh-Mart ID, username, mobile or name.');
+  const term=(document.getElementById('fmAdminBankMemberSearch').value||'').trim();if(!term)throw new Error('Enter a Rupee Mart ID, username, mobile or name.');
   const safe=term.replace(/[(),]/g,' ').trim();
   const {data:rows,error}=await fmSupabase.from('fm_profiles')
    .select('id,user_code,display_name,username,mobile_number,bank_account_holder,bank_name,bank_account_number,bank_ifsc,upi_id')
@@ -1753,7 +1753,7 @@ async function fmAdminFindBankMember(){
    .limit(5);
   if(error)throw error;
   if(!rows?.length)throw new Error('No member found.');
-  if(rows.length>1)throw new Error('More than one member matched. Search using the exact Fresh-Mart ID or username.');
+  if(rows.length>1)throw new Error('More than one member matched. Search using the exact Rupee Mart ID or username.');
   const m=rows[0];
   document.getElementById('fmAdminBankUserId').value=m.id;
   document.getElementById('fmAdminBankMemberLabel').textContent=`${m.display_name||m.username||'Member'} · ${m.user_code||m.id}`;
@@ -1971,8 +1971,8 @@ document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('da
    <label><input id="fmUpiEnabled" type="checkbox"> Enable UPI QR payments</label>
    <label><input id="fmUpiManual" type="checkbox" checked> Require manual admin verification</label>
    <label>UPI ID<input id="fmUpiId" placeholder="yourname@upi"></label>
-   <label>Payee Name<input id="fmUpiPayee" placeholder="Fresh Mart"></label>
-   <label>Payment note<input id="fmUpiNote" placeholder="Fresh Mart Payment"></label>
+   <label>Payee Name<input id="fmUpiPayee" placeholder="Rupee Mart"></label>
+   <label>Payment note<input id="fmUpiNote" placeholder="Rupee Mart Payment"></label>
   </div>
   <button onclick="fmUpiAdminSave()">Save UPI Settings</button><span id="fmUpiAdminMsg" class="fm-upi-muted"></span>
   <hr><h3>Payment Requests</h3><button onclick="fmUpiAdminLoad()">Refresh Requests</button>
@@ -1982,7 +1982,7 @@ document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('da
 <script>
 async function fmUpiAdminOpen(){document.getElementById('fmUpiAdminModal').style.display='block';await fmUpiAdminLoadSettings();await fmUpiAdminLoad();}
 function fmUpiAdminClose(){document.getElementById('fmUpiAdminModal').style.display='none';}
-async function fmUpiAdminLoadSettings(){const m=document.getElementById('fmUpiAdminMsg');try{const {data,error}=await fmSupabase.from('fm_payment_gateway_settings').select('*').eq('id',1).maybeSingle();if(error)throw error;document.getElementById('fmUpiEnabled').checked=!!data?.upi_enabled;document.getElementById('fmUpiManual').checked=data?.manual_verification!==false;document.getElementById('fmUpiId').value=data?.upi_id||'';document.getElementById('fmUpiPayee').value=data?.payee_name||'';document.getElementById('fmUpiNote').value=data?.upi_note||'Fresh Mart Payment';}catch(e){m.textContent='Load error: '+e.message;}}
+async function fmUpiAdminLoadSettings(){const m=document.getElementById('fmUpiAdminMsg');try{const {data,error}=await fmSupabase.from('fm_payment_gateway_settings').select('*').eq('id',1).maybeSingle();if(error)throw error;document.getElementById('fmUpiEnabled').checked=!!data?.upi_enabled;document.getElementById('fmUpiManual').checked=data?.manual_verification!==false;document.getElementById('fmUpiId').value=data?.upi_id||'';document.getElementById('fmUpiPayee').value=data?.payee_name||'';document.getElementById('fmUpiNote').value=data?.upi_note||'Rupee Mart Payment';}catch(e){m.textContent='Load error: '+e.message;}}
 async function fmUpiAdminSave(){const m=document.getElementById('fmUpiAdminMsg');m.textContent='Saving…';try{const {data:{session}}=await fmSupabase.auth.getSession();if(!session)throw new Error('Admin login required');const payload={id:1,upi_enabled:document.getElementById('fmUpiEnabled').checked,manual_verification:document.getElementById('fmUpiManual').checked,upi_id:document.getElementById('fmUpiId').value.trim(),payee_name:document.getElementById('fmUpiPayee').value.trim(),upi_note:document.getElementById('fmUpiNote').value.trim(),updated_at:new Date().toISOString()};if(payload.upi_enabled&&(!payload.upi_id||!payload.payee_name))throw new Error('UPI ID and Payee Name are required');const {error}=await fmSupabase.from('fm_payment_gateway_settings').upsert(payload,{onConflict:'id'});if(error)throw error;m.textContent='Saved successfully.';await fmUpiAdminLoad();}catch(e){m.textContent='Save failed: '+e.message;}}
 async function fmUpiAdminLoad(){const el=document.getElementById('fmUpiAdminRows');if(!el)return;el.textContent='Loading…';try{const {data,error}=await fmSupabase.from('fm_common_payment_transactions').select('*').order('created_at',{ascending:false}).limit(100);if(error)throw error;const rows=await Promise.all((data||[]).map(async x=>{let proof='Screenshot not submitted';if(x.screenshot_path){const {data:signed,error:se}=await fmSupabase.storage.from('fm-payment-proofs').createSignedUrl(x.screenshot_path,3600);proof=!se&&signed?.signedUrl?`<a href="${fmUpiEsc(signed.signedUrl)}" target="_blank" rel="noopener">View payment screenshot (1 hour)</a>`:'Screenshot link unavailable / permission denied';}return `<div class="fm-upi-row"><b>${fmUpiEsc(x.payment_type)} · ₹${Number(x.amount).toFixed(2)}</b><br>Ref: ${fmUpiEsc(x.txn_ref)}<br>Source ID: ${fmUpiEsc(x.source_id||'—')}<br>User: ${fmUpiEsc(x.user_id)}<br>Status: ${fmUpiEsc(String(x.status||"").toLowerCase()==="submitted"?"Submitted – Pending for Approval":(["paid","approved"].includes(String(x.status||"").toLowerCase())?"Approved":String(x.status||"").toUpperCase()))}<br>UTR: ${fmUpiEsc(x.utr_number||'Not submitted')}<br>${proof}<br><small>Created: ${fmUpiEsc(new Date(x.created_at).toLocaleString('en-IN'))}</small><br>${x.status==='submitted'?`<button onclick="fmUpiAdminReview('${x.id}','paid')">Approve after bank verification</button><button onclick="fmUpiAdminReview('${x.id}','rejected')" style="background:#a83232">Reject</button>`:''}</div>`;}));el.innerHTML=rows.join('')||'No payment requests found.';}catch(e){el.textContent='Load error: '+e.message;}}
 async function fmUpiAdminReview(id,decision){const note=prompt('Admin note (optional):')||'';if(decision==='paid'&&!confirm('Have you verified this exact UTR and amount in the bank / UPI statement? Approve payment now?'))return;if(decision==='rejected'&&!confirm('Reject this payment request?'))return;try{const {data,error}=await fmSupabase.rpc('fm_common_payment_admin_review_v1',{p_transaction_id:id,p_decision:decision,p_admin_note:note});if(error)throw error;if(data?.success===false)throw new Error(data.message||'Payment review failed');await fmUpiAdminLoad();alert('Payment '+decision+'. '+(decision==='paid'?'The member panel will show the activation popup automatically. ':'')+(data?.message||''));}catch(e){alert('Review failed: '+e.message);}}
