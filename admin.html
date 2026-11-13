@@ -48,7 +48,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <style>#fmAreaMap{height:300px;border:1px solid #dbe8de;border-radius:14px;z-index:1;margin:12px 0}.leaflet-container{font:inherit}</style>
 </head>
 <body>
-<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="avatar">SA</div></div></header>
+<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo" id="fmAdminBrandLogo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="avatar">SA</div></div></header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
 <div class="layout">
 <aside class="sidebar">
@@ -222,6 +222,18 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="settings">
 <div class="welcome"><div><h1>Portal Settings</h1><p>Manage branding, support and portal preferences.</p></div></div>
+<div class="card" style="margin-bottom:16px" id="fmBrandLogoManager">
+ <div class="section-head"><h2>🏷️ Website Logo Settings</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmBrandLogoLoad()">Refresh</button></div>
+ <p class="hint">మీ మొబైల్ నుంచి Rupee Mart Logo upload చేయండి. PNG / JPG / WEBP, maximum 2 MB. Save చేసిన తర్వాత Admin header లో వెంటనే కనిపిస్తుంది. ఇదే Logo URL ని User, Login, Register pages లో కూడా ఉపయోగించవచ్చు.</p>
+ <div class="formgrid">
+  <div class="field"><label>Choose Logo Image</label><input id="fmBrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="fmBrandLogoPreview(this)"></div>
+  <div class="field"><label>Logo Display</label><select id="fmBrandLogoDisplay"><option value="image">Image only</option><option value="image_text">Image + Rupee Mart text</option></select></div>
+ </div>
+ <div id="fmBrandLogoPreviewBox" class="previewbox"><span class="hint">Current logo preview will appear here.</span></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="fmBrandLogoSave()">Upload & Save Logo</button><button class="btn btn-outline" type="button" onclick="fmBrandLogoRemove()">Remove Logo</button></div>
+ <p id="fmBrandLogoMsg" class="hint" aria-live="polite"></p>
+</div>
+
 <div class="card" style="margin-bottom:16px" id="fmPageBannerManager">
  <div class="section-head"><h2>Page-wise Promotional Banners</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmBannerLoad()">Refresh</button></div>
  <p class="hint">Prathi page ki separate banner image upload cheyyandi. User Panel lo aa page open chesinappudu aa banner display avutundi.</p>
@@ -621,7 +633,7 @@ async function submitAdminSignIn(){
  closeModal('adminSignInModal');
  await loadFreshMartDashboard();
 }
-fmSupabase.auth.onAuthStateChange(()=>{setTimeout(()=>{loadFreshMartDashboard();loadPlanSettings();fmLoadCategories();fmBannerLoad();fmLoadCommerceSettings();fmAdminLoadWithdrawalSettings();fmLoadOrders();},0);});
+fmSupabase.auth.onAuthStateChange(()=>{setTimeout(()=>{loadFreshMartDashboard();loadPlanSettings();fmBrandLogoLoad();fmLoadCategories();fmBannerLoad();fmLoadCommerceSettings();fmAdminLoadWithdrawalSettings();fmLoadOrders();},0);});
 loadFreshMartDashboard();
 loadPlanSettings();
 loadAdminProducts();
@@ -855,6 +867,55 @@ async function fmAddCategory(){
 }
 async function fmAddSubcategory(){const category_id=document.getElementById('fmSubCategoryParent').value,name=document.getElementById('fmNewSubcategory').value.trim(),msg=document.getElementById('fmCategoryMsg');if(!category_id||!name){msg.textContent='Choose a category and enter subcategory name.';return;}try{const {error}=await fmSupabase.from('fm_product_subcategories').insert({category_id,subcategory_name:name,is_active:true});if(error)throw error;document.getElementById('fmNewSubcategory').value='';msg.textContent='Subcategory added.';await fmLoadCategories();}catch(e){msg.textContent='Could not add subcategory: '+e.message;}}
 
+let fmBrandLogoConfig={};
+function fmBrandLogoApply(){
+ const host=document.getElementById('fmAdminBrandLogo');
+ if(!host)return;
+ if(fmBrandLogoConfig.image_url){
+  host.innerHTML='<img src="'+escapeHtml(fmBrandLogoConfig.image_url)+'" alt="Rupee Mart Logo" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff">';
+  host.style.background='#fff';
+ }else{host.textContent='🛒';host.style.background='var(--green)';}
+ const preview=document.getElementById('fmBrandLogoPreviewBox');
+ if(preview)preview.innerHTML=fmBrandLogoConfig.image_url?'<img src="'+escapeHtml(fmBrandLogoConfig.image_url)+'" alt="Current Rupee Mart logo" style="max-width:180px;max-height:110px;object-fit:contain"><p class="hint">Current saved logo</p>':'<span class="hint">No custom logo saved. Default cart icon is active.</span>';
+ const mode=document.getElementById('fmBrandLogoDisplay');if(mode)mode.value=fmBrandLogoConfig.display_mode||'image_text';
+}
+async function fmBrandLogoLoad(){
+ const msg=document.getElementById('fmBrandLogoMsg');
+ try{const {data,error}=await fmSupabase.from('fm_store_settings').select('setting_value').eq('setting_key','brand_logo').maybeSingle();if(error)throw error;fmBrandLogoConfig=data?.setting_value||{};fmBrandLogoApply();if(msg)msg.textContent='Logo settings loaded.';}
+ catch(e){if(msg)msg.textContent='Logo load failed: '+e.message;}
+}
+function fmBrandLogoPreview(input){
+ const file=input.files?.[0],host=document.getElementById('fmBrandLogoPreviewBox');if(!file||!host)return;
+ if(!['image/png','image/jpeg','image/webp'].includes(file.type)){host.textContent='Choose PNG, JPG or WEBP.';return;}
+ if(file.size>2*1024*1024){host.textContent='Logo must be 2 MB or smaller.';return;}
+ const reader=new FileReader();reader.onload=()=>{host.innerHTML='<img src="'+reader.result+'" alt="Logo preview" style="max-width:180px;max-height:110px;object-fit:contain"><p class="hint">New logo preview (not saved yet)</p>';};reader.readAsDataURL(file);
+}
+async function fmBrandLogoSave(){
+ const msg=document.getElementById('fmBrandLogoMsg'),file=document.getElementById('fmBrandLogoFile').files?.[0];
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Admin sign-in required.');
+  let imageUrl=fmBrandLogoConfig.image_url||'';
+  if(file){
+   if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Choose PNG, JPG or WEBP.');
+   if(file.size>2*1024*1024)throw new Error('Logo must be 2 MB or smaller.');
+   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+   const path='branding/rupee-mart-logo-'+Date.now()+'.'+ext;
+   const {data,error}=await fmSupabase.storage.from('fm-product-images').upload(path,file,{contentType:file.type,upsert:false});if(error)throw error;
+   imageUrl=fmSupabase.storage.from('fm-product-images').getPublicUrl(data.path).data.publicUrl;
+  }
+  if(!imageUrl)throw new Error('Please choose a logo image first.');
+  fmBrandLogoConfig={image_url:imageUrl,display_mode:document.getElementById('fmBrandLogoDisplay').value,updated_at:new Date().toISOString()};
+  const {error}=await fmSupabase.from('fm_store_settings').upsert({setting_key:'brand_logo',setting_value:fmBrandLogoConfig,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'setting_key'});if(error)throw error;
+  document.getElementById('fmBrandLogoFile').value='';fmBrandLogoApply();msg.textContent='Logo saved successfully in Portal Settings.';msg.style.color='#168447';
+ }catch(e){msg.textContent='Logo save failed: '+e.message;msg.style.color='#b72e2e';}
+}
+async function fmBrandLogoRemove(){
+ const msg=document.getElementById('fmBrandLogoMsg');
+ try{const {data:{session}}=await fmSupabase.auth.getSession();if(!session)throw new Error('Admin sign-in required.');
+  const {error}=await fmSupabase.from('fm_store_settings').upsert({setting_key:'brand_logo',setting_value:{image_url:'',display_mode:'image_text'},updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'setting_key'});if(error)throw error;
+  fmBrandLogoConfig={};document.getElementById('fmBrandLogoFile').value='';fmBrandLogoApply();msg.textContent='Custom logo removed. Default cart icon restored.';msg.style.color='#168447';
+ }catch(e){msg.textContent='Could not remove logo: '+e.message;msg.style.color='#b72e2e';}
+}
 let fmPageBannerConfig={};
 async function fmBannerLoad(){
  const msg=document.getElementById('fmBannerMsg');try{const {data,error}=await fmSupabase.from('fm_store_settings').select('setting_key,setting_value').eq('setting_key','page_banners').maybeSingle();if(error)throw error;fmPageBannerConfig=data?.setting_value||{};fmBannerShowPreview();if(msg)msg.textContent='Saved page banners loaded.';}catch(e){if(msg)msg.textContent='Could not load banners: '+e.message;}

@@ -31,7 +31,7 @@
 @media(max-width:620px){body{padding-bottom:65px}.topinner{grid-template-columns:1fr auto;padding:11px 13px;gap:10px}.actions{grid-column:1/-1;grid-row:4;justify-content:flex-end;flex-wrap:wrap}.brand{min-width:0}.brandname{font-size:19px}.delivery{grid-column:1/-1;grid-row:2;display:block}.delivery small{display:inline;margin-right:5px}.delivery strong{font-size:12px}.delivery button{margin-left:5px}.search{grid-column:1/-1;grid-row:3;height:42px}.actions{gap:6px}.action{padding:9px 10px;font-size:12px}.hide-mobile{display:none}.container{padding:12px}.hero{grid-template-columns:1fr;min-height:0;padding:22px;border-radius:19px;margin-top:4px}.hero h1{font-size:31px;max-width:340px}.hero p{font-size:12px;max-width:300px}.hero-art{position:absolute;right:4px;bottom:7px;opacity:.48}.hero-art .basket{width:112px;height:100px;font-size:62px}.floating{display:none}.section-head{margin:22px 0 11px}.section-head h2{font-size:18px}.category-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.category{padding:9px 5px;border-radius:13px}.cat-icon{height:56px;font-size:32px}.category b{font-size:10px}.offer-strip{gap:8px;margin:18px 0}.offer{min-height:108px;padding:12px;border-radius:14px}.offer h3{font-size:15px}.offer p{font-size:10px}.offer-icon{font-size:37px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.product{padding:8px;border-radius:13px}.product-art{height:105px;font-size:56px}.product h3{font-size:12px}.price{font-size:13px}.add{padding:7px 10px}.benefits{grid-template-columns:1fr;gap:8px;margin:20px 0}.benefit{padding:11px}.footer-inner{display:block}.footer-links{margin-top:15px;flex-wrap:wrap}.bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:7px 5px calc(7px + env(safe-area-inset-bottom));box-shadow:0 -5px 20px #1a3b2010}.bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#68756d;font-weight:750}.bottom-nav a.active{color:var(--green)}.bottom-nav span{font-size:20px}.toast{bottom:78px;max-width:90%;white-space:nowrap}}
 @media(max-width:360px){.actions .action{padding:8px}.hero h1{font-size:27px}.offer-icon{font-size:30px}}
 </style>
-</head>
+<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style></head>
 <body>
 <header class="topbar">
  <div class="topinner">
@@ -251,6 +251,46 @@
  document.getElementById('changeLocation').addEventListener('click',()=>{const pin=prompt('Enter your 6-digit delivery pincode:');if(pin===null)return;if(!/^[0-9]{6}$/.test(pin)){showToast('Please enter a valid 6-digit pincode');return}document.getElementById('deliveryPlace').textContent='Pincode '+pin;showToast('Location selected for this browsing session')});
  async function loadFreshMartOffers(){const box=document.getElementById('fmLiveOfferGrid');if(!box||!db)return;try{const {data,error}=await db.from('fm_offer_campaigns').select('id,title,description,offer_type,badge_text,discount_type,discount_value,starts_at,ends_at,is_active,sort_order').eq('is_active',true).order('sort_order').limit(8);if(error)throw error;const now=Date.now(),rows=(data||[]).filter(x=>(!x.starts_at||new Date(x.starts_at).getTime()<=now)&&(!x.ends_at||new Date(x.ends_at).getTime()>=now));box.innerHTML=rows.length?rows.map(x=>'<article class="offer green"><div><small>'+esc(x.badge_text||'SPECIAL OFFER')+'</small><h3>'+esc(x.title)+'</h3><p>'+esc(x.description||'Shop now at Rupee Mart')+'</p>'+(x.discount_value>0?'<b style="color:#168447">'+(x.discount_type==='percent'?Number(x.discount_value)+'% OFF':'₹'+Number(x.discount_value)+' OFF')+'</b>':'')+'</div><div class="offer-icon">🎁</div></article>').join(''):'<div class="offer yellow"><div><small>Rupee Mart</small><h3>Offers coming soon</h3><p>Check back for new deals.</p></div><div class="offer-icon">🛍️</div></div>';}catch(e){box.innerHTML='<div class="offer yellow"><div><small>Offers</small><h3>Deals coming soon</h3><p>Refresh to check current offers.</p></div><div class="offer-icon">🎁</div></div>';}}
  loadLiveStore();loadFreshMartOffers();
+})();
+</script>
+
+<script>
+/* Rupee Mart shared logo: reads the logo saved by Super Admin. */
+(async function fmLoadSharedBrandLogo(){
+  const SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
+  const SUPABASE_KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
+  try {
+    const response = await fetch(SUPABASE_URL + '/rest/v1/fm_store_settings?select=setting_value&setting_key=eq.brand_logo&limit=1', {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+    });
+    if (!response.ok) return;
+    const rows = await response.json();
+    const config = rows && rows[0] && rows[0].setting_value;
+    if (!config || !config.image_url) return;
+    const logoUrl = String(config.image_url);
+    const logoNodes = document.querySelectorAll('.brandmark, .brand .logo, .brand .brandmark');
+    logoNodes.forEach(function(node) {
+      node.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = logoUrl;
+      img.alt = 'Rupee Mart';
+      img.loading = 'eager';
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff;display:block';
+      node.appendChild(img);
+      node.style.background = '#fff';
+      node.style.overflow = 'hidden';
+      if (config.display_mode === 'image_only') {
+        const brand = node.closest('.brand');
+        if (brand) {
+          Array.from(brand.children).forEach(function(child) {
+            if (child !== node) child.style.display = 'none';
+          });
+        }
+      }
+    });
+  } catch (e) {
+    console.warn('Shared logo could not be loaded; default logo remains active.', e);
+  }
 })();
 </script>
 </body>
