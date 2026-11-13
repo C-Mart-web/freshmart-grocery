@@ -2589,6 +2589,72 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(fmDFUserLoad,1200));
   }
 }
 
+
+/* Rupee Mart modern visual refresh — CSS only; existing page logic is unchanged */
+:root{
+ --green:#168447;--green2:#0d6b3b;--mint:#e9f8ef;--pale:#f5fbf7;
+ --text:#173528;--muted:#718078;--line:#e1eee6;--white:#fff;
+ --shadow:0 10px 30px rgba(18,92,52,.09)
+}
+body{background:linear-gradient(180deg,#f3fbf6 0%,#f8fbf9 48%,#f4faf6 100%);color:var(--text)}
+.topbar{height:72px;padding:0 clamp(12px,3vw,28px);box-shadow:0 3px 18px rgba(20,80,45,.06);border-bottom:1px solid #e5f0e8}
+.brand{font-size:21px;letter-spacing:-.45px}
+.logo{border-radius:14px;box-shadow:0 5px 14px rgba(22,132,71,.18)}
+.signout-btn{border-radius:12px;padding:10px 15px;transition:.2s}
+.signout-btn:hover,.btn:hover,.navbtn:hover{transform:translateY(-1px)}
+.layout{min-height:calc(100vh - 72px)}
+.sidebar{padding:20px 14px;background:rgba(255,255,255,.94);box-shadow:5px 0 24px rgba(20,80,45,.035)}
+.navbtn{border-radius:13px;padding:13px 14px;transition:background .18s,color .18s,transform .18s}
+.navbtn.active{background:linear-gradient(100deg,#e5f7eb,#f2fbf5);box-shadow:inset 3px 0 0 var(--green);font-weight:800}
+main{padding:clamp(16px,3vw,30px)}
+.welcome{padding:4px 2px 10px}
+.welcome h1{font-size:clamp(23px,3vw,30px);letter-spacing:-.7px}
+.banner{border-radius:22px;padding:clamp(20px,3vw,30px);background:linear-gradient(120deg,#0f713e 0%,#18a456 58%,#56c878 100%);box-shadow:0 14px 30px rgba(20,130,70,.18);position:relative;overflow:hidden}
+.banner:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-55px;top:-95px;background:rgba(255,255,255,.12);pointer-events:none}
+.banner h2{font-size:clamp(19px,2.4vw,25px);letter-spacing:-.4px}
+.banner .bannericon{filter:drop-shadow(0 7px 10px rgba(0,0,0,.12))}
+.card{border:1px solid #e4eee7;border-radius:19px;padding:clamp(14px,2vw,20px);box-shadow:0 7px 24px rgba(21,90,52,.055);transition:box-shadow .2s,border-color .2s}
+.card:hover{box-shadow:0 12px 30px rgba(21,90,52,.09);border-color:#d3e9da}
+.stat-value{font-size:clamp(22px,2.5vw,28px);letter-spacing:-.5px}
+.stat-icon{border-radius:12px;background:linear-gradient(145deg,#e4f7e9,#f3fbf5)}
+.section-head h2{font-size:19px;letter-spacing:-.3px}
+.planbox{border-radius:15px;background:linear-gradient(110deg,#f0faf3,#fbfefc);border-color:#dceee2}
+.planprice{font-size:22px}
+.quick{border-radius:15px;padding:15px;transition:.18s;box-shadow:0 3px 12px rgba(20,80,45,.035)}
+.quick:hover{border-color:#b9dfc5;transform:translateY(-2px);box-shadow:0 8px 18px rgba(20,80,45,.08)}
+.btn{border-radius:12px;transition:.18s}
+.btn-green{box-shadow:0 5px 13px rgba(22,132,71,.18)}
+.btn-outline{border-color:#d9e9df}
+input,select,textarea{border-radius:11px!important}
+.tablewrap{border:1px solid var(--line);border-radius:14px;background:#fff}
+table{border-collapse:separate;border-spacing:0;overflow:hidden}
+th{background:#f1f8f3;color:#4f6758;padding:14px 10px}
+td{padding:13px 10px}
+tr:last-child td{border-bottom:0}
+.badge{padding:6px 10px}
+.upload{border-radius:16px;background:linear-gradient(135deg,#f0faf3,#fbfefc)}
+.sidebar-foot{border-radius:15px}
+.mobile-nav{background:rgba(255,255,255,.97)!important;backdrop-filter:blur(12px);box-shadow:0 -7px 24px rgba(20,80,45,.08)!important;border-top:1px solid #e5efe8!important}
+.mobile-nav button.active{color:var(--green)!important}
+.mobile-nav button span{filter:saturate(.9)}
+@media(max-width:680px){
+ .topbar{height:62px;padding:0 12px}
+ .brand{font-size:18px}
+ main{padding:17px 13px 96px}
+ .welcome{margin-bottom:16px}
+ .banner{border-radius:18px;margin-bottom:17px}
+ .grid{gap:10px}
+ .card{border-radius:16px;padding:14px}
+ .twocol{gap:12px}
+ .quicklinks{gap:8px}
+ .quick{padding:12px 10px}
+ .section-head{margin-bottom:11px}
+ .tablewrap{border-radius:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
+
 </style>
 <div id="fmPaymentProcessingNotice" role="dialog" aria-modal="true" aria-labelledby="fmPaymentProcessingTitle">
  <div class="fm-global-notice-box"><div class="fm-global-notice-icon">⏳</div><h2 id="fmPaymentProcessingTitle">Payment Processing</h2><p>Your UTR and payment screenshot were submitted successfully. Please allow <b>5–10 minutes</b> for Admin verification. You can continue browsing Rupee Mart. Your membership activates only after the payment is approved.</p><button type="button" onclick="fmClosePaymentProcessingNotice()">Close</button></div>
