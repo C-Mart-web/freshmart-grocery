@@ -2672,7 +2672,7 @@ async function fmLoadFeaturedProducts(){
  }catch(e){console.warn('Featured products unavailable:',e.message||e);host.style.display='none';}
 }
 const fmFeaturedWrappedOriginalLoadProducts2026=loadFreshMartProducts;
-loadFreshMartProducts=async function(){await fmFeaturedWrappedOriginalLoadProducts2026();await fmLoadFeaturedProducts();};
+loadFreshMartProducts=async function(){await fmFeaturedWrappedOriginalLoadProducts2026();await Promise.allSettled([fmLoadFeaturedProducts(),fmLoadGroceryHomeOffers()]);};
 document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 </script>
 
@@ -2809,6 +2809,27 @@ document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
  width:100%!important;height:27px!important;min-height:27px!important;padding:4px 5px!important;
  border:0!important;border-radius:7px!important;background:#168447!important;color:#fff!important;
  font-size:10px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important
+}
+</style>
+
+
+<style id="fm-grocery-offer-banner-display-fix">
+/* Ensure admin-saved offer banners load on first page visit and show the uploaded artwork clearly. */
+#fmHomeOffers{display:block}
+#fmHomeOffers[style*="display: none"]{display:none}
+#fmHomeOffersTrack{display:flex!important;flex-flow:row nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;gap:12px!important}
+#fmHomeOffersTrack .fm-home-offer{
+ position:relative!important;display:block!important;flex:0 0 91%!important;width:91%!important;min-width:91%!important;
+ height:158px!important;overflow:hidden!important;border-radius:17px!important;padding:0!important;background:#168447!important;
+}
+#fmHomeOffersTrack .fm-home-offer img{
+ position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;
+ object-fit:cover!important;object-position:center!important;z-index:0!important;
+}
+#fmHomeOffersTrack .fm-home-offer:after{display:none!important;content:none!important}
+#fmHomeOffersTrack .fm-home-offer-copy{display:none!important}
+@media(min-width:681px){
+ #fmHomeOffersTrack .fm-home-offer{flex-basis:62%!important;width:62%!important;min-width:62%!important;height:205px!important}
 }
 </style>
 
@@ -3367,6 +3388,27 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
  width:100%!important;height:27px!important;min-height:27px!important;padding:4px 5px!important;
  border:0!important;border-radius:7px!important;background:#168447!important;color:#fff!important;
  font-size:10px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important
+}
+</style>
+
+
+<style id="fm-grocery-offer-banner-display-fix">
+/* Ensure admin-saved offer banners load on first page visit and show the uploaded artwork clearly. */
+#fmHomeOffers{display:block}
+#fmHomeOffers[style*="display: none"]{display:none}
+#fmHomeOffersTrack{display:flex!important;flex-flow:row nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;gap:12px!important}
+#fmHomeOffersTrack .fm-home-offer{
+ position:relative!important;display:block!important;flex:0 0 91%!important;width:91%!important;min-width:91%!important;
+ height:158px!important;overflow:hidden!important;border-radius:17px!important;padding:0!important;background:#168447!important;
+}
+#fmHomeOffersTrack .fm-home-offer img{
+ position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;
+ object-fit:cover!important;object-position:center!important;z-index:0!important;
+}
+#fmHomeOffersTrack .fm-home-offer:after{display:none!important;content:none!important}
+#fmHomeOffersTrack .fm-home-offer-copy{display:none!important}
+@media(min-width:681px){
+ #fmHomeOffersTrack .fm-home-offer{flex-basis:62%!important;width:62%!important;min-width:62%!important;height:205px!important}
 }
 </style>
 
