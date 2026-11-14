@@ -49,11 +49,27 @@ body.rm-login-promo{background:linear-gradient(145deg,#eaf8ef,#f8fbf8 55%,#e7f5e
 @media(max-width:520px){#rmLoginPromo{margin-bottom:14px;border-radius:17px}#rmLoginPromo img{max-height:165px}}
 </style>
 
+
+<style id="rm-login-promo-layout-fix">
+/* Keep the promotional banner above the login card on mobile and desktop. */
+body{flex-direction:column;align-items:center;justify-content:flex-start;gap:0;padding:22px 14px 28px}
+.wrap{width:100%;max-width:440px;flex:0 0 auto}
+#rmLoginPromo{width:100%;max-width:440px;margin:0 auto 18px}
+#rmLoginPromo img{width:100%;height:auto;max-height:145px;object-fit:cover}
+#rmLoginPromo.rm-promo-active{display:block}
+@media(max-width:520px){
+ body{padding:18px 14px 24px}
+ .wrap{max-width:440px}
+ #rmLoginPromo{margin-bottom:14px}
+ #rmLoginPromo img{max-height:125px}
+}
+</style>
+
 </head>
 <body>
 <div class="rm-login-ambient" aria-hidden="true"><div class="rm-float cart">🛒</div><div class="rm-float grocery">🥬</div><div class="rm-float wallet">👛</div><div class="rm-float coins">🪙</div><div class="rm-flow"><span>🛒</span><span>→</span><span>📦</span><span>→</span><span>💰</span></div></div>
-<div id="rmLoginPromo" aria-label="Rupee Mart promotional banner"></div>
 <div class="wrap">
+ <div id="rmLoginPromo" aria-label="Rupee Mart promotional banner"></div>
  <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
  <div class="card">
   <div class="eyebrow">Member access</div><h1>Welcome back</h1><p class="sub">Sign in to manage your groceries, membership and rewards.</p>
