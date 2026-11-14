@@ -586,7 +586,8 @@ function fmRenderCategoryCards(){
   [...new Set(fmShopProducts.map(p=>p.fm_product_categories?.category_name).filter(Boolean))].map(name=>({name,icon:''}));
  if(!cats.length){host.innerHTML='<span class="hint">Categories will appear here after admin adds them.</span>';return;}
  host.innerHTML=cats.map((cat,i)=>{const name=cat.name,t=fmCategoryTranslations(name),c=fmCategoryPalette[i%fmCategoryPalette.length],icon=cat.icon||fmShopProducts.find(p=>p.fm_product_categories?.category_name===name)?.fm_product_categories?.icon||t.icon,count=fmShopProducts.filter(p=>p.fm_product_categories?.category_name===name).length;
- return '<button type="button" class="fm-category-tile" style="--cat-a:'+c[0]+';--cat-b:'+c[1]+'" data-fm-category="'+shopEsc(name)+'"><span class="fm-cat-visual">'+shopEsc(icon)+'</span><b>'+shopEsc(name)+'</b><small>'+t.te+' · '+t.hi+'</small><small>'+count+' products</small></button>';}).join('');
+ const visual=/^https?:\/\//i.test(String(icon||''))?'<img src="'+shopEsc(icon)+'" alt="'+shopEsc(name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':shopEsc(icon);
+ return '<button type="button" class="fm-category-tile" style="--cat-a:'+c[0]+';--cat-b:'+c[1]+'" data-fm-category="'+shopEsc(name)+'"><span class="fm-cat-visual">'+visual+'</span><b>'+shopEsc(name)+'</b><small>'+t.te+' · '+t.hi+'</small><small>'+count+' products</small></button>';}).join('');
  host.querySelectorAll('[data-fm-category]').forEach(b=>b.addEventListener('click',()=>{const s=document.getElementById('shopProductCategory');if(s){s.value=b.dataset.fmCategory;window.fmActiveHomeOfferProductIds=null;window.fmActiveHomeOfferTitle='';host.querySelectorAll('[data-fm-category]').forEach(x=>x.classList.toggle('fm-category-active',x===b));renderFreshMartProducts();}document.getElementById('shopProductSearch')?.scrollIntoView({behavior:'smooth',block:'center'});}));
 }
 async function fmLoadPageBanners(){
@@ -1832,8 +1833,8 @@ async function copyReferralLink(side){
  buildReferralLinks();
  const value=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink').value;
  if(!value){alert('First enter your username or Rupee Mart User ID.');return;}
- try{await navigator.clipboard.writeText(value);alert('Copied '+side.toUpperCase()+' referral link.');}
- catch(e){const input=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink');input.focus();input.select();const ok=document.execCommand('copy');alert(ok?'Copied '+side.toUpperCase()+' referral link.':'Please copy the selected link manually.');}
+ try{await navigator.clipboard.writeText(value);alert('Your '+side.toUpperCase()+' link copied.');}
+ catch(e){const input=document.getElementById(side==='left'?'leftReferralLink':'rightReferralLink');input.focus();input.select();const ok=document.execCommand('copy');alert(ok?'Your '+side.toUpperCase()+' link copied.':'Please copy the selected link manually.');}
 }
 function shareReferralLink(side){
  buildReferralLinks();
@@ -2014,7 +2015,7 @@ async function selectPlan(el){
  if(status)status.textContent='PREPARING PAYMENT';msg.textContent='Checking payment gateway and preparing your selected plan…';
  try{
   const enabled=await fmRefreshUpiVisibility();
-  if(!enabled)throw new Error('Dynamic UPI QR is currently disabled by Admin. Please contact support.');
+  if(!enabled)throw new Error('Dynamic UPI QR is not enabled yet. Admin must enable UPI QR and manual verification in Payment Gateway Settings.');
   // The server resolves the active plan ID from this exact amount; the browser never invents a plan ID.
   // Reuse the same pending membership request after the user closes the QR.
   const cacheKey='fm_membership_pending_request_'+String(amount);

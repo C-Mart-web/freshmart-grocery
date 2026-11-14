@@ -161,7 +161,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
  <div class="tablewrap"><table><thead><tr><th>Preview</th><th>Code</th><th>Label</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmImageLibraryRows"><tr><td colspan="5" class="empty">Loading image library…</td></tr></tbody></table></div>
 </div>
 <div class="card" style="margin-bottom:16px"><div class="section-head"><h2>Category & Subcategory Manager</h2><button class="btn btn-outline btn-sm" onclick="fmLoadCategories()">Refresh</button></div><div class="formgrid"><div class="field"><label>New Category</label><input id="fmNewCategory" placeholder="e.g. Grocery"></div><div class="field"><label>Category Icon / Emoji (optional)</label><input id="fmNewCategoryIcon" placeholder="🛒" maxlength="8"></div>
-<div class="field"><label>Or Upload Category Image (JPG / PNG / WEBP · max 2 MB)</label><input id="fmNewCategoryIconFile" type="file" accept="image/jpeg,image/png,image/webp" onchange="fmCategoryIconPreview(this)"><div id="fmCategoryIconPreview" class="hint">Image upload చేస్తే Emoji బదులుగా Image కనిపిస్తుంది.</div></div><div class="field"><label>Subcategory under</label><select id="fmSubCategoryParent"><option value="">Select category</option></select></div><div class="field"><label>New Subcategory</label><input id="fmNewSubcategory" placeholder="e.g. Cooking Oil"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" onclick="fmAddCategory()">Add Category</button><button class="btn btn-outline" onclick="fmAddSubcategory()">Add Subcategory</button></div><p id="fmCategoryMsg" class="hint" aria-live="polite"></p><div class="tablewrap"><table><thead><tr><th>Icon / Image</th><th>Category</th><th>Subcategories</th><th>Status</th><th>Change Image</th></tr></thead><tbody id="fmCategoryRows"><tr><td colspan="5" class="empty">Load categories after SQL setup.</td></tr></tbody></table></div></div>
+<div class="field"><label>Or Upload Category Image (JPG / PNG / WEBP · max 2 MB)</label><input id="fmNewCategoryIconFile" type="file" accept="image/jpeg,image/png,image/webp" onchange="fmCategoryIconPreview(this)"><div id="fmCategoryIconPreview" class="hint">Image upload చేస్తే Emoji బదులుగా Image కనిపిస్తుంది.</div></div><div class="field"><label>Subcategory under</label><select id="fmSubCategoryParent"><option value="">Select category</option></select></div><div class="field"><label>New Subcategory</label><input id="fmNewSubcategory" placeholder="e.g. Cooking Oil"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-green" onclick="fmAddCategory()">Add Category</button><button class="btn btn-outline" onclick="fmAddSubcategory()">Add Subcategory</button></div><p id="fmCategoryMsg" class="hint" aria-live="polite"></p><div class="tablewrap"><table><thead><tr><th>Icon / Image</th><th>Category</th><th>Subcategories</th><th>Status</th><th>Change Image</th><th>Actions</th></tr></thead><tbody id="fmCategoryRows"><tr><td colspan="6" class="empty">Load categories after SQL setup.</td></tr></tbody></table></div></div>
 <div class="card"><div class="searchrow"><input id="productSearch" placeholder="Search product name or SKU" oninput="renderAdminProducts()"><select id="productCategoryFilter" onchange="renderAdminProducts()"><option value="">All categories</option></select><button class="btn btn-outline" onclick="loadAdminProducts()">Refresh</button></div><p id="productListMsg" class="hint" aria-live="polite">Loading products…</p><div class="tablewrap"><table><thead><tr><th>Image</th><th>Product</th><th>Category</th><th>SKU / Barcode</th><th>Retail / Wholesale</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody id="adminProductRows"><tr><td colspan="8" class="empty">Loading products…</td></tr></tbody></table></div></div>
 </section>
 <section class="page" id="plans">
@@ -892,9 +892,24 @@ async function fmLoadCategories(){
    <td>${fmAdminSubcats.filter(x=>String(x.category_id)===String(c.id)).map(x=>escapeHtml(x.subcategory_name)).join(', ')||'—'}</td>
    <td>${c.is_active?'Active':'Inactive'}</td>
    <td><label class="btn btn-outline btn-sm" style="display:inline-block">Change Image<input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="fmReplaceCategoryIcon('${c.id}',this)"></label></td>
-  </tr>`).join('')||'<tr><td colspan="5" class="empty">No categories yet.</td></tr>';
+   <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" type="button" onclick="fmEditCategory('${c.id}')">Edit</button><button class="btn ${c.is_active?'btn-red':'btn-green'} btn-sm" type="button" onclick="fmToggleCategoryActive('${c.id}',${c.is_active?'false':'true'})">${c.is_active?'Deactivate':'Activate'}</button></div></td>
+  </tr>`).join('')||'<tr><td colspan="6" class="empty">No categories yet.</td></tr>';
   msg.textContent='Categories and subcategories loaded.';
  }catch(e){msg.textContent='Category load failed: '+e.message;}
+}
+async function fmEditCategory(id){
+ const row=fmAdminCats.find(x=>String(x.id)===String(id));if(!row)return;
+ const next=prompt('Edit category name:',row.category_name);if(next===null)return;
+ const name=next.trim();if(!name){alert('Category name cannot be empty.');return;}
+ try{const {error}=await fmSupabase.from('fm_product_categories').update({category_name:name}).eq('id',id);if(error)throw error;document.getElementById('fmCategoryMsg').textContent='Category updated successfully.';await fmLoadCategories();}
+ catch(e){document.getElementById('fmCategoryMsg').textContent='Category update failed: '+e.message;}
+}
+async function fmToggleCategoryActive(id,activate){
+ const row=fmAdminCats.find(x=>String(x.id)===String(id));if(!row)return;
+ const action=activate?'activate':'deactivate';
+ if(!confirm('Are you sure you want to '+action+' category "'+row.category_name+'"?'))return;
+ try{const {error}=await fmSupabase.from('fm_product_categories').update({is_active:!!activate}).eq('id',id);if(error)throw error;document.getElementById('fmCategoryMsg').textContent='Category '+(activate?'activated':'deactivated')+'.';await fmLoadCategories();}
+ catch(e){document.getElementById('fmCategoryMsg').textContent='Category status update failed: '+e.message;}
 }
 async function fmReplaceCategoryIcon(id,input){
  const msg=document.getElementById('fmCategoryMsg'),file=input?.files?.[0];if(!file)return;
