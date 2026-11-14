@@ -8,8 +8,31 @@
 :root{--g:#168447;--gd:#0f6b38;--mint:#eaf8ef;--bg:#f5faf6;--text:#183126;--muted:#718078;--line:#dfebe3}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#eaf8ef,#f8fbf8 55%,#e7f5eb);font-family:Arial,Helvetica,sans-serif;color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px}.wrap{width:100%;max-width:440px}.brand{display:flex;justify-content:center;align-items:center;gap:10px;color:var(--g);font-size:24px;font-weight:850;margin-bottom:22px}.logo{width:48px;height:48px;border-radius:15px;background:var(--g);color:white;display:grid;place-items:center;font-size:25px}.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:27px;box-shadow:0 16px 50px #11663812}.eyebrow{text-transform:uppercase;letter-spacing:1.5px;font-size:11px;font-weight:800;color:var(--g)}h1{font-size:27px;margin:8px 0}.sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 23px}.field{margin:15px 0}.field label{display:block;font-size:13px;font-weight:750;margin-bottom:7px}.field input{width:100%;padding:13px 14px;border:1px solid #d9e7dd;border-radius:11px;font:inherit;outline:none}.field input:focus{border-color:var(--g);box-shadow:0 0 0 3px #16844714}.passwordbox{display:flex;gap:8px}.passwordbox input{flex:1;min-width:0}.show{background:var(--mint);color:var(--gd);border:0;border-radius:10px;padding:0 12px;font-weight:700}.primary{width:100%;border:0;background:var(--g);color:white;padding:14px;border-radius:11px;font-size:15px;font-weight:800;margin-top:8px}.primary:disabled{opacity:.55}.row{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px}.row label{display:flex;align-items:center;gap:6px;color:var(--muted)}a{color:var(--g);font-weight:750;text-decoration:none}.message{display:none;padding:11px;border-radius:10px;font-size:13px;line-height:1.45;margin:14px 0}.message.error{display:block;background:#fff0f0;color:#a52828}.message.ok{display:block;background:#eaf8ef;color:#116638}.foot{text-align:center;font-size:13px;color:var(--muted);margin-top:20px}.preview{margin-top:15px;padding:11px;background:#fff8e7;color:#785913;border:1px solid #f1e0ad;border-radius:10px;font-size:11px;line-height:1.5}@media(max-width:420px){.card{padding:22px}.brand{font-size:22px}}
 </style>
-<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style></head>
+<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style>
+<style id="rupee-mart-login-animated-theme">
+body{position:relative;isolation:isolate;overflow-x:hidden;background:linear-gradient(135deg,#e9f8ef 0%,#f8fcf8 48%,#e3f5e9 100%)}
+.rm-login-ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.rm-login-ambient:before,.rm-login-ambient:after{content:"";position:absolute;border-radius:50%;filter:blur(2px);opacity:.65}
+.rm-login-ambient:before{width:260px;height:260px;left:-95px;top:8%;background:radial-gradient(circle,#b8efca 0%,#dff7e7 58%,transparent 72%);animation:rmGlow 8s ease-in-out infinite alternate}
+.rm-login-ambient:after{width:300px;height:300px;right:-125px;bottom:5%;background:radial-gradient(circle,#c6efd4 0%,#e5f7eb 58%,transparent 72%);animation:rmGlow 10s ease-in-out infinite alternate-reverse}
+.rm-float{position:absolute;display:grid;place-items:center;border:1px solid #d8efdf;background:rgba(255,255,255,.78);box-shadow:0 12px 30px rgba(25,110,60,.09);border-radius:22px;backdrop-filter:blur(5px);animation:rmFloat 6s ease-in-out infinite}
+.rm-float.cart{width:68px;height:68px;left:5%;top:17%;font-size:34px}
+.rm-float.grocery{width:58px;height:58px;right:7%;top:29%;font-size:29px;animation-delay:-2s}
+.rm-float.wallet{width:68px;height:68px;left:7%;bottom:13%;font-size:33px;animation-delay:-3.5s}
+.rm-float.coins{width:54px;height:54px;right:8%;bottom:17%;font-size:27px;animation-delay:-1s}
+.rm-flow{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;color:#168447;opacity:.23;font-size:22px;font-weight:800;white-space:nowrap}
+.rm-flow span{animation:rmPulse 2.4s ease-in-out infinite}.rm-flow span:nth-child(2){animation-delay:.3s}.rm-flow span:nth-child(3){animation-delay:.6s}.rm-flow span:nth-child(4){animation-delay:.9s}
+@keyframes rmFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-13px) rotate(3deg)}}
+@keyframes rmGlow{from{transform:scale(.92);opacity:.45}to{transform:scale(1.08);opacity:.8}}
+@keyframes rmPulse{0%,100%{opacity:.35;transform:scale(.94)}50%{opacity:1;transform:scale(1.08)}}
+.wrap{position:relative;z-index:1}.card{background:rgba(255,255,255,.94);backdrop-filter:blur(8px)}
+@media(max-width:520px){body{padding:18px 14px}.rm-float.cart{left:2%;top:10%;width:48px;height:48px;font-size:25px}.rm-float.grocery{right:2%;top:23%;width:45px;height:45px;font-size:23px}.rm-float.wallet{left:2%;bottom:8%;width:48px;height:48px;font-size:24px}.rm-float.coins{right:2%;bottom:10%;width:44px;height:44px;font-size:21px}.rm-flow{top:53%;font-size:17px;gap:6px}}
+@media(prefers-reduced-motion:reduce){.rm-float,.rm-flow span,.rm-login-ambient:before,.rm-login-ambient:after{animation:none!important}}
+</style>
+
+</head>
 <body>
+<div class="rm-login-ambient" aria-hidden="true"><div class="rm-float cart">🛒</div><div class="rm-float grocery">🥬</div><div class="rm-float wallet">👛</div><div class="rm-float coins">🪙</div><div class="rm-flow"><span>🛒</span><span>→</span><span>📦</span><span>→</span><span>💰</span></div></div>
 <div class="wrap">
  <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
  <div class="card">
@@ -21,7 +44,6 @@
    <div id="message" class="message" role="status"></div>
    <button class="primary" type="submit" id="submit">Login securely</button>
   </form>
-  <div class="preview"><b>Setup stage:</b> Secure sign-in uses Rupee Mart Supabase Authentication. Inactive members can sign in to submit a plan payment; only authorized active Super Admins can open the Admin Panel.</div>
  </div>
  <div class="foot">New to Rupee Mart? <a href="register.html">Create an account</a><br><br>© Rupee Mart</div>
 </div>

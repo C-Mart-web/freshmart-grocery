@@ -31,7 +31,9 @@
 @media(max-width:620px){body{padding-bottom:65px}.topinner{grid-template-columns:1fr auto;padding:11px 13px;gap:10px}.actions{grid-column:1/-1;grid-row:4;justify-content:flex-end;flex-wrap:wrap}.brand{min-width:0}.brandname{font-size:19px}.delivery{grid-column:1/-1;grid-row:2;display:block}.delivery small{display:inline;margin-right:5px}.delivery strong{font-size:12px}.delivery button{margin-left:5px}.search{grid-column:1/-1;grid-row:3;height:42px}.actions{gap:6px}.action{padding:9px 10px;font-size:12px}.hide-mobile{display:none}.container{padding:12px}.hero{grid-template-columns:1fr;min-height:0;padding:22px;border-radius:19px;margin-top:4px}.hero h1{font-size:31px;max-width:340px}.hero p{font-size:12px;max-width:300px}.hero-art{position:absolute;right:4px;bottom:7px;opacity:.48}.hero-art .basket{width:112px;height:100px;font-size:62px}.floating{display:none}.section-head{margin:22px 0 11px}.section-head h2{font-size:18px}.category-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.category{padding:9px 5px;border-radius:13px}.cat-icon{height:56px;font-size:32px}.category b{font-size:10px}.offer-strip{gap:8px;margin:18px 0}.offer{min-height:108px;padding:12px;border-radius:14px}.offer h3{font-size:15px}.offer p{font-size:10px}.offer-icon{font-size:37px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.product{padding:8px;border-radius:13px}.product-art{height:105px;font-size:56px}.product h3{font-size:12px}.price{font-size:13px}.add{padding:7px 10px}.benefits{grid-template-columns:1fr;gap:8px;margin:20px 0}.benefit{padding:11px}.footer-inner{display:block}.footer-links{margin-top:15px;flex-wrap:wrap}.bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:7px 5px calc(7px + env(safe-area-inset-bottom));box-shadow:0 -5px 20px #1a3b2010}.bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#68756d;font-weight:750}.bottom-nav a.active{color:var(--green)}.bottom-nav span{font-size:20px}.toast{bottom:78px;max-width:90%;white-space:nowrap}}
 @media(max-width:360px){.actions .action{padding:8px}.hero h1{font-size:27px}.offer-icon{font-size:30px}}
 </style>
-<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style></head>
+<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style><style id="fm-home-offer-slider-style">
+#fmHomeOfferSlider{margin:14px 0 20px;display:none}#fmHomeOfferTrack{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px 1px 8px}#fmHomeOfferTrack::-webkit-scrollbar{display:none}.fm-home-offer-card{flex:0 0 100%;min-width:0;border:0;padding:0;background:transparent;border-radius:17px;overflow:hidden;scroll-snap-align:start;box-shadow:0 7px 20px #183b2010;cursor:pointer}.fm-home-offer-card img{display:block;width:100%;height:clamp(105px,24vw,190px);object-fit:cover;border-radius:17px}#fmHomeOfferDots{display:flex;justify-content:center;gap:6px;margin-top:5px}#fmHomeOfferDots button{width:9px;height:9px;border:0;border-radius:99px;background:#cbd8ce;padding:0}#fmHomeOfferDots button.active{width:28px;background:#35a765}@media(max-width:620px){#fmHomeOfferSlider{margin:10px 0 16px}.fm-home-offer-card img{height:clamp(105px,34vw,150px);object-fit:cover}}
+</style></head>
 <body>
 <header class="topbar">
  <div class="topinner">
@@ -293,5 +295,22 @@
   }
 })();
 </script>
-</body>
+<script id="fm-index-home-offers">
+(function(){
+const URL='https://wmquhgmrvdlcxmgarxqp.supabase.co',KEY='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa',db=window.supabase?.createClient(URL,KEY),section=document.getElementById('fmHomeOfferSlider'),track=document.getElementById('fmHomeOfferTrack'),dots=document.getElementById('fmHomeOfferDots');
+if(!db||!section||!track)return;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function load(){try{
+const {data,error}=await db.from('fm_store_settings').select('setting_value').eq('setting_key','grocery_home_offers').maybeSingle();if(error)throw error;
+const offers=(data?.setting_value?.offers||[]).filter(o=>o&&o.enabled!==false&&o.image_url);if(!offers.length)return;
+track.innerHTML=offers.map((o,i)=>'<button type="button" class="fm-home-offer-card" data-i="'+i+'" aria-label="'+esc(o.alt||o.title||'Special offer')+'"><img src="'+esc(o.image_url)+'" alt="'+esc(o.alt||o.title||'Rupee Mart offer')+'" loading="'+(i?'lazy':'eager')+'"></button>').join('');
+dots.innerHTML=offers.length>1?offers.map((o,i)=>'<button type="button" data-dot="'+i+'" class="'+(!i?'active':'')+'" aria-label="Show offer '+(i+1)+'"></button>').join(''):'';
+section.style.display='block';
+track.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{const ids=offers[+b.dataset.i].product_ids||[],wanted=new Set(ids.map(String)),chosen=(window.fmIndexAllProducts||[]).filter(p=>wanted.has(String(p.id)));if(chosen.length&&window.fmIndexRenderProducts){window.fmIndexRenderProducts(chosen);document.getElementById('emptyState').style.display='none';document.getElementById('popular')?.scrollIntoView({behavior:'smooth'});}}));
+dots.querySelectorAll('[data-dot]').forEach(b=>b.addEventListener('click',()=>{track.children[+b.dataset.dot]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});dots.querySelectorAll('button').forEach((x,i)=>x.classList.toggle('active',i===+b.dataset.dot));}));
+if(offers.length>1)track.addEventListener('scroll',()=>{const i=Math.max(0,Math.min(offers.length-1,Math.round(track.scrollLeft/(track.clientWidth+12))));dots.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('active',j===i));},{passive:true});
+}catch(e){console.warn('Homepage offer banners unavailable:',e.message||e);}}
+load();
+})();
+</script></body>
 </html>
