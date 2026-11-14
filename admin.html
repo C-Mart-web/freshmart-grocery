@@ -246,6 +246,18 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
  <p id="fmBrandLogoMsg" class="hint" aria-live="polite"></p>
 </div>
 
+<div class="card" style="margin-bottom:16px" id="fmLoginHeroManager">
+ <div class="section-head"><h2>🌙 Login Page Top Design</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmLoginHeroLoad()">Refresh</button></div>
+ <p class="hint">Login page lo logo paina / top empty area lo Dark Theme with floating groceries లేదా promotional banner set cheyyachu. Save chesina setting login page lo automatic ga display avutundi.</p>
+ <div class="formgrid">
+  <div class="field"><label>Top Area Design</label><select id="fmLoginHeroMode" onchange="fmLoginHeroModeChange()"><option value="floating">Floating Grocery Icons</option><option value="dark">Dark Theme + Floating Groceries</option><option value="banner">Promotional Banner</option></select></div>
+  <div class="field" id="fmLoginHeroFileField"><label>Promotional Banner Image (JPG / PNG / WEBP · max 3 MB)</label><input id="fmLoginHeroFile" type="file" accept="image/jpeg,image/png,image/webp" onchange="fmLoginHeroPreview(this)"></div>
+ </div>
+ <div id="fmLoginHeroPreview" class="previewbox"><span class="hint">Current top-area design preview will appear here.</span></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green" type="button" onclick="fmLoginHeroSave()">Save Login Design</button><button class="btn btn-outline" type="button" onclick="fmLoginHeroDisableBanner()">Remove Banner</button></div>
+ <p id="fmLoginHeroMsg" class="hint" aria-live="polite"></p>
+</div>
+
 <div class="card" style="margin-bottom:16px" id="fmPageBannerManager">
  <div class="section-head"><h2>Page-wise Promotional Banners</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmBannerLoad()">Refresh</button></div>
  <p class="hint">Prathi page ki separate banner image upload cheyyandi. User Panel lo aa page open chesinappudu aa banner display avutundi.</p>
@@ -2205,6 +2217,60 @@ async function fmFeaturedSave(){
 function fmFeaturedClear(){window.fmFeaturedSelectedProductIds=[];fmRenderProductPicker('featured');}
 const _fmOriginalOfferLoad=window.fmHomeOfferLoad;
 document.addEventListener('DOMContentLoaded',()=>{if(typeof loadAdminProducts==='function')loadAdminProducts();fmFeaturedLoad();});
+</script>
+
+
+<script id="fm-login-hero-admin">
+let fmLoginHeroConfig={mode:'floating',image_url:''};
+function fmLoginHeroModeChange(){
+ const mode=document.getElementById('fmLoginHeroMode').value;
+ document.getElementById('fmLoginHeroFileField').style.display=mode==='banner'?'block':'none';
+}
+function fmLoginHeroRender(){
+ const mode=document.getElementById('fmLoginHeroMode');if(mode)mode.value=fmLoginHeroConfig.mode||'floating';
+ fmLoginHeroModeChange();
+ const host=document.getElementById('fmLoginHeroPreview');if(!host)return;
+ if(fmLoginHeroConfig.mode==='banner'&&fmLoginHeroConfig.image_url)
+  host.innerHTML='<img src="'+escapeHtml(fmLoginHeroConfig.image_url)+'" alt="Login banner preview" style="width:100%;max-width:440px;max-height:160px;object-fit:cover;border-radius:12px"><p class="hint">Saved promotional banner</p>';
+ else if(fmLoginHeroConfig.mode==='dark')
+  host.innerHTML='<div style="padding:30px;border-radius:12px;background:radial-gradient(circle at 20% 20%,#315e45,#0a1911);color:#eaffef;font-size:25px">🛒　🥬　🥦　🍅<p style="font-size:12px">Dark theme with floating groceries</p></div>';
+ else host.innerHTML='<div style="padding:30px;border-radius:12px;background:linear-gradient(135deg,#e7f8ed,#f8fcf8);font-size:25px">🛒　🥬　🥦　🍅<p class="hint">Light theme with floating groceries</p></div>';
+}
+async function fmLoginHeroLoad(){
+ const msg=document.getElementById('fmLoginHeroMsg');
+ try{const {data,error}=await fmSupabase.from('fm_store_settings').select('setting_value').eq('setting_key','login_hero_design').maybeSingle();if(error)throw error;fmLoginHeroConfig=data?.setting_value||{mode:'floating',image_url:''};fmLoginHeroRender();if(msg)msg.textContent='Login design settings loaded.';}
+ catch(e){if(msg)msg.textContent='Could not load login design: '+e.message;}
+}
+function fmLoginHeroPreview(input){
+ const f=input.files?.[0],host=document.getElementById('fmLoginHeroPreview');if(!f||!host)return;
+ if(!['image/jpeg','image/png','image/webp'].includes(f.type)){host.textContent='Choose JPG, PNG or WEBP.';return;}
+ if(f.size>3*1024*1024){host.textContent='Banner must be 3 MB or smaller.';return;}
+ const reader=new FileReader();reader.onload=()=>{host.innerHTML='<img src="'+reader.result+'" alt="New banner preview" style="width:100%;max-width:440px;max-height:160px;object-fit:cover;border-radius:12px"><p class="hint">New banner preview (not saved yet)</p>';};reader.readAsDataURL(f);
+}
+async function fmLoginHeroSave(){
+ const msg=document.getElementById('fmLoginHeroMsg'),mode=document.getElementById('fmLoginHeroMode').value,file=document.getElementById('fmLoginHeroFile').files?.[0];
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Admin sign-in required.');
+  let imageUrl=fmLoginHeroConfig.image_url||'';
+  if(mode==='banner'&&file){
+   if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP.');
+   if(file.size>3*1024*1024)throw new Error('Banner must be 3 MB or smaller.');
+   const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path='branding/login-hero-'+Date.now()+'.'+ext;
+   const {data,error}=await fmSupabase.storage.from('fm-product-images').upload(path,file,{contentType:file.type,upsert:false});if(error)throw error;
+   imageUrl=fmSupabase.storage.from('fm-product-images').getPublicUrl(data.path).data.publicUrl;
+  }
+  if(mode==='banner'&&!imageUrl)throw new Error('Please choose a banner image.');
+  fmLoginHeroConfig={mode,image_url:mode==='banner'?imageUrl:''};
+  const {error}=await fmSupabase.from('fm_store_settings').upsert({setting_key:'login_hero_design',setting_value:fmLoginHeroConfig,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'setting_key'});if(error)throw error;
+  fmLoginHeroRender();document.getElementById('fmLoginHeroFile').value='';msg.textContent='Login page design saved successfully.';msg.style.color='#168447';
+ }catch(e){msg.textContent='Save failed: '+e.message;msg.style.color='#b72e2e';}
+}
+async function fmLoginHeroDisableBanner(){
+ document.getElementById('fmLoginHeroMode').value='floating';
+ document.getElementById('fmLoginHeroFile').value='';
+ await fmLoginHeroSave();
+}
+setTimeout(()=>{if(typeof fmLoginHeroLoad==='function')fmLoginHeroLoad();},1300);
 </script>
 
 </body>

@@ -30,9 +30,29 @@ body{position:relative;isolation:isolate;overflow-x:hidden;background:linear-gra
 @media(prefers-reduced-motion:reduce){.rm-float,.rm-flow span,.rm-login-ambient:before,.rm-login-ambient:after{animation:none!important}}
 </style>
 
+
+<style id="rm-login-hero-config-style">
+body.rm-login-dark{background:radial-gradient(circle at 20% 15%,#244b39 0,#10251d 48%,#07140f 100%);color:#edf8f0}
+body.rm-login-dark .card{background:rgba(12,28,21,.94);border-color:#315342;color:#edf8f0;box-shadow:0 18px 55px #0005}
+body.rm-login-dark .sub,body.rm-login-dark .foot,body.rm-login-dark .row label{color:#b8cbbf}
+body.rm-login-dark .field input{background:#142b20;color:#f3fff6;border-color:#3c5a49}
+body.rm-login-dark .field input::placeholder{color:#9eb2a5}
+body.rm-login-dark .show{background:#244b37;color:#d9f5e3}
+body.rm-login-dark .rm-float{background:rgba(17,43,30,.82);border-color:#47785a;color:#eaffef}
+body.rm-login-dark .rm-flow{color:#b8f0ca;opacity:.28}
+body.rm-login-dark .brand{color:#b9f2ca}
+#rmLoginPromo{display:none;width:min(100%,620px);margin:0 auto 18px;border-radius:22px;overflow:hidden;box-shadow:0 14px 38px #1238}
+#rmLoginPromo img{display:block;width:100%;max-height:210px;object-fit:cover}
+#rmLoginPromo.rm-promo-active{display:block}
+body.rm-login-promo .rm-login-ambient{display:none}
+body.rm-login-promo{background:linear-gradient(145deg,#eaf8ef,#f8fbf8 55%,#e7f5eb)}
+@media(max-width:520px){#rmLoginPromo{margin-bottom:14px;border-radius:17px}#rmLoginPromo img{max-height:165px}}
+</style>
+
 </head>
 <body>
 <div class="rm-login-ambient" aria-hidden="true"><div class="rm-float cart">🛒</div><div class="rm-float grocery">🥬</div><div class="rm-float wallet">👛</div><div class="rm-float coins">🪙</div><div class="rm-flow"><span>🛒</span><span>→</span><span>📦</span><span>→</span><span>💰</span></div></div>
+<div id="rmLoginPromo" aria-label="Rupee Mart promotional banner"></div>
 <div class="wrap">
  <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
  <div class="card">
@@ -129,5 +149,31 @@ document.getElementById('forgot').addEventListener('click',async e=>{
   }
 })();
 </script>
+
+<script id="rm-login-hero-config">
+(async function(){
+ const U='https://wmquhgmrvdlcxmgarxqp.supabase.co';
+ const K='sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
+ try{
+  const r=await fetch(U+'/rest/v1/fm_store_settings?select=setting_value&setting_key=eq.login_hero_design&limit=1',{headers:{apikey:K,Authorization:'Bearer '+K}});
+  if(!r.ok)return;
+  const rows=await r.json(),cfg=rows&&rows[0]&&rows[0].setting_value||{};
+  document.body.classList.remove('rm-login-dark','rm-login-promo');
+  const ambient=document.querySelector('.rm-login-ambient');
+  if(cfg.mode==='dark'){
+    document.body.classList.add('rm-login-dark');
+    if(ambient)ambient.style.display='block';
+  }else if(cfg.mode==='banner'&&cfg.image_url){
+    document.body.classList.add('rm-login-promo');
+    if(ambient)ambient.style.display='none';
+    const host=document.getElementById('rmLoginPromo');
+    if(host){host.innerHTML='<img src="'+String(cfg.image_url).replace(/"/g,'%22')+'" alt="Rupee Mart promotional banner">';host.classList.add('rm-promo-active');}
+  }else{
+    if(ambient)ambient.style.display='block';
+  }
+ }catch(e){console.warn('Login hero design could not be loaded; default floating grocery design remains.',e);}
+})();
+</script>
+
 </body>
 </html>
