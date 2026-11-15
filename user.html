@@ -1404,7 +1404,7 @@ async function fmLoadAvailableCheckoutCoupons(){
  try{
   const session=await getMemberSession();
   const {data:assignments,error:ae}=await fmShopClient.from('fm_user_coupons')
-   .select('id,coupon_id,status,assigned_at').eq('user_id',session.user.id).eq('status','available')
+   .select('id,coupon_id,status,assigned_at,expires_at').eq('user_id',session.user.id).eq('status','available')
    .order('assigned_at',{ascending:false});
   if(ae)throw ae;
   const ids=[...new Set((assignments||[]).map(x=>x.coupon_id).filter(Boolean))];
@@ -1413,7 +1413,7 @@ async function fmLoadAvailableCheckoutCoupons(){
    .select('id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active').in('id',ids);
   if(ce)throw ce;
   const map=new Map((coupons||[]).map(c=>[String(c.id),c]));
-  const rows=(assignments||[]).map(a=>map.get(String(a.coupon_id))).filter(c=>c&&c.is_active&&(!c.ends_at||new Date(c.ends_at)>new Date())&&c.code);
+  const rows=(assignments||[]).filter(a=>{const c=map.get(String(a.coupon_id));return c&&c.is_active&&(!a.expires_at||new Date(a.expires_at)>new Date())&&(!c.ends_at||new Date(c.ends_at)>new Date())&&c.code;}).map(a=>map.get(String(a.coupon_id)));
   if(!rows.length){box.textContent='No valid available coupons found.';return;}
   box.innerHTML=rows.map((c,i)=>{
    const d=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?'₹'+Number(c.discount_value||0)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':'Coupon');
@@ -1438,13 +1438,13 @@ async function fmApplyCheckoutCoupon(){
   btn.disabled=true;msg.textContent='Checking coupon…';
   const session=await getMemberSession();
   const {data,error}=await fmShopClient.from('fm_user_coupons')
-   .select('id,coupon_id,status,fm_coupons(id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active)')
+   .select('id,coupon_id,status,expires_at,fm_coupons(id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active)')
    .eq('user_id',session.user.id).eq('status','available');
   if(error)throw error;
   const assigned=(data||[]).find(x=>x.fm_coupons&&x.fm_coupons.is_active&&String(x.fm_coupons.code||'').toUpperCase()===code);
   if(!assigned)throw new Error('Invalid coupon or this coupon is not assigned to your account.');
   const c=assigned.fm_coupons;
-  if(c.ends_at&&Date.now()>new Date(c.ends_at).getTime())throw new Error('This coupon has expired.');
+  if((assigned.expires_at&&Date.now()>new Date(assigned.expires_at).getTime())||(c.ends_at&&Date.now()>new Date(c.ends_at).getTime()))throw new Error('This coupon has expired.');
   const subtotal=fmCheckoutSubtotal(),delivery=Number(fmCheckoutArea?.delivery_charge||0);
   if(subtotal<Number(c.min_order_amount||0))throw new Error('Minimum order amount is '+shopMoney(c.min_order_amount)+'.');
   let discount=0;
@@ -2150,20 +2150,20 @@ async function fmLoadMyOffers(){
   window.fmCurrentSpinPlanId=onlyActivation?.plan_id||null;
   window.fmCurrentSpinMemberId=session.user.id;
   // Fetch assignments first, then coupon rows directly. This avoids relation-name mismatches.
-  const {data:assignments,error:ae}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at,redeemed_at').eq('user_id',session.user.id).order('assigned_at',{ascending:false});
+  const {data:assignments,error:ae}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at,expires_at,redeemed_at').eq('user_id',session.user.id).order('assigned_at',{ascending:false});
   if(ae)throw ae;
   const couponIds=[...new Set((assignments||[]).map(x=>x.coupon_id).filter(Boolean))];
   let couponRows=[];
   if(couponIds.length){const {data,error}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,max_discount,ends_at,is_active').in('id',couponIds);if(error)throw error;couponRows=data||[];}
   const couponMap=new Map(couponRows.map(c=>[String(c.id),c]));
   const joined=(assignments||[]).map(a=>({...a,coupon:couponMap.get(String(a.coupon_id))||null}));
-  const usable=joined.filter(x=>x.status==='available'&&x.coupon?.is_active&&(!x.coupon.ends_at||new Date(x.coupon.ends_at)>new Date()));
+  const usable=joined.filter(x=>x.status==='available'&&x.coupon?.is_active&&(!x.expires_at||new Date(x.expires_at)>new Date())&&(!x.coupon.ends_at||new Date(x.coupon.ends_at)>new Date()));
   const countEl=document.getElementById('fmMyCouponCount');if(countEl)countEl.textContent=usable.length+' AVAILABLE';
   couponBox.innerHTML=joined.length?joined.map(x=>{
-    const c=x.coupon||{};const expired=!!(c.ends_at&&new Date(c.ends_at)<=new Date());
+    const c=x.coupon||{};const effectiveExpiry=x.expires_at||c.ends_at||null;const expired=!!(effectiveExpiry&&new Date(effectiveExpiry)<=new Date());
     const status=expired&&x.status==='available'?'EXPIRED':String(x.status||'unknown').toUpperCase();
     const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
-    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Rupee Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${c.ends_at?`<p class="hint">Valid until: ${new Date(c.ends_at).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
+    return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Rupee Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${effectiveExpiry?`<p class="hint">Valid until: ${new Date(effectiveExpiry).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;
   }).join(''):'No coupons assigned to your account yet.';
   const spinBtn=document.getElementById('fmSpinButton');
   const {data:plays,error:pe}=spinTable?(spinScope==='plan'?await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at,membership_activation_id').eq('user_id',session.user.id).eq('spin_scope','membership').eq('membership_activation_id',onlyActivation?.id||-1).order('played_at',{ascending:true}):await fmShopClient.from(spinTable).select('id,reward_label,reward_type,status,played_at').eq('user_id',session.user.id).order('played_at',{ascending:true})):{data:[],error:null};if(pe)throw pe;
@@ -2292,9 +2292,9 @@ async function fmPlayWelcomeSpin(){
   if(String(data.reward_type||'')==='coupon'){
    const memberId=window.fmCurrentSpinMemberId||(await getMemberSession())?.user?.id;
    if(memberId){
-    const {data:assigned,error:assignErr}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at').eq('user_id',memberId).order('assigned_at',{ascending:false}).limit(1).maybeSingle();
+    const {data:assigned,error:assignErr}=await fmShopClient.from('fm_user_coupons').select('id,coupon_id,status,assigned_at,expires_at').eq('user_id',memberId).order('assigned_at',{ascending:false}).limit(1).maybeSingle();
     if(assignErr)throw assignErr;
-    if(assigned?.coupon_id){const {data:coupon,error:couponErr}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,ends_at,is_active').eq('id',assigned.coupon_id).maybeSingle();if(couponErr)throw couponErr;wonCoupon=coupon?{...coupon,status:assigned.status}:null;}
+    if(assigned?.coupon_id){const {data:coupon,error:couponErr}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,ends_at,is_active').eq('id',assigned.coupon_id).maybeSingle();if(couponErr)throw couponErr;wonCoupon=coupon?{...coupon,status:assigned.status,expires_at:assigned.expires_at}:null;}
    }
    if(!wonCoupon)throw new Error('Coupon prize was recorded, but its assigned coupon could not be loaded. Please refresh My Coupons or contact support.');
   }
@@ -2315,7 +2315,7 @@ async function fmPlayWelcomeSpin(){
   const usedCount=window.fmMemberSpinPlays.length;
   const maxCount=Math.max(1,Number(window.fmWelcomeSpinConfig?.max_spins_per_user||1));
   const retryAvailable=data.reward_type==='none'&&usedCount<maxCount;
-  if(details){if(wonCoupon){details.innerHTML=`<div style="margin-top:8px;padding:12px;border:1px dashed #d8b84a;border-radius:12px;background:#fffdf3;text-align:left"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:21px;letter-spacing:1px;color:#176b3d">${fmOfferEsc(wonCoupon.code||'')}</strong><button type="button" class="btn btn-outline" style="display:block;margin:8px auto" onclick="fmCopyCouponCode('${fmOfferEsc(wonCoupon.code||'')}')">Copy Code</button><div style="font-size:18px;font-weight:900;color:#b87916;margin:6px 0">${fmOfferEsc(wonCoupon.discount_type==='percent'?Number(wonCoupon.discount_value||0)+'% OFF':wonCoupon.discount_type==='fixed'?fmOfferMoney(wonCoupon.discount_value)+' OFF':wonCoupon.discount_type==='free_delivery'?'FREE DELIVERY':(Number(wonCoupon.discount_value||0)>0?fmOfferMoney(wonCoupon.discount_value)+' OFF':'Coupon reward'))}</div>${Number(wonCoupon.min_order_amount||0)>0?`<div class="hint">Minimum order: ${fmOfferMoney(wonCoupon.min_order_amount)}</div>`:''}${wonCoupon.ends_at?`<div class="hint">Valid until: ${new Date(wonCoupon.ends_at).toLocaleString('en-IN')}</div>`:''}${wonCoupon.terms_and_conditions?`<div style="margin-top:8px"><b style="font-size:12px">Terms & Conditions</b><div class="hint" style="white-space:pre-wrap">${fmOfferEsc(wonCoupon.terms_and_conditions)}</div></div>`:''}</div>`;}else{if(data.reward_type==='product'){details.innerHTML='<p>Your gift is reserved. Check your purchase eligibility and submit your delivery address to claim it.</p><button type="button" class="btn btn-green" onclick="fmOpenGiftClaim()">Claim Gift</button>';window.fmLastWonSpinPlayId=data.spin_play_id||data.id||null;}else details.textContent=data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your reward is recorded.';}}
+  if(details){if(wonCoupon){details.innerHTML=`<div style="margin-top:8px;padding:12px;border:1px dashed #d8b84a;border-radius:12px;background:#fffdf3;text-align:left"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:21px;letter-spacing:1px;color:#176b3d">${fmOfferEsc(wonCoupon.code||'')}</strong><button type="button" class="btn btn-outline" style="display:block;margin:8px auto" onclick="fmCopyCouponCode('${fmOfferEsc(wonCoupon.code||'')}')">Copy Code</button><div style="font-size:18px;font-weight:900;color:#b87916;margin:6px 0">${fmOfferEsc(wonCoupon.discount_type==='percent'?Number(wonCoupon.discount_value||0)+'% OFF':wonCoupon.discount_type==='fixed'?fmOfferMoney(wonCoupon.discount_value)+' OFF':wonCoupon.discount_type==='free_delivery'?'FREE DELIVERY':(Number(wonCoupon.discount_value||0)>0?fmOfferMoney(wonCoupon.discount_value)+' OFF':'Coupon reward'))}</div>${Number(wonCoupon.min_order_amount||0)>0?`<div class="hint">Minimum order: ${fmOfferMoney(wonCoupon.min_order_amount)}</div>`:''}${(wonCoupon.expires_at||wonCoupon.ends_at)?`<div class="hint">Valid until: ${new Date(wonCoupon.expires_at||wonCoupon.ends_at).toLocaleString('en-IN')}</div>`:''}${wonCoupon.terms_and_conditions?`<div style="margin-top:8px"><b style="font-size:12px">Terms & Conditions</b><div class="hint" style="white-space:pre-wrap">${fmOfferEsc(wonCoupon.terms_and_conditions)}</div></div>`:''}</div>`;}else{if(data.reward_type==='product'){details.innerHTML='<p>Your gift is reserved. Check your purchase eligibility and submit your delivery address to claim it.</p><button type="button" class="btn btn-green" onclick="fmOpenGiftClaim()">Claim Gift</button>';window.fmLastWonSpinPlayId=data.spin_play_id||data.id||null;}else details.textContent=data.reward_type==='wallet'?'₹'+Number(data.reward_value||0).toLocaleString('en-IN')+' has been credited to your Shopping Wallet.':data.reward_type==='none'?(retryAvailable?'No prize this time. You can spin again!':'No prize this time. Your spin limit has been reached.'):'Your reward is recorded.';}}
   const resultAction=document.getElementById('fmSpinResultAction');
   if(resultAction){if(retryAvailable){resultAction.textContent='SPIN AGAIN';resultAction.onclick=fmSpinResultContinue;}else{resultAction.textContent=data.reward_type==='none'?'Close':'View My Coupons';resultAction.onclick=fmGoToMyCoupons;}}
   if(cardBtn){cardBtn.disabled=!retryAvailable;cardBtn.textContent=retryAvailable?'Spin Again ('+(maxCount-usedCount)+' left)':usedCount>=maxCount?'Spin Limit Reached':'Spin Already Used';}
@@ -2980,7 +2980,9 @@ tr:last-child td{border-bottom:0}
  <div id="fmUpiQrArea" style="text-align:center;margin:12px 0"></div>
  <div id="fmUpiProofArea" style="display:none">
   <label>UPI UTR / Transaction ID<input id="fmUpiUtr" maxlength="80" placeholder="Enter UTR after payment"></label>
-  <label>Payment screenshot<input id="fmUpiProofFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+  <label for="fmUpiProofFile" style="display:block;font-weight:700;margin:10px 0 5px">Payment screenshot (JPG / PNG / WEBP)</label>
+  <input id="fmUpiProofFile" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" onchange="fmUpiPreviewProof(this)" style="display:block;width:100%;padding:12px;border:2px dashed #8ab7a0;border-radius:10px;background:#f5fbf7;box-sizing:border-box;color:#183328">
+  <div id="fmUpiProofPreview" style="display:none;margin:8px 0 12px;padding:10px;border:1px solid #d5e4db;border-radius:10px;background:#f7fbf8;font-size:13px"></div>
   <button type="button" onclick="fmUpiSubmitProof()">Submit UTR &amp; Screenshot</button>
  </div>
  <p id="fmUpiUserMsg" style="font-size:13px;color:#176c45"></p><hr><h3>My Payment History</h3><div id="fmUpiMyRows" style="font-size:13px">Loading…</div>
@@ -3070,6 +3072,19 @@ function fmStartMembershipActivationWatcher(userId){
  }
 }
 function fmUpiEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmUpiPreviewProof(input){
+ const box=document.getElementById('fmUpiProofPreview');
+ const file=input?.files?.[0];
+ if(!box)return;
+ if(!file){box.style.display='none';box.innerHTML='';return;}
+ const size=(file.size/1024/1024).toFixed(2);
+ box.style.display='block';
+ box.innerHTML='<b style="color:#176c45">✓ Screenshot selected</b><br>'+fmUpiEsc(file.name)+' · '+size+' MB';
+ if(file.type&&file.type.startsWith('image/')){
+  const url=URL.createObjectURL(file);
+  box.innerHTML+='<br><img src="'+url+'" alt="Selected payment screenshot preview" style="display:block;max-width:100%;max-height:220px;object-fit:contain;margin-top:8px;border-radius:8px">';
+ }
+}
 async function fmRefreshUpiVisibility(){try{if(!fmShopClient)return false;const {data,error}=await fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle();if(error)throw error;return data?.upi_enabled===true&&data?.manual_verification===true;}catch(e){console.warn('UPI visibility check failed; keeping UPI hidden.',e);return false;}}
 async function fmUpiUserOpen(){
  const enabled=await fmRefreshUpiVisibility();
@@ -3133,12 +3148,16 @@ async function fmUpiSubmitProof(){
   const utr=document.getElementById('fmUpiUtr').value.trim();
   const file=document.getElementById('fmUpiProofFile').files[0];
   if(!utr||!file)throw new Error('UTR and screenshot are required.');
-  if(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Choose JPG, PNG or WEBP up to 5 MB.');
+  const fileExt=(file.name.split('.').pop()||'').toLowerCase();
+  const allowedTypes=['image/jpeg','image/png','image/webp'];
+  const allowedExts=['jpg','jpeg','png','webp'];
+  if(file.size>8*1024*1024||(!allowedTypes.includes(file.type)&&!allowedExts.includes(fileExt)))throw new Error('Choose a JPG, PNG or WEBP screenshot up to 8 MB. After choosing, the selected file name and preview will appear above.');
   const session=await getMemberSession();
-  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const ext=file.type==='image/png'||fileExt==='png'?'png':file.type==='image/webp'||fileExt==='webp'?'webp':'jpg';
+  const contentType=ext==='png'?'image/png':ext==='webp'?'image/webp':'image/jpeg';
   const path=`common-upi/${session.user.id}/${Date.now()}_${crypto.randomUUID()}.${ext}`;
   msg.textContent='Uploading screenshot and submitting payment…';
-  const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});
+  const {data:up,error:ue}=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType,upsert:false});
   if(ue)throw ue;
   const {error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});
   if(error)throw error;
@@ -3165,6 +3184,7 @@ async function fmUpiSubmitProof(){
   document.getElementById('fmUpiQrArea').innerHTML='';
   document.getElementById('fmUpiUtr').value='';
   document.getElementById('fmUpiProofFile').value='';
+  fmUpiPreviewProof(document.getElementById('fmUpiProofFile'));
  }catch(e){
   msg.textContent='Submit failed: '+(e.message||e);
  }finally{
