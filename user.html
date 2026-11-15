@@ -847,7 +847,7 @@ function fmUpdateShoppingSpend(){
   if(note)note.textContent=money(balance)+' remaining in Shopping Wallet · '+pct.toFixed(1)+'% of allocation used';
   if(allocation)allocation.textContent=money(total);
   const daily=document.getElementById(prefix==='dash'?'fmDashShoppingDailyLimit':'walletShoppingDailyLimit');
-  if(daily){if(fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today usable: '+money(d.available_to_spend_today)+' · Used today: '+money(d.used_today)+' · Opening balance: '+money(d.opening_balance)+' · Daily 20% limit: '+money(d.daily_limit)+' · Threshold: '+money(d.threshold);}else{daily.textContent='Daily Shopping Wallet limit details are unavailable. Please refresh or contact support.';}}
+  if(daily&&fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today usable: '+money(d.available_to_spend_today)+' · Daily 20% limit: '+money(d.daily_limit)+' of '+money(d.opening_balance)+' · Used today: '+money(d.used_today)+' · Threshold: '+money(d.threshold);}
  });
 }
 let fmShoppingDailyInfo=null;
@@ -3030,12 +3030,22 @@ async function fmCheckMembershipActivation(userId){
   if(!Array.isArray(saved))saved=[];
   if(activation?.id&&String(activation.status||'active').toLowerCase()==='active'){
    const id=String(activation.id);
-   if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify([id]));
-   else if(!saved.map(String).includes(id)){
+   const amount=Number(activation.plan_amount)||0;
+   const pendingKey=amount>0?'fm_membership_pending_request_'+String(amount):'';
+   const hasPendingPayment=!!(pendingKey&&localStorage.getItem(pendingKey));
+   if(!localStorage.getItem(key)){
+    localStorage.setItem(key,JSON.stringify([id]));
+    if(hasPendingPayment){
+     fmShowPlanActivatedNotice('Membership');
+     await fmLoadMemberPlanSplit(userId,session.access_token);
+     localStorage.removeItem(pendingKey);
+     setTimeout(()=>fmStartMembershipActivationSpin(id,activation.plan_id),900);
+    }
+   }else if(!saved.map(String).includes(id)){
     localStorage.setItem(key,JSON.stringify([...new Set([...saved.map(String),id])].slice(-100)));
     fmShowPlanActivatedNotice('Membership');
     await fmLoadMemberPlanSplit(userId,session.access_token);
-    const amount=Number(activation.plan_amount)||0;if(amount>0)localStorage.removeItem('fm_membership_pending_request_'+String(amount));
+    if(pendingKey)localStorage.removeItem(pendingKey);
     setTimeout(()=>fmStartMembershipActivationSpin(id,activation.plan_id),900);
    }
   }
