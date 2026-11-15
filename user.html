@@ -1190,6 +1190,7 @@ async function loadSignedInMember(){
 // Grocery cart: guest cart stays local; signed-in cart syncs to the member account.
 let fmCart=[];try{fmCart=JSON.parse(localStorage.getItem('fm_grocery_cart')||'[]')}catch(e){fmCart=[]}
 let fmCheckoutArea=null,fmCheckoutSlots=[],fmCloudCartBusy=false;
+let fmCheckoutDailyAvailable=0, fmCheckoutWalletBalance=0, fmCheckoutNoticePin='';
 async function fmSyncCartForUser(userId){
  if(!fmShopClient||!userId||fmCloudCartBusy)return;fmCloudCartBusy=true;
  try{
@@ -1310,7 +1311,7 @@ async function fmLoadCheckoutPayments(){
   const daily=dailyResult.data||{};
   const todayUsable=Math.max(0,Number(daily.available_to_spend_today)||0);
   const openingBalance=Math.max(0,Number(daily.opening_balance)||0);
-  const dailyPercent=Number(daily.daily_percent)||20;
+  fmCheckoutDailyAvailable=todayUsable; fmCheckoutWalletBalance=balance;
   const usableLabel='Shopping Wallet — Today usable ₹'+todayUsable.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+' (20% of ₹'+openingBalance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+') · Balance ₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   const opts=['<option value="" selected disabled>Select a payment method</option>'];
   opts.push(`<option value="shopping_wallet" ${todayUsable<=0?'disabled':''}>${usableLabel}</option>`);
@@ -1324,6 +1325,19 @@ async function fmLoadCheckoutPayments(){
   document.getElementById('fmCheckoutMsg').textContent='Payment options could not load: '+e.message;
  }
 }
+function fmShowCheckoutNotice(title,message){
+ let modal=document.getElementById('fmCheckoutNoticeModal');
+ if(!modal){
+  modal=document.createElement('div');modal.id='fmCheckoutNoticeModal';modal.className='fm-checkout-notice';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.innerHTML='<div class="fm-checkout-notice-box"><div class="fm-checkout-notice-icon">📍</div><h3 id="fmCheckoutNoticeTitle"></h3><p id="fmCheckoutNoticeText"></p><button type="button" onclick="fmCloseCheckoutNotice()">Close</button></div>';
+  document.body.appendChild(modal);
+ }
+ document.getElementById('fmCheckoutNoticeTitle').textContent=title||'Notice';
+ document.getElementById('fmCheckoutNoticeText').textContent=message||'';
+ modal.classList.add('open');
+}
+function fmCloseCheckoutNotice(){const m=document.getElementById('fmCheckoutNoticeModal');if(m)m.classList.remove('open');}
+
 async function fmLoadDeliveryChoices(){
  const pin=document.getElementById('fmCheckoutPin').value.trim(),box=document.getElementById('fmDeliveryChoices');
  fmCheckoutArea=null;fmCheckoutSlots=[];
@@ -1334,12 +1348,13 @@ async function fmLoadDeliveryChoices(){
  try{
   const {data:area,error}=await fmShopClient.from('fm_delivery_areas').select('*').eq('pincode',pin).maybeSingle();
   if(error)throw error;
-  if(!area||!area.is_serviceable){box.innerHTML='<b style="color:#b72e2e">We will start our service in your area soon.</b>';return;}
+  if(!area||!area.is_serviceable){box.innerHTML='';if(fmCheckoutNoticePin!==pin)fmShowCheckoutNotice('Delivery Not Available','We will start our service in your area soon. Please try another delivery pincode.');fmCheckoutNoticePin=pin;return;}
   const {data:quote,error:qe}=await fmShopClient.rpc('fm_get_delivery_quote',{
     p_pincode:pin,p_lat:address?.latitude??null,p_lng:address?.longitude??null,p_subtotal:subtotal
   });
   if(qe)throw qe;
-  if(!quote?.serviceable){box.innerHTML='<b style="color:#b72e2e">'+shopEsc(quote?.message||'We will start our service in your area soon.')+'</b>';return;}
+  if(!quote?.serviceable){box.innerHTML='';if(fmCheckoutNoticePin!==pin)fmShowCheckoutNotice('Delivery Not Available',quote?.message||'We will start our service in your area soon. Please try another delivery pincode.');fmCheckoutNoticePin=pin;return;}
+  fmCheckoutNoticePin='';
   fmCheckoutArea={...area,delivery_charge:Number(quote.delivery_charge||0),free_delivery:quote.free_delivery===true};
   const dateInput=document.getElementById('fmCheckoutDeliveryDate');
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());
@@ -1374,7 +1389,7 @@ async function fmLoadDeliveryChoices(){
   if(area.slot_booking_enabled){
     if(slots.length){
       html+=`<b>Available delivery slots for ${selectedDate}</b>`;
-      html+=slots.map((s,i)=>`<label class="card" style="padding:10px"><input type="radio" name="fmDeliveryMode" value="slot" data-slot="${s.id}" ${i===0&&!hasExpress?'checked':''}> ${shopEsc(s.slot_label)} · ${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)}</label>`).join('');
+      html+=slots.map((s,i)=>`<label class="card fm-delivery-slot-option" style="padding:12px"><input type="radio" name="fmDeliveryMode" value="slot" data-slot="${s.id}" ${i===0&&!hasExpress?'checked':''}> <span><b>${shopEsc(s.slot_label)}</b><small>${String(s.start_time).slice(0,5)}–${String(s.end_time).slice(0,5)}</small></span></label>`).join('');
       if(autoMovedToNextDate)html+='<p class="hint">Today’s booking window is closed. The next available daily slot has been selected automatically. You can choose another future date above.</p>';
     }else html+=`<p class="hint">No delivery slots are available for ${selectedDate}. Please choose another date or contact the store.</p>`;
   }
@@ -1413,6 +1428,7 @@ function fmUpdateCouponTotal(){
  const t=document.getElementById('fmCheckoutTotal');
  if(d)d.textContent=shopMoney(discount);
  if(t)t.textContent=shopMoney(total);
+ if(typeof fmUpdateCheckoutButton==='function')fmUpdateCheckoutButton();
 }
 function fmToggleCheckoutCouponList(){
  const panel=document.getElementById('fmCheckoutAvailableCoupons');
@@ -1497,11 +1513,22 @@ function fmRemoveCheckoutCoupon(){
  fmUpdateCouponTotal();
 }
 
+function fmCheckoutGrandTotal(){
+ const totalEl=document.getElementById('fmCheckoutTotal');
+ const shown=Number(String(totalEl?.textContent||'').replace(/[^0-9.]/g,''));
+ if(Number.isFinite(shown)&&shown>=0)return shown;
+ return Math.max(0,fmCheckoutSubtotal()+Number(fmCheckoutArea?.delivery_charge||0)-Number(fmCouponDiscount||0));
+}
 function fmUpdateCheckoutButton(){
  const method=String(document.getElementById('fmCheckoutPayment')?.value||'').toLowerCase();
  const btn=document.getElementById('fmPlaceOrderBtn');if(!btn)return;
+ const total=fmCheckoutGrandTotal();
+ const exceedsWallet=method==='shopping_wallet'&&total>fmCheckoutDailyAvailable+0.009;
  btn.textContent=method==='upi'?'Pay Now':'Place an Order';
- btn.disabled=!method;
+ btn.disabled=!method||exceedsWallet;
+ const msg=document.getElementById('fmCheckoutMsg');
+ if(exceedsWallet){if(msg){msg.style.color='#b72e2e';msg.textContent='Today you can use only '+shopMoney(fmCheckoutDailyAvailable)+' from Shopping Wallet. Reduce your cart or choose another payment method.';}}
+ else if(msg&&/Today you can use only/.test(msg.textContent||'')){msg.textContent='';msg.style.color='';}
 }
 async function fmPlaceOrder(){
  const msg=document.getElementById('fmCheckoutMsg'),btn=document.getElementById('fmPlaceOrderBtn');
@@ -1519,6 +1546,9 @@ async function fmPlaceOrder(){
   if(mode==='slot'&&!slotId)throw new Error('Please choose a delivery date and slot.');
   const method=document.getElementById('fmCheckoutPayment').value;
   if(!method)throw new Error('No payment method is enabled.');
+  if(String(method).toLowerCase()==='shopping_wallet' && fmCheckoutGrandTotal()>fmCheckoutDailyAvailable+0.009){
+   throw new Error('Today you can use only '+shopMoney(fmCheckoutDailyAvailable)+' from Shopping Wallet. Reduce your cart or choose another payment method.');
+  }
   // Resume the same pending UPI order only when the current cart exactly matches its saved snapshot.
   const cartSignature=JSON.stringify(fmCart.map(x=>({product_id:String(x.product_id),variant_id:String(x.variant_id||''),quantity:Number(x.quantity||0)})).sort((a,b)=>(a.product_id+'|'+a.variant_id).localeCompare(b.product_id+'|'+b.variant_id)));
   if(String(method).toLowerCase()==='upi'){
@@ -1558,6 +1588,9 @@ async function fmPlaceOrder(){
    await loadMyGroceryOrders();
    await fmUpiUserOpenFor('grocery',String(orderId));
    return;
+  }
+  if(String(method).toLowerCase()==='shopping_wallet'){
+   try{await fmLoadWalletBalances(session.access_token);await fmLoadCheckoutPayments();}catch(refreshError){console.warn('Wallet balance refresh after order:',refreshError);}
   }
   fmCart=[];fmSaveCart();
   fmAppliedCoupon=null;fmCouponDiscount=0;
@@ -2878,6 +2911,22 @@ document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 @media(min-width:681px){
  #fmHomeOffersTrack .fm-home-offer{flex-basis:58%!important;width:58%!important;min-width:58%!important;height:150px!important;max-height:150px!important}
 }
+</style>
+
+
+<style>
+.fm-checkout-notice{display:none;position:fixed;inset:0;z-index:12050;background:rgba(8,24,15,.62);align-items:center;justify-content:center;padding:18px}
+.fm-checkout-notice.open{display:flex}
+.fm-checkout-notice-box{width:min(100%,390px);background:#fff;border-radius:18px;padding:22px 20px;text-align:center;box-shadow:0 18px 55px rgba(0,0,0,.28);color:#183328}
+.fm-checkout-notice-icon{font-size:38px;margin-bottom:8px}
+.fm-checkout-notice-box h3{margin:5px 0 9px;font-size:20px}
+.fm-checkout-notice-box p{font-size:14px;line-height:1.55;color:#64756b;margin:0 0 18px}
+.fm-checkout-notice-box button{min-width:110px;padding:11px 20px;border:0;border-radius:10px;background:#168447;color:#fff;font-weight:800}
+.fm-delivery-slot-option{display:flex!important;align-items:center;gap:11px;border:1.5px solid #b8dfc7!important;background:#f1fbf4!important;border-radius:13px!important;box-shadow:0 3px 10px rgba(22,132,71,.07)!important;cursor:pointer}
+.fm-delivery-slot-option:has(input:checked){border:2px solid #168447!important;background:#dff5e7!important;box-shadow:0 0 0 3px rgba(22,132,71,.13)!important}
+.fm-delivery-slot-option input{accent-color:#168447;width:19px;height:19px;flex:0 0 auto}
+.fm-delivery-slot-option span{display:flex;flex-direction:column;gap:3px;color:#184b32}
+.fm-delivery-slot-option small{font-size:12px;color:#527763}
 </style>
 
 </body>
