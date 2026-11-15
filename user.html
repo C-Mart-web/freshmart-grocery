@@ -860,7 +860,7 @@ function fmUpdateShoppingSpend(){
   if(note)note.textContent=money(balance)+' left · '+pct.toFixed(1)+'% used';
   if(allocation)allocation.textContent=money(total);
   const daily=document.getElementById(prefix==='dash'?'fmDashShoppingDailyLimit':'walletShoppingDailyLimit');
-  if(daily&&fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today: '+money(d.available_to_spend_today)+' usable · Used '+money(d.used_today)+' · Floor '+money(d.threshold);}
+  if(daily&&fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today: '+money(d.available_to_spend_today)+' usable · Used '+money(d.used_today);}
  });
 }
 let fmShoppingDailyInfo=null;
@@ -1297,20 +1297,27 @@ async function fmRestoreCheckoutAfterRefresh(){
 async function fmLoadCheckoutPayments(){
  const sel=document.getElementById('fmCheckoutPayment');
  try{
-  const [{data:gateway,error:gatewayError},dashResult]=await Promise.all([
+  const [{data:gateway,error:gatewayError},dashResult,dailyResult]=await Promise.all([
    fmShopClient.from('fm_payment_gateway_settings').select('upi_enabled,manual_verification').eq('id',1).maybeSingle(),
-   fmShopClient.rpc('fm_get_member_dashboard_v1')
+   fmShopClient.rpc('fm_get_member_dashboard_v1'),
+   fmShopClient.rpc('fm_get_shopping_wallet_daily_usage_v1')
   ]);
   if(gatewayError)throw gatewayError;
   if(dashResult.error)throw dashResult.error;
+  if(dailyResult.error)throw dailyResult.error;
   const upiEnabled=gateway?.upi_enabled===true && gateway?.manual_verification===true;
   const balance=Number(dashResult.data?.shopping_wallet_balance)||0;
+  const daily=dailyResult.data||{};
+  const todayUsable=Math.max(0,Number(daily.available_to_spend_today)||0);
+  const openingBalance=Math.max(0,Number(daily.opening_balance)||0);
+  const dailyPercent=Number(daily.daily_percent)||20;
+  const usableLabel='Shopping Wallet — Today usable ₹'+todayUsable.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+' (20% of ₹'+openingBalance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+') · Balance ₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   const opts=['<option value="" selected disabled>Select a payment method</option>'];
-  opts.push(`<option value="shopping_wallet" ${balance<=0?'disabled':''}>Shopping Wallet — Available ₹${balance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</option>`);
+  opts.push(`<option value="shopping_wallet" ${todayUsable<=0?'disabled':''}>${usableLabel}</option>`);
   if(upiEnabled)opts.push('<option value="upi">UPI QR (Admin verification)</option>');
   opts.push('<option value="cod">Cash on Delivery</option>');
   sel.innerHTML=opts.join('');
-  if(balance<=0)sel.options[0].text+=' (Insufficient balance)';
+  if(todayUsable<=0)sel.options[1].text+=' — Daily limit reached';
   fmUpdateCheckoutButton();
  }catch(e){
   sel.innerHTML='<option value="">Payment settings unavailable</option>';
