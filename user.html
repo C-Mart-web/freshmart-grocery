@@ -847,7 +847,7 @@ function fmUpdateShoppingSpend(){
   if(note)note.textContent=money(balance)+' remaining in Shopping Wallet · '+pct.toFixed(1)+'% of allocation used';
   if(allocation)allocation.textContent=money(total);
   const daily=document.getElementById(prefix==='dash'?'fmDashShoppingDailyLimit':'walletShoppingDailyLimit');
-  if(daily&&fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today usable: '+money(d.available_to_spend_today)+' · Used today: '+money(d.used_today)+' · Threshold: '+money(d.threshold);}
+  if(daily){if(fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today usable: '+money(d.available_to_spend_today)+' · Used today: '+money(d.used_today)+' · Opening balance: '+money(d.opening_balance)+' · Daily 20% limit: '+money(d.daily_limit)+' · Threshold: '+money(d.threshold);}else{daily.textContent='Daily Shopping Wallet limit details are unavailable. Please refresh or contact support.';}}
  });
 }
 let fmShoppingDailyInfo=null;
