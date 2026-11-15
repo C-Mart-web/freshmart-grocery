@@ -244,6 +244,19 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .fm-spin-welcome-box.has-result #fmSpinWelcomeClose{z-index:15}
 
 @media(max-width:360px){.fm-spin-wheel-label{font-size:8px}.fm-spin-wheel-label:nth-child(n){transform-origin:center}.fm-spin-wheel-label:nth-child(1){transform:rotate(0deg) translateY(-88px)}.fm-spin-wheel-label:nth-child(2){transform:rotate(60deg) translateY(-88px) rotate(-60deg)}.fm-spin-wheel-label:nth-child(3){transform:rotate(120deg) translateY(-88px) rotate(-120deg)}.fm-spin-wheel-label:nth-child(4){transform:rotate(180deg) translateY(-88px) rotate(-180deg)}.fm-spin-wheel-label:nth-child(5){transform:rotate(240deg) translateY(-88px) rotate(-240deg)}.fm-spin-wheel-label:nth-child(6){transform:rotate(300deg) translateY(-88px) rotate(-300deg)}}
+
+/* Compact Shopping Wallet cards */
+.fm-wallet-compact{padding:14px!important}
+.fm-wallet-compact .stat-head{font-size:14px;margin-bottom:4px}
+.fm-wallet-compact .stat-value{font-size:25px!important;line-height:1.12;margin:5px 0!important}
+.fm-wallet-compact .stat-note{font-size:11px;line-height:1.25;margin:2px 0 8px}
+.fm-wallet-compact .fm-wallet-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px 9px;margin-top:7px}
+.fm-wallet-compact .fm-wallet-meta div{font-size:11px;line-height:1.25;color:#64756b;min-width:0}
+.fm-wallet-compact .fm-wallet-meta b{display:block;color:#234b35;font-size:12px;margin-top:2px}
+.fm-wallet-compact .fm-wallet-progress{height:5px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:8px}
+.fm-wallet-compact .fm-wallet-balance-note{font-size:10px;line-height:1.25;margin-top:5px;color:#718078}
+.fm-wallet-compact .fm-wallet-daily{font-size:11px;line-height:1.3;font-weight:800;color:#176b3d;background:#effaf2;border-radius:8px;padding:7px 8px;margin-top:8px}
+.fm-wallet-compact .btn{margin-top:9px!important;padding:9px 10px!important;font-size:13px}
 </style>
 <style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style></head>
 <body>
@@ -275,7 +288,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="fm-page-banner" id="fmBannerDashboard" style="display:none"></div>
   <div class="banner" id="fmDashboardPlanBanner"><div><h2 id="fmDashboardBannerTitle">Your Rupee Mart journey starts here</h2><p id="fmDashboardBannerText">Checking your membership activation…</p><button class="btn btn-white" id="fmDashboardPlanAction" data-goto="plans">View Plan →</button></div><div class="bannericon">🛒</div></div>
   <div class="grid">
-    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available shopping balance</div><div class="small" style="margin-top:8px">Plan allocation: <b id="fmDashShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="fmDashShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="fmDashShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="fmDashShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div><div class="small" id="fmDashShoppingDailyLimit" style="margin-top:6px">Today's usable amount: checking…</div></div>
+    <div class="card fm-wallet-compact"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="fmDashShoppingBalance">—</div><div class="stat-note">Available balance</div><div class="fm-wallet-meta"><div>Plan allocation<b id="fmDashShoppingAllocation">₹0.00</b></div><div>Purchases<b id="fmDashShoppingSpent">₹0.00 / ₹0.00</b></div></div><div class="fm-wallet-progress"><div id="fmDashShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="fm-wallet-balance-note" id="fmDashShoppingSpentNote">Balance remaining</div><div class="fm-wallet-daily" id="fmDashShoppingDailyLimit">Today usable: checking…</div></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="fmDashIncomeBalance">—</div><div class="stat-note">Total eligible income balance</div></div>
     <div class="card"><div class="stat-head">Team Purchase Reward Points <span class="stat-icon">⭐</span></div><div class="stat-value" id="fmDashRewardPoints">—</div><div class="stat-note">Points earned from eligible team grocery purchases.</div></div>
     <div class="card"><div class="stat-head">My Team <span class="stat-icon">👥</span></div><div class="stat-value">0</div><div class="stat-note">Direct referrals</div></div>
@@ -413,7 +426,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;padding:10px 12px;background:#e7f6eb;border-radius:10px"><span style="font-size:12px;font-weight:800;color:#315b40">Available matching points</span><strong id="fmWalletTopPossibleMatch" style="font-size:17px;color:#168447">—</strong></div>
   </div>
   <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-    <div class="card"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">Available balance for eligible product purchases.</div><div class="small" style="margin-top:8px">Plan allocation: <b id="walletShoppingAllocation">₹0.00</b></div><div class="small" style="margin-top:6px">Total purchases: <b id="walletShoppingSpent">₹0.00 / ₹0.00</b></div><div style="height:7px;background:#e8f1eb;border-radius:99px;overflow:hidden;margin-top:7px"><div id="walletShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="small" id="walletShoppingSpentNote" style="margin-top:5px">Purchases made using Shopping Wallet.</div><div class="small" id="walletShoppingDailyLimit" style="margin-top:6px">Today's usable amount: checking…</div><button class="btn btn-outline" style="margin-top:12px;width:100%" data-goto="groceries">Shop with balance →</button></div>
+    <div class="card fm-wallet-compact"><div class="stat-head">Shopping Wallet <span class="stat-icon">🛍️</span></div><div class="stat-value" id="walletShoppingBalance">₹0.00</div><div class="stat-note">Available balance</div><div class="fm-wallet-meta"><div>Plan allocation<b id="walletShoppingAllocation">₹0.00</b></div><div>Purchases<b id="walletShoppingSpent">₹0.00 / ₹0.00</b></div></div><div class="fm-wallet-progress"><div id="walletShoppingSpentBar" style="height:100%;width:0%;background:#168447;border-radius:99px"></div></div><div class="fm-wallet-balance-note" id="walletShoppingSpentNote">Balance remaining</div><div class="fm-wallet-daily" id="walletShoppingDailyLimit">Today usable: checking…</div><button class="btn btn-outline" style="width:100%" data-goto="groceries">Shop →</button></div>
     <div class="card"><div class="stat-head">Income Wallet <span class="stat-icon">💰</span></div><div class="stat-value" id="walletIncomeTotal">—</div><div class="stat-note">Total balance from all eligible income sources, including ROI, referrals and matching.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('All Income')">View income history</button></div>
     <div class="card"><div class="stat-head">ROI Progress <span class="stat-icon">📈</span></div><div class="stat-value" id="walletRoiProgress">₹0.00 / ₹0.00</div><div class="stat-note" id="walletRoiProgressNote">Daily ROI credited / total ROI allocation.</div><div class="small" style="margin-top:8px" id="walletRoiDayCount">Day 0 / 0</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('ROI Income')">View ROI history</button></div>
     <div class="card"><div class="stat-head">Self Purchase Income <span class="stat-icon">🧾</span></div><div class="stat-value" id="walletSelfPurchase">₹0.00</div><div class="stat-note">Benefits earned from your own eligible product purchases.</div><button class="btn btn-outline" style="margin-top:12px;width:100%" onclick="showWalletHistory('Self Purchase Income')">View details</button></div>
@@ -844,10 +857,10 @@ function fmUpdateShoppingSpend(){
   const allocation=document.getElementById(prefix==='dash'?'fmDashShoppingAllocation':'walletShoppingAllocation');
   if(value)value.textContent=money(spent)+' / '+money(total);
   if(bar)bar.style.width=pct.toFixed(2)+'%';
-  if(note)note.textContent=money(balance)+' remaining in Shopping Wallet · '+pct.toFixed(1)+'% of allocation used';
+  if(note)note.textContent=money(balance)+' left · '+pct.toFixed(1)+'% used';
   if(allocation)allocation.textContent=money(total);
   const daily=document.getElementById(prefix==='dash'?'fmDashShoppingDailyLimit':'walletShoppingDailyLimit');
-  if(daily&&fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today usable: '+money(d.available_to_spend_today)+' · Daily 20% limit: '+money(d.daily_limit)+' of '+money(d.opening_balance)+' · Used today: '+money(d.used_today)+' · Threshold: '+money(d.threshold);}
+  if(daily&&fmShoppingDailyInfo){const d=fmShoppingDailyInfo;daily.textContent='Today: '+money(d.available_to_spend_today)+' usable · Used '+money(d.used_today)+' · Floor '+money(d.threshold);}
  });
 }
 let fmShoppingDailyInfo=null;
@@ -3030,22 +3043,12 @@ async function fmCheckMembershipActivation(userId){
   if(!Array.isArray(saved))saved=[];
   if(activation?.id&&String(activation.status||'active').toLowerCase()==='active'){
    const id=String(activation.id);
-   const amount=Number(activation.plan_amount)||0;
-   const pendingKey=amount>0?'fm_membership_pending_request_'+String(amount):'';
-   const hasPendingPayment=!!(pendingKey&&localStorage.getItem(pendingKey));
-   if(!localStorage.getItem(key)){
-    localStorage.setItem(key,JSON.stringify([id]));
-    if(hasPendingPayment){
-     fmShowPlanActivatedNotice('Membership');
-     await fmLoadMemberPlanSplit(userId,session.access_token);
-     localStorage.removeItem(pendingKey);
-     setTimeout(()=>fmStartMembershipActivationSpin(id,activation.plan_id),900);
-    }
-   }else if(!saved.map(String).includes(id)){
+   if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify([id]));
+   else if(!saved.map(String).includes(id)){
     localStorage.setItem(key,JSON.stringify([...new Set([...saved.map(String),id])].slice(-100)));
     fmShowPlanActivatedNotice('Membership');
     await fmLoadMemberPlanSplit(userId,session.access_token);
-    if(pendingKey)localStorage.removeItem(pendingKey);
+    const amount=Number(activation.plan_amount)||0;if(amount>0)localStorage.removeItem('fm_membership_pending_request_'+String(amount));
     setTimeout(()=>fmStartMembershipActivationSpin(id,activation.plan_id),900);
    }
   }
