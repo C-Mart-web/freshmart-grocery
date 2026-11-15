@@ -1410,10 +1410,10 @@ async function fmLoadAvailableCheckoutCoupons(){
   const ids=[...new Set((assignments||[]).map(x=>x.coupon_id).filter(Boolean))];
   if(!ids.length){box.textContent='No available coupons. Spin & Win or check My Coupons.';return;}
   const {data:coupons,error:ce}=await fmShopClient.from('fm_coupons')
-   .select('id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active').in('id',ids);
+   .select('id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active,is_spin_pool').in('id',ids);
   if(ce)throw ce;
   const map=new Map((coupons||[]).map(c=>[String(c.id),c]));
-  const rows=(assignments||[]).filter(a=>{const c=map.get(String(a.coupon_id));return c&&c.is_active&&(!a.expires_at||new Date(a.expires_at)>new Date())&&(!c.ends_at||new Date(c.ends_at)>new Date())&&c.code;}).map(a=>map.get(String(a.coupon_id)));
+  const rows=(assignments||[]).filter(a=>{const c=map.get(String(a.coupon_id));return c&&c.is_active&&(!a.expires_at||new Date(a.expires_at)>new Date())&&(c.is_spin_pool||!c.ends_at||new Date(c.ends_at)>new Date())&&c.code;}).map(a=>map.get(String(a.coupon_id)));
   if(!rows.length){box.textContent='No valid available coupons found.';return;}
   box.innerHTML=rows.map((c,i)=>{
    const d=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?'₹'+Number(c.discount_value||0)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':'Coupon');
@@ -1438,13 +1438,13 @@ async function fmApplyCheckoutCoupon(){
   btn.disabled=true;msg.textContent='Checking coupon…';
   const session=await getMemberSession();
   const {data,error}=await fmShopClient.from('fm_user_coupons')
-   .select('id,coupon_id,status,expires_at,fm_coupons(id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active)')
+   .select('id,coupon_id,status,expires_at,fm_coupons(id,code,title,discount_type,discount_value,min_order_amount,ends_at,is_active,is_spin_pool)')
    .eq('user_id',session.user.id).eq('status','available');
   if(error)throw error;
   const assigned=(data||[]).find(x=>x.fm_coupons&&x.fm_coupons.is_active&&String(x.fm_coupons.code||'').toUpperCase()===code);
   if(!assigned)throw new Error('Invalid coupon or this coupon is not assigned to your account.');
   const c=assigned.fm_coupons;
-  if((assigned.expires_at&&Date.now()>new Date(assigned.expires_at).getTime())||(c.ends_at&&Date.now()>new Date(c.ends_at).getTime()))throw new Error('This coupon has expired.');
+  if((assigned.expires_at&&Date.now()>new Date(assigned.expires_at).getTime())||(!c.is_spin_pool&&c.ends_at&&Date.now()>new Date(c.ends_at).getTime()))throw new Error('This coupon has expired.');
   const subtotal=fmCheckoutSubtotal(),delivery=Number(fmCheckoutArea?.delivery_charge||0);
   if(subtotal<Number(c.min_order_amount||0))throw new Error('Minimum order amount is '+shopMoney(c.min_order_amount)+'.');
   let discount=0;
@@ -2154,13 +2154,13 @@ async function fmLoadMyOffers(){
   if(ae)throw ae;
   const couponIds=[...new Set((assignments||[]).map(x=>x.coupon_id).filter(Boolean))];
   let couponRows=[];
-  if(couponIds.length){const {data,error}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,max_discount,ends_at,is_active').in('id',couponIds);if(error)throw error;couponRows=data||[];}
+  if(couponIds.length){const {data,error}=await fmShopClient.from('fm_coupons').select('id,code,title,description,terms_and_conditions,discount_type,discount_value,min_order_amount,max_discount,ends_at,is_active,is_spin_pool').in('id',couponIds);if(error)throw error;couponRows=data||[];}
   const couponMap=new Map(couponRows.map(c=>[String(c.id),c]));
   const joined=(assignments||[]).map(a=>({...a,coupon:couponMap.get(String(a.coupon_id))||null}));
-  const usable=joined.filter(x=>x.status==='available'&&x.coupon?.is_active&&(!x.expires_at||new Date(x.expires_at)>new Date())&&(!x.coupon.ends_at||new Date(x.coupon.ends_at)>new Date()));
+  const usable=joined.filter(x=>x.status==='available'&&x.coupon?.is_active&&(!x.expires_at||new Date(x.expires_at)>new Date())&&(x.coupon.is_spin_pool||!x.coupon.ends_at||new Date(x.coupon.ends_at)>new Date()));
   const countEl=document.getElementById('fmMyCouponCount');if(countEl)countEl.textContent=usable.length+' AVAILABLE';
   couponBox.innerHTML=joined.length?joined.map(x=>{
-    const c=x.coupon||{};const effectiveExpiry=x.expires_at||c.ends_at||null;const expired=!!(effectiveExpiry&&new Date(effectiveExpiry)<=new Date());
+    const c=x.coupon||{};const effectiveExpiry=x.expires_at||(c.is_spin_pool?null:c.ends_at)||null;const expired=!!(effectiveExpiry&&new Date(effectiveExpiry)<=new Date());
     const status=expired&&x.status==='available'?'EXPIRED':String(x.status||'unknown').toUpperCase();
     const discount=c.discount_type==='percent'?Number(c.discount_value||0)+'% OFF':c.discount_type==='fixed'?fmOfferMoney(c.discount_value)+' OFF':(c.discount_type==='free_delivery'?'Free Delivery':(c.discount_value?fmOfferMoney(c.discount_value)+' OFF':'Coupon'));
     return `<article style="padding:14px;border:1px solid #dcebe0;border-radius:13px;margin:9px 0;background:#fff"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>${fmOfferEsc(c.title||'Rupee Mart Coupon')}</b><span class="badge ${status==='AVAILABLE'?'approved':status==='REDEEMED'?'rejected':'pending'}">${fmOfferEsc(status)}</span></div><div style="margin:10px 0;padding:10px;background:#effaf2;border:1px dashed #168447;border-radius:9px"><div style="font-size:11px;color:#718078">YOUR COUPON CODE</div><strong style="font-size:20px;letter-spacing:1px">${fmOfferEsc(c.code||'Code unavailable')}</strong><button class="btn btn-outline" style="display:block;margin-top:8px" ${!c.code||x.status!=='available'||expired?'disabled':''} onclick="fmCopyCouponCode('${fmOfferEsc(c.code||'')}')">Copy Code</button></div><div style="font-size:17px;font-weight:900;color:#168447">${fmOfferEsc(discount)}</div>${Number(c.min_order_amount||0)>0?`<p class="hint">Minimum order: ${fmOfferMoney(c.min_order_amount)}</p>`:''}${effectiveExpiry?`<p class="hint">Valid until: ${new Date(effectiveExpiry).toLocaleString('en-IN')}</p>`:''}${c.terms_and_conditions?`<div style="margin-top:9px;padding:10px;background:#f7faf8;border-radius:9px"><b style="font-size:12px">Terms & Conditions</b><p class="hint" style="white-space:pre-wrap;margin:5px 0 0">${fmOfferEsc(c.terms_and_conditions)}</p></div>`:''}${c.description?`<p class="hint">${fmOfferEsc(c.description)}</p>`:''}</article>`;

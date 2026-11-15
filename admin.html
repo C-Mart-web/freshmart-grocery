@@ -343,11 +343,11 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="field"><label>Start Date (optional)</label><input id="fmOfferStart" type="date"><small class="hint">Offer starts on this date. Blank means immediately.</small></div>
 <div class="field"><label>End Date (optional)</label><input id="fmOfferEnd" type="date"><small class="hint">Offer ends on this date. Blank means no expiry.</small></div></div><textarea id="fmOfferDescription" placeholder="Offer description" style="width:100%;margin-top:10px;padding:11px;border:1px solid #dbe8de;border-radius:10px"></textarea><button class="btn btn-green" style="margin-top:10px" onclick="fmAdminCreateOffer()">Publish Offer</button><p id="fmOfferMsg" class="hint"></p></div><div class="card" style="margin-top:14px" id="fmBulkCouponPoolCard">
 <h2>🎟️ Bulk Coupon Generator (Spin Wheel)</h2>
-<p class="hint">Generate unique random 5%–10% coupons in bulk. Spin Wheel lo Coupon reward vasthe pool nundi one-time coupon assign avutundi. 50 available ki taggagane next batch auto-generate avutundi.</p>
+<p class="hint">Generate unique random 5%–10% coupons in bulk. Spin Wheel lo Coupon reward vasthe pool nundi one-time coupon assign avutundi. Validity countdown User ki assign ayina time nundi start avutundi; unassigned pool coupons expire avvavu. 50 available ki taggagane next batch auto-generate avutundi.</p>
 <div class="formgrid">
  <div class="field"><label>Minimum Discount (%)</label><input id="fmPoolMinDiscount" type="number" min="1" max="100" value="5"></div>
  <div class="field"><label>Maximum Discount (%)</label><input id="fmPoolMaxDiscount" type="number" min="1" max="100" value="10"></div>
- <div class="field"><label>Coupon Validity (Hours)</label><input id="fmPoolValidityHours" type="number" min="1" max="8760" value="72"></div>
+ <div class="field"><label>Coupon Validity (Hours)</label><input id="fmPoolValidityHours" type="number" min="1" max="8760" value="72"><small class="hint">Validity starts only when the coupon is assigned to a member, not when the batch is generated.</small></div>
  <div class="field"><label>Auto Refill Threshold</label><input id="fmPoolThreshold" type="number" min="0" max="100000" value="50"></div>
  <div class="field"><label>Generate Quantity / Refill Quantity</label><input id="fmPoolBatchSize" type="number" min="1" max="100000" value="1000"></div>
  <div class="field"><label>Minimum Order Amount (₹)</label><input id="fmPoolMinOrder" type="number" min="0" value="0"></div>
@@ -1609,15 +1609,19 @@ async function fmAdminLoadCouponPoolPage(page){
   fmCouponPoolTotal=Number(count||0);
   if(!rows?.length){host.innerHTML='<div class="empty">No generated Spin Wheel coupons found.</div>';return;}
   const ids=rows.map(x=>x.id);
-  const {data:assignments,error:ae}=await fmSupabase.from('fm_user_coupons').select('coupon_id,status').in('coupon_id',ids);
+  const {data:assignments,error:ae}=await fmSupabase.from('fm_user_coupons').select('coupon_id,status,assigned_at,expires_at').in('coupon_id',ids);
   if(ae)throw ae;
   const byCoupon=new Map();(assignments||[]).forEach(a=>{const k=String(a.coupon_id);const old=byCoupon.get(k)||[];old.push(String(a.status||'').toLowerCase());byCoupon.set(k,old);});
+  const assignmentsByCoupon=new Map();(assignments||[]).forEach(a=>{const k=String(a.coupon_id);const old=assignmentsByCoupon.get(k)||[];old.push(a);assignmentsByCoupon.set(k,old);});
   const body=rows.map((x,i)=>{
-   const statuses=byCoupon.get(String(x.id))||[];let label='NOT ALLOCATED',color='#168447';
-   if(statuses.includes('redeemed')||statuses.includes('used')){label='USED';color='#64748b';}
-   else if(statuses.includes('available')){label='ALLOCATED';color='#315eaa';}
-   else if(x.ends_at&&new Date(x.ends_at)<new Date()){label='EXPIRED';color='#956500';}
-   return `<tr><td>${from+i+1}</td><td><b>${fmAdmEsc(x.code)}</b></td><td>${Number(x.discount_value||0)}%</td><td><span class="badge" style="background:#f3f6f4;color:${color}">${label}</span></td><td>${x.ends_at?new Date(x.ends_at).toLocaleString('en-IN'):'—'}</td></tr>`;
+   const rowsForCoupon=assignmentsByCoupon.get(String(x.id))||[];
+   const statuses=rowsForCoupon.map(a=>String(a.status||'').toLowerCase());
+   let label='NOT ALLOCATED',color='#168447',expiry='Starts when assigned';
+   const activeAssignment=rowsForCoupon.find(a=>String(a.status||'').toLowerCase()==='available');
+   const usedAssignment=rowsForCoupon.find(a=>['redeemed','used'].includes(String(a.status||'').toLowerCase()));
+   if(usedAssignment){label='USED';color='#64748b';expiry=usedAssignment.expires_at?new Date(usedAssignment.expires_at).toLocaleString('en-IN'):'—';}
+   else if(activeAssignment){label='ALLOCATED';color='#315eaa';expiry=activeAssignment.expires_at?new Date(activeAssignment.expires_at).toLocaleString('en-IN'):'Assigned · expiry not set';if(activeAssignment.expires_at&&new Date(activeAssignment.expires_at)<=new Date()){label='EXPIRED';color='#956500';}}
+   return `<tr><td>${from+i+1}</td><td><b>${fmAdmEsc(x.code)}</b></td><td>${Number(x.discount_value||0)}%</td><td><span class="badge" style="background:#f3f6f4;color:${color}">${label}</span></td><td>${expiry}</td></tr>`;
   }).join('');
   const pages=Math.max(1,Math.ceil(fmCouponPoolTotal/100));
   host.innerHTML=`<div class="hint" style="margin-bottom:8px">Showing ${from+1}–${from+rows.length} of ${fmCouponPoolTotal.toLocaleString('en-IN')} generated coupons</div>
