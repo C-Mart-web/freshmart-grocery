@@ -1504,7 +1504,13 @@ async function fmApplyCheckoutCoupon(){
   document.getElementById('fmRemoveCouponBtn').style.display='inline-flex';
  }catch(e){
   fmAppliedCoupon=null;fmCouponDiscount=0;fmUpdateCouponTotal();
-  msg.style.color='#b72e2e';msg.textContent=e.message||'Coupon could not be applied.';
+  msg.style.color='#b72e2e';
+  if(/^Minimum order amount is /i.test(String(e.message||''))){
+   msg.textContent='';
+   alert('Coupon not applicable. '+e.message);
+  }else{
+   msg.textContent=e.message||'Coupon could not be applied.';
+  }
  }finally{btn.disabled=false;}
 }
 function fmRemoveCheckoutCoupon(){
@@ -1556,7 +1562,7 @@ function fmUpdateCheckoutButton(){
   if(summary){
     summary.style.display='block';
     if(wallet>0){
-      summary.innerHTML=`<div class="fm-split-row fm-split-total"><span>Grand Total</span><strong>${money(total)}</strong></div><div class="fm-split-row"><span>Your Shopping Wallet</span><strong>${money(wallet)}</strong></div><div class="fm-split-row"><span>Remaining Amount</span><strong>${money(due)}</strong></div>`;
+      summary.innerHTML=`<div class="fm-split-row fm-split-total"><span>Grand Total</span><strong>${money(total)}</strong></div><div class="fm-split-row"><span>Your Shopping Wallet (20% daily usable limit)</span><strong>${money(wallet)}</strong></div><div class="fm-split-row"><span>Remaining Amount</span><strong>${money(due)}</strong></div>`;
     }else{
       summary.innerHTML=`<div class="fm-split-row fm-split-total"><span>Grand Total</span><strong>${money(total)}</strong></div>`;
     }
