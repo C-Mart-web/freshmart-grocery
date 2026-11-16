@@ -2015,7 +2015,48 @@ async function fmSavePayoutDetails(){
   if(btn){btn.disabled=false;btn.textContent='Save All Bank Details';}
  }
 }
-async function loadMyGroceryOrders(){const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');if(!box||!fmShopClient)return;box.textContent='Loading your orders…';try{const session=await getMemberSession();const {data:orders,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);if(error)throw error;let pendingMarker=null;try{pendingMarker=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}const newlyPaid=pendingMarker?(orders||[]).find(o=>String(o.id)===String(pendingMarker.sourceId)&&String(o.payment_status).toLowerCase()==='paid'):null;if(newlyPaid){localStorage.removeItem('fm_pending_upi_grocery');alert('Payment confirmed. Order placed: '+(newlyPaid.order_number||''));showPage('orders');}badge.textContent=(orders||[]).length+' ORDERS';if(!orders?.length){box.textContent='No orders yet. Your placed orders will appear here.';return;}box.innerHTML=orders.map(o=>{const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;const date=new Date(o.created_at).toLocaleString('en-IN');return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div>${o.payment_method==='upi'&&o.payment_status==='pending'&&o.order_status!=='cancelled'?`<button type="button" class="btn btn-green" style="margin-top:10px" onclick="fmUpiUserOpenFor('grocery','${o.id}')">Pay this order by UPI QR</button>`:''}</article>`;}).join('');}catch(e){box.textContent='Could not load orders: '+(e.message||'Please sign in again.');}}
+async function loadMyGroceryOrders(){
+ const box=document.getElementById('fmMyOrdersList'),badge=document.getElementById('fmMyOrderCount');
+ if(!box||!fmShopClient)return;
+ box.textContent='Loading your orders…';
+ try{
+  const session=await getMemberSession();
+  const {data:orders,error}=await fmShopClient.from('fm_grocery_orders')
+   .select('id,order_number,pincode,delivery_mode,delivery_slot_label,payment_method,payment_status,order_status,grand_total,created_at,fm_grocery_order_items(product_name,quantity,line_total)')
+   .eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(100);
+  if(error)throw error;
+  const allOrders=orders||[];
+  let pendingMarker=null;
+  try{pendingMarker=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');}catch(_){}
+  const newlyPaid=pendingMarker?allOrders.find(o=>String(o.id)===String(pendingMarker.sourceId)&&String(o.payment_status).toLowerCase()==='paid'):null;
+  if(newlyPaid){
+   localStorage.removeItem('fm_pending_upi_grocery');
+   alert('Payment confirmed. Order placed: '+(newlyPaid.order_number||''));
+   showPage('orders');
+  }
+  // UPI checkout needs a temporary database order ID to generate its QR.
+  // Keep unpaid UPI records out of the member's completed/placed order list.
+  const visibleOrders=allOrders.filter(o=>{
+   const method=String(o.payment_method||'').toLowerCase();
+   const status=String(o.payment_status||'').toLowerCase();
+   const isUpi=['upi','shopping_wallet_upi'].includes(method);
+   const isAwaitingPayment=['pending','processing','submitted','awaiting_review'].includes(status);
+   return !(isUpi&&isAwaitingPayment);
+  });
+  badge.textContent=visibleOrders.length+' ORDERS';
+  if(!visibleOrders.length){
+   box.textContent='No completed orders yet. UPI orders will appear here after payment is verified.';
+   return;
+  }
+  box.innerHTML=visibleOrders.map(o=>{
+   const statusLabel=({placed:'Order Placed',confirmed:'Order Confirmed',packing:'Processed / Packing',ready:'Ready for Dispatch',out_for_delivery:'Out for Delivery',delivered:'Delivered',cancelled:'Cancelled'})[o.order_status]||o.order_status;
+   const date=new Date(o.created_at).toLocaleString('en-IN');
+   return `<article style="border:1px solid #e1eee5;border-radius:13px;padding:13px;margin:10px 0"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${shopEsc(o.order_number)}</b><span class="badge ${o.order_status==='delivered'?'approved':o.order_status==='cancelled'?'rejected':'pending'}">${shopEsc(statusLabel)}</span></div><p class="hint">${shopEsc(date)} · PIN ${shopEsc(o.pincode)} · ${shopEsc(o.payment_status)}</p><div style="font-size:13px;margin:8px 0">${(o.fm_grocery_order_items||[]).map(i=>`<div>${shopEsc(i.product_name)} × ${i.quantity} — ${shopMoney(i.line_total)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;border-top:1px solid #edf3ee;padding-top:9px"><span class="hint">${shopEsc(o.delivery_slot_label||o.delivery_mode||'Delivery')}</span><b>${shopMoney(o.grand_total)}</b></div>${['upi','shopping_wallet_upi'].includes(String(o.payment_method||'').toLowerCase())&&String(o.payment_status).toLowerCase()==='rejected'&&o.order_status!=='cancelled'?`<button type="button" class="btn btn-green" style="margin-top:10px" onclick="fmUpiUserOpenFor('grocery','${o.id}')">Retry UPI Payment</button>`:''}</article>`;
+  }).join('');
+ }catch(e){
+  box.textContent='Could not load orders: '+(e.message||'Please sign in again.');
+ }
+}
 async function signOut(){
   Object.keys(localStorage).filter(k=>k.startsWith('fm_sticky_cart_dismissed_until_')).forEach(k=>localStorage.removeItem(k));
   const authKey=Object.keys(localStorage).find(k=>/^sb-.+-auth-token$/.test(k));
