@@ -1314,9 +1314,13 @@ async function fmLoadCheckoutPayments(){
   fmCheckoutDailyAvailable=todayUsable; fmCheckoutWalletBalance=balance;
   const usableLabel='Shopping Wallet — Today usable ₹'+todayUsable.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+' (20% of ₹'+openingBalance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+') · Balance ₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
   const opts=['<option value="" selected disabled>Select a payment method</option>'];
-  opts.push(`<option value="shopping_wallet" ${todayUsable<=0?'disabled':''}>${usableLabel}</option>`);
-  if(upiEnabled)opts.push('<option value="upi">UPI QR (Admin verification)</option>');
-  opts.push('<option value="cod">Cash on Delivery</option>');
+  opts.push(`<option value="shopping_wallet" ${todayUsable<=0?'disabled':''}>${usableLabel} — Full payment</option>`);
+  if(todayUsable>0){
+   if(upiEnabled)opts.push('<option value="shopping_wallet_upi">Shopping Wallet + UPI QR (pay remaining amount)</option>');
+   opts.push('<option value="shopping_wallet_cod">Shopping Wallet + Cash on Delivery (pay remaining amount)</option>');
+  }
+  if(upiEnabled)opts.push('<option value="upi">Full UPI QR payment</option>');
+  opts.push('<option value="cod">Full Cash on Delivery</option>');
   sel.innerHTML=opts.join('');
   if(todayUsable<=0)sel.options[1].text+=' — Daily limit reached';
   fmUpdateCheckoutButton();
@@ -1524,7 +1528,7 @@ function fmUpdateCheckoutButton(){
  const btn=document.getElementById('fmPlaceOrderBtn');if(!btn)return;
  const total=fmCheckoutGrandTotal();
  const exceedsWallet=method==='shopping_wallet'&&total>fmCheckoutDailyAvailable+0.009;
- btn.textContent=method==='upi'?'Pay Now':'Place an Order';
+ btn.textContent=(method==='upi'||method==='shopping_wallet_upi')?'Continue to UPI QR':'Place an Order';
  btn.disabled=!method||exceedsWallet;
  const msg=document.getElementById('fmCheckoutMsg');
  if(exceedsWallet){if(msg){msg.style.color='#b72e2e';msg.textContent='Today you can use only '+shopMoney(fmCheckoutDailyAvailable)+' from Shopping Wallet. Reduce your cart or choose another payment method.';}}
@@ -1551,7 +1555,7 @@ async function fmPlaceOrder(){
   }
   // Resume the same pending UPI order only when the current cart exactly matches its saved snapshot.
   const cartSignature=JSON.stringify(fmCart.map(x=>({product_id:String(x.product_id),variant_id:String(x.variant_id||''),quantity:Number(x.quantity||0)})).sort((a,b)=>(a.product_id+'|'+a.variant_id).localeCompare(b.product_id+'|'+b.variant_id)));
-  if(String(method).toLowerCase()==='upi'){
+  if(['upi','shopping_wallet_upi'].includes(String(method).toLowerCase())){
    let pending=null;try{pending=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null')}catch(_){}
    if(pending?.sourceId&&pending.cartSignature===cartSignature){
     msg.textContent='Continuing your saved pending order payment…';
@@ -1569,7 +1573,7 @@ async function fmPlaceOrder(){
   if(error)throw error;
   const result=Array.isArray(data)?data[0]:data;
   if(!result?.success)throw new Error(result?.message||'Order could not be placed.');
-  if(String(method).toLowerCase()==='upi'){
+  if(['upi','shopping_wallet_upi'].includes(String(method).toLowerCase())){
    let orderId=result.order_id||result.id||result.grocery_order_id||null;
    if(!orderId && result.order_number){
     const {data:found,error:findError}=await fmShopClient.from('fm_grocery_orders').select('id').eq('user_id',session.user.id).eq('order_number',String(result.order_number)).maybeSingle();
