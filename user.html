@@ -3017,6 +3017,11 @@ document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 .fm-delivery-slot-option small{font-size:12px;color:#527763}
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ try{const p=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null');if(p?.sourceId)fmStartGroceryPaymentWatcher();}catch(_){}
+});
+</script>
 </body>
 
 <style>
@@ -3139,6 +3144,12 @@ tr:last-child td{border-bottom:0}
  <label>Order / Request ID<input id="fmUpiSource" placeholder="Existing pending source ID" autocomplete="off"></label>
  <button type="button" onclick="fmUpiMakeQR()">Fetch Exact Amount &amp; Generate QR</button>
  <div id="fmUpiQrArea" style="text-align:center;margin:12px 0"></div>
+ <div id="fmGroceryPaymentWait" style="display:none;padding:16px;border:1px solid #c9e8d2;border-radius:12px;background:#f0faf3;text-align:center;margin:12px 0">
+  <div style="font-size:34px">⏳</div><h3 style="margin:8px 0;color:#176c45">Payment Submitted Successfully</h3>
+  <p style="margin:0;line-height:1.6">Your payment proof has been submitted to the <b>Rupee Mart Team</b>. Please wait <b>5–10 minutes</b> while our team verifies your payment. Your order will be confirmed after approval.</p>
+  <p id="fmGroceryPaymentWaitStatus" style="font-size:12px;color:#8a6500;font-weight:800">Waiting for payment verification…</p>
+  <button type="button" class="btn btn-outline" onclick="fmUpiUserClose()">Close</button>
+ </div>
  <div id="fmUpiProofArea" style="display:none">
   <label>UPI UTR / Transaction ID<input id="fmUpiUtr" maxlength="80" placeholder="Enter UTR after payment"></label>
   <label for="fmUpiProofFile" style="display:block;font-weight:700;margin:10px 0 5px">Payment screenshot (JPG / PNG / WEBP)</label>
@@ -3159,7 +3170,7 @@ function fmShowPaymentProcessingNotice(type){
  const el=document.getElementById('fmPaymentProcessingNotice');
  const p=el?.querySelector('.fm-global-notice-box p');
  const label=type==='daily_fresh'?'Daily Fresh subscription':type==='membership'?'Membership plan':'payment';
- if(p)p.innerHTML='Your UTR and payment screenshot were submitted successfully for your <b>'+label+'</b>. Please wait <b>5–10 minutes</b> while Admin verifies your payment. You can continue browsing Rupee Mart. Your plan becomes active immediately after Admin approval.';
+ if(p)p.innerHTML='Your UTR and payment screenshot were submitted successfully for your <b>'+label+'</b>. Please wait <b>5–10 minutes</b> while the Rupee Mart Team verifies your payment. You can continue browsing Rupee Mart. Your plan becomes active immediately after Admin approval.';
  if(el)el.style.display='flex';
 }
 function fmClosePaymentProcessingNotice(){const el=document.getElementById('fmPaymentProcessingNotice');if(el)el.style.display='none';}
@@ -3323,12 +3334,22 @@ async function fmUpiSubmitProof(){
   const {error}=await fmShopClient.rpc('fm_common_payment_submit_v1',{p_transaction_id:fmUpiCurrentTxn.id,p_utr_number:utr,p_screenshot_path:up.path});
   if(error)throw error;
 
-  // Keep the prepared request ID cached while it is awaiting admin review; this prevents duplicate requests.
+  // Keep the prepared request ID cached while it is awaiting Rupee Mart Team review.
   fmUpiCurrentTxn=null;
   fmUpiLastContext=null;
-  const paymentModal=document.getElementById('fmUpiUserModal');if(paymentModal)paymentModal.style.display='none';
+  const paymentModal=document.getElementById('fmUpiUserModal');
+  if(paymentType!=='grocery'){
+   if(paymentModal)paymentModal.style.display='none';
+   history.replaceState({fmUserPage:'plans',fmRoot:true},'',location.pathname+location.search+'#plans');
+  }else{
+   const wait=document.getElementById('fmGroceryPaymentWait');if(wait)wait.style.display='block';
+   const qr=document.getElementById('fmUpiQrArea');if(qr)qr.style.display='none';
+   const proof=document.getElementById('fmUpiProofArea');if(proof)proof.style.display='none';
+   const status=document.getElementById('fmGroceryPaymentWaitStatus');if(status)status.textContent='Waiting for Rupee Mart Team verification…';
+   const typeSel=document.getElementById('fmUpiType');if(typeSel)typeSel.disabled=true;
+   const sourceInput=document.getElementById('fmUpiSource');if(sourceInput)sourceInput.disabled=true;
+  }
   fmUpiModalHistoryActive=false;
-  history.replaceState({fmUserPage:paymentType==='daily_fresh'?'plans':'plans',fmRoot:true},'',location.pathname+location.search+'#plans');
   await fmUpiMyPayments();
   if(paymentType==='membership'){
    const m=document.getElementById('payMessage');if(m)m.textContent='Payment submitted successfully. Status: Processing — pending Admin verification.';
@@ -3340,6 +3361,9 @@ async function fmUpiSubmitProof(){
    await fmDFUserLoad();
   }else if(paymentType==='grocery'){
    await loadMyGroceryOrders();
+   fmStartGroceryPaymentWatcher();
+   msg.textContent='Payment submitted. Waiting for Rupee Mart Team verification.';
+   return;
   }
   document.getElementById('fmUpiProofArea').style.display='none';
   document.getElementById('fmUpiQrArea').innerHTML='';
@@ -3351,6 +3375,49 @@ async function fmUpiSubmitProof(){
  }finally{
   if(submitBtn)submitBtn.disabled=false;
  }
+}
+let fmGroceryPaymentWatchTimer=null;
+let fmGroceryPaymentWatchBusy=false;
+function fmShowGroceryOrderNotice(title,message,approved){
+ let el=document.getElementById('fmGroceryOrderNotice');
+ if(!el){
+  el=document.createElement('div');el.id='fmGroceryOrderNotice';el.style.cssText='display:none;position:fixed;inset:0;z-index:10050;background:#10251c99;align-items:center;justify-content:center;padding:18px';
+  el.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;text-align:center;box-shadow:0 12px 40px #0003"><div id="fmGroceryNoticeIcon" style="font-size:42px">🎉</div><h2 id="fmGroceryNoticeTitle" style="margin:8px 0;color:#176c45"></h2><p id="fmGroceryNoticeText" style="line-height:1.6"></p><button class="btn btn-green" type="button" onclick="document.getElementById(\'fmGroceryOrderNotice\').style.display=\'none\'">OK</button></div>';
+  document.body.appendChild(el);
+ }
+ document.getElementById('fmGroceryNoticeIcon').textContent=approved?'🎉':'⚠️';
+ document.getElementById('fmGroceryNoticeTitle').textContent=title;
+ document.getElementById('fmGroceryNoticeText').textContent=message;
+ el.style.display='flex';
+}
+async function fmCheckGroceryPaymentApproval(){
+ if(fmGroceryPaymentWatchBusy)return;
+ let marker=null;try{marker=JSON.parse(localStorage.getItem('fm_pending_upi_grocery')||'null')}catch(_){}
+ if(!marker?.sourceId)return;
+ fmGroceryPaymentWatchBusy=true;
+ try{
+  const {data,error}=await fmShopClient.from('fm_grocery_orders').select('id,order_number,payment_status,order_status').eq('id',String(marker.sourceId)).maybeSingle();
+  if(error)throw error;
+  const status=String(data?.payment_status||'').toLowerCase();
+  if(['paid','approved'].includes(status)){
+   localStorage.removeItem('fm_pending_upi_grocery');
+   if(fmGroceryPaymentWatchTimer){clearInterval(fmGroceryPaymentWatchTimer);fmGroceryPaymentWatchTimer=null;}
+   const wait=document.getElementById('fmGroceryPaymentWait');if(wait)wait.style.display='none';
+   const modal=document.getElementById('fmUpiUserModal');if(modal)modal.style.display='none';
+   fmShowGroceryOrderNotice('Payment Approved!','Your payment has been verified by the Rupee Mart Team. Your order '+(data.order_number||'')+' is confirmed and will be delivered according to your selected delivery slot.',true);
+   await loadMyGroceryOrders();
+  }else if(['rejected','failed'].includes(status)){
+   if(fmGroceryPaymentWatchTimer){clearInterval(fmGroceryPaymentWatchTimer);fmGroceryPaymentWatchTimer=null;}
+   const st=document.getElementById('fmGroceryPaymentWaitStatus');if(st)st.textContent='Payment needs attention. Please contact the Rupee Mart Team.';
+   fmShowGroceryOrderNotice('Payment Not Approved','The Rupee Mart Team could not verify this payment. Please contact the team with your UTR before making another payment.',false);
+  }
+ }catch(e){console.warn('Grocery payment status check:',e.message||e);}
+ finally{fmGroceryPaymentWatchBusy=false;}
+}
+function fmStartGroceryPaymentWatcher(){
+ if(fmGroceryPaymentWatchTimer)clearInterval(fmGroceryPaymentWatchTimer);
+ fmCheckGroceryPaymentApproval();
+ fmGroceryPaymentWatchTimer=setInterval(fmCheckGroceryPaymentApproval,10000);
 }
 async function fmUpiMyPayments(){const el=document.getElementById('fmUpiMyRows');if(!el)return;try{const {data:{session}}=await fmShopClient.auth.getSession();if(!session){el.textContent='Login required';return;}const {data,error}=await fmShopClient.from('fm_common_payment_transactions').select('txn_ref,payment_type,amount,status,utr_number,created_at').eq('user_id',session.user.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;el.innerHTML=(data||[]).map(x=>{const st=String(x.status||'').toLowerCase();const label=st==='submitted'?'Submitted – Pending for Approval':(['paid','approved'].includes(st)?'Approved':st==='rejected'?'Rejected':st==='cancelled'?'Cancelled':st==='pending'?'Pending':st);return `<div style="padding:8px;border:1px solid #e2e9e4;border-radius:8px;margin:6px 0">₹${Number(x.amount).toFixed(2)} · ${fmUpiEsc(x.payment_type)}<br>Ref: ${fmUpiEsc(x.txn_ref)}<br>Status: <b>${fmUpiEsc(label)}</b></div>`;}).join('')||'No payment requests yet.';}catch(e){el.textContent='Could not load payments: '+e.message;}}
 </script>
