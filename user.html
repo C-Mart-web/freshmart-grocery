@@ -3360,9 +3360,17 @@ async function fmUpiSubmitProof(){
    fmShowPaymentProcessingNotice('daily_fresh');
    await fmDFUserLoad();
   }else if(paymentType==='grocery'){
-   await loadMyGroceryOrders();
+   const sourceId=String(fmUpiLastContext?.sourceId||document.getElementById('fmUpiSource')?.value||'').trim();
+   if(!sourceId)throw new Error('The grocery order ID could not be identified. Please contact the Rupee Mart Team.');
+   localStorage.setItem('fm_pending_upi_grocery',JSON.stringify({type:'grocery',sourceId,submittedAt:new Date().toISOString()}));
+   // The order is awaiting verification; clear the completed checkout/cart view for the member.
+   fmCart=[];
+   fmSaveCart();
+   const wait=document.getElementById('fmGroceryPaymentWait');if(wait)wait.style.display='none';
+   const modal=document.getElementById('fmUpiUserModal');if(modal)modal.style.display='none';
    fmStartGroceryPaymentWatcher();
-   msg.textContent='Payment submitted. Waiting for Rupee Mart Team verification.';
+   fmShowGroceryOrderNotice('Payment Submitted Successfully','Your payment proof has been submitted to the Rupee Mart Team. Please wait 5–10 minutes while our team verifies your payment. Your order will be confirmed after approval.',false,()=>{showPage('orders');});
+   msg.textContent='';
    return;
   }
   document.getElementById('fmUpiProofArea').style.display='none';
@@ -3378,14 +3386,22 @@ async function fmUpiSubmitProof(){
 }
 let fmGroceryPaymentWatchTimer=null;
 let fmGroceryPaymentWatchBusy=false;
-function fmShowGroceryOrderNotice(title,message,approved){
+let fmGroceryNoticeOkAction=null;
+function fmGroceryNoticeOk(){
+ const el=document.getElementById('fmGroceryOrderNotice');if(el)el.style.display='none';
+ const action=fmGroceryNoticeOkAction;fmGroceryNoticeOkAction=null;
+ if(typeof action==='function')action();
+}
+function fmShowGroceryOrderNotice(title,message,approved,onOk){
  let el=document.getElementById('fmGroceryOrderNotice');
  if(!el){
   el=document.createElement('div');el.id='fmGroceryOrderNotice';el.style.cssText='display:none;position:fixed;inset:0;z-index:10050;background:#10251c99;align-items:center;justify-content:center;padding:18px';
-  el.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;text-align:center;box-shadow:0 12px 40px #0003"><div id="fmGroceryNoticeIcon" style="font-size:42px">🎉</div><h2 id="fmGroceryNoticeTitle" style="margin:8px 0;color:#176c45"></h2><p id="fmGroceryNoticeText" style="line-height:1.6"></p><button class="btn btn-green" type="button" onclick="document.getElementById(\'fmGroceryOrderNotice\').style.display=\'none\'">OK</button></div>';
+  el.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px;max-width:420px;width:100%;text-align:center;box-shadow:0 12px 40px #0003"><div id="fmGroceryNoticeIcon" style="font-size:42px">🎉</div><h2 id="fmGroceryNoticeTitle" style="margin:8px 0;color:#176c45"></h2><p id="fmGroceryNoticeText" style="line-height:1.6"></p><button class="btn btn-green" type="button" onclick="fmGroceryNoticeOk()">OK</button></div>';
   document.body.appendChild(el);
  }
- document.getElementById('fmGroceryNoticeIcon').textContent=approved?'🎉':'⚠️';
+ fmGroceryNoticeOkAction=typeof onOk==='function'?onOk:null;
+ const icon=document.getElementById('fmGroceryNoticeIcon');
+ icon.textContent=approved?'🎉':(/submitted/i.test(title)?'⏳':'⚠️');
  document.getElementById('fmGroceryNoticeTitle').textContent=title;
  document.getElementById('fmGroceryNoticeText').textContent=message;
  el.style.display='flex';
@@ -3404,7 +3420,7 @@ async function fmCheckGroceryPaymentApproval(){
    if(fmGroceryPaymentWatchTimer){clearInterval(fmGroceryPaymentWatchTimer);fmGroceryPaymentWatchTimer=null;}
    const wait=document.getElementById('fmGroceryPaymentWait');if(wait)wait.style.display='none';
    const modal=document.getElementById('fmUpiUserModal');if(modal)modal.style.display='none';
-   fmShowGroceryOrderNotice('Payment Approved!','Your payment has been verified by the Rupee Mart Team. Your order '+(data.order_number||'')+' is confirmed and will be delivered according to your selected delivery slot.',true);
+   fmShowGroceryOrderNotice('Payment Approved!','Your payment has been verified by the Rupee Mart Team. Your order '+(data.order_number||'')+' is confirmed and will be delivered according to your selected delivery slot.',true,()=>{showPage('orders');loadMyGroceryOrders();});
    await loadMyGroceryOrders();
   }else if(['rejected','failed'].includes(status)){
    if(fmGroceryPaymentWatchTimer){clearInterval(fmGroceryPaymentWatchTimer);fmGroceryPaymentWatchTimer=null;}
