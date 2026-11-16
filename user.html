@@ -215,6 +215,12 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .fm-checkout-split-summary .fm-split-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
 .fm-checkout-split-summary .fm-split-row strong{white-space:nowrap}
 .fm-checkout-split-summary .fm-split-total{border-top:1px solid #dcebe0;margin-top:6px;padding-top:8px;font-weight:850}
+.fm-payment-radio-list{display:grid;gap:10px;margin-top:8px}
+.fm-payment-radio-option{display:flex;align-items:center;gap:11px;padding:13px 14px;border:1px solid #dce8df;border-radius:12px;background:#fff;color:#183126;font-size:14px;font-weight:650;line-height:1.4;cursor:pointer}
+.fm-payment-radio-option:has(input:checked){border:2px solid #168447;background:#f1fbf4;padding:12px 13px}
+.fm-payment-radio-option input{width:19px;height:19px;flex:0 0 19px;accent-color:#168447;margin:0}
+.fm-payment-radio-option span{flex:1}
+
 </style>
 <style>
 /* Rupee Mart first-login spin wheel */
@@ -325,7 +331,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   
 </section>
 <section class="page" id="cart"><div class="welcome"><div><h1>My Cart 🛒</h1><p>Review items and quantities before checkout.</p></div><button class="btn btn-outline" onclick="fmRenderCart()">Refresh</button></div><div class="card"><div id="fmCartRows" class="hint">Your cart is empty.</div><div style="display:flex;justify-content:space-between;margin-top:14px;font-weight:850"><span>Subtotal</span><span id="fmCartSubtotal">₹0.00</span></div><button class="btn btn-green" style="margin-top:14px;width:100%" onclick="fmOpenCheckout()">Proceed to Checkout</button><button class="btn btn-outline" style="margin-top:9px;width:100%" onclick="showPage('groceries')">Continue Shopping</button></div></section>
-<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div id="fmCheckoutSplitSummary" class="fm-checkout-split-summary" style="display:none" aria-live="polite"></div><div class="field" id="fmCheckoutPaymentWrap" style="margin:12px 0"><label>How would you like to pay the remaining amount?</label><select id="fmCheckoutPayment" onchange="fmUpdateCheckoutButton()"><option value="">Loading payment options…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><button type="button" class="btn btn-outline" id="fmShowAvailableCouponsBtn" onclick="fmToggleCheckoutCouponList()" style="margin-top:7px;padding:6px 10px;font-size:12px;min-height:32px">🎟 Available Coupons</button><div id="fmCheckoutAvailableCoupons" style="display:none;margin-top:8px;padding:9px;border:1px solid #dcebe0;border-radius:10px;background:#f7fbf8"><div class="hint" style="font-size:12px;margin-bottom:6px">Your available coupons</div><div id="fmCheckoutAvailableCouponRows" class="hint" style="font-size:12px">Tap Available Coupons to load.</div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Benefit (after delivery)</span><b id="fmCheckoutSelfDiscount">Credited after delivery</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><div style="display:flex;justify-content:space-between;font-weight:850;margin:12px 0"><span>Grand Total</span><span id="fmCheckoutTotal">₹0.00</span></div><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Place an Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
+<section class="page" id="checkout"><div class="welcome"><div><h1>Checkout & Payment</h1><p>Confirm your delivery address, delivery option and payment method.</p></div></div><div class="card" id="fmCheckoutCard"><h2 style="font-size:18px">Delivery & Payment</h2><div class="field" style="margin:12px 0"><label>Delivery Address</label><div id="fmCheckoutAddressWrap"><select id="fmCheckoutAddress"><option value="">Choose a saved address</option></select></div><button class="btn btn-outline" type="button" id="fmCheckoutAddAddressBtn" style="display:none;margin-top:9px" onclick="fmGoAddDeliveryAddress()">＋ Add Delivery Address</button></div><div class="field" style="margin:12px 0"><label>Delivery Pincode</label><input id="fmCheckoutPin" maxlength="6" placeholder="6-digit pincode" oninput="fmLoadDeliveryChoices()"></div><div class="field" style="margin:12px 0"><label for="fmCheckoutDeliveryDate">Delivery Date</label><input id="fmCheckoutDeliveryDate" type="date" onchange="fmLoadDeliveryChoices()"><small class="hint">Select a delivery date to see available slots.</small></div><div id="fmDeliveryChoices" class="hint">Enter pincode to check delivery options.</div><div id="fmCheckoutSplitSummary" class="fm-checkout-split-summary" style="display:none" aria-live="polite"></div><div class="field" id="fmCheckoutPaymentWrap" style="margin:12px 0"><label>Choose payment method</label><div id="fmCheckoutPaymentChoices" class="fm-payment-radio-list" role="radiogroup" aria-label="Choose payment method"></div><select id="fmCheckoutPayment" onchange="fmUpdateCheckoutButton()" style="display:none" aria-hidden="true" tabindex="-1"><option value="">Loading payment options…</option></select></div><div class="card" style="margin:14px 0;padding:13px;box-shadow:none"><div class="field"><label for="fmCheckoutCoupon">🎁 Apply Coupon Code</label><div style="display:flex;gap:8px"><input id="fmCheckoutCoupon" type="text" placeholder="Enter coupon code" autocomplete="off" style="flex:1;min-width:0;text-transform:uppercase"><button class="btn btn-green" type="button" id="fmApplyCouponBtn" onclick="fmApplyCheckoutCoupon()">Apply</button></div></div><button type="button" class="btn btn-outline" id="fmShowAvailableCouponsBtn" onclick="fmToggleCheckoutCouponList()" style="margin-top:7px;padding:6px 10px;font-size:12px;min-height:32px">🎟 Available Coupons</button><div id="fmCheckoutAvailableCoupons" style="display:none;margin-top:8px;padding:9px;border:1px solid #dcebe0;border-radius:10px;background:#f7fbf8"><div class="hint" style="font-size:12px;margin-bottom:6px">Your available coupons</div><div id="fmCheckoutAvailableCouponRows" class="hint" style="font-size:12px">Tap Available Coupons to load.</div></div><p id="fmCouponApplyMsg" class="hint" aria-live="polite"></p><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Self Purchase Benefit (after delivery)</span><b id="fmCheckoutSelfDiscount">Credited after delivery</b></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span>Coupon Discount</span><b id="fmCheckoutDiscount">₹0.00</b></div><button class="btn btn-outline" type="button" id="fmRemoveCouponBtn" style="display:none;margin-top:8px" onclick="fmRemoveCheckoutCoupon()">Remove Coupon</button></div><span id="fmCheckoutTotal" style="display:none">₹0.00</span><button class="btn btn-green" type="button" id="fmPlaceOrderBtn" onclick="fmPlaceOrder()">Place an Order</button><p id="fmCheckoutMsg" class="hint" aria-live="polite"></p></div></section>
 <section class="page" id="plans"><div class="fm-page-banner" id="fmBannerPlans" style="display:none"></div>
   <div class="welcome"><div><h1>My Plan & Payment</h1><p>Select a plan and submit your payment proof for review.</p></div></div>
 
@@ -1519,45 +1525,50 @@ function fmCheckoutGrandTotal(){
  return Math.max(0,fmCheckoutSubtotal()+Number(fmCheckoutArea?.delivery_charge||0)-Number(fmCouponDiscount||0));
 }
 function fmUpdateCheckoutButton(){
- const sel=document.getElementById('fmCheckoutPayment');
- const btn=document.getElementById('fmPlaceOrderBtn');if(!btn||!sel)return;
- const total=fmCheckoutGrandTotal();
- const wallet=Math.min(Math.max(0,Number(fmCheckoutDailyAvailable)||0),total);
- const due=Math.max(0,total-wallet);
- const summary=document.getElementById('fmCheckoutSplitSummary');
- const wrap=document.getElementById('fmCheckoutPaymentWrap');
- const money=n=>shopMoney(Math.max(0,Number(n)||0));
- let options=[],desired=sel.value;
- if(due<=0.009 && wallet>0){
-  options.push('<option value="shopping_wallet">Pay fully using Shopping Wallet</option>');
-  desired='shopping_wallet';
-  if(wrap)wrap.style.display='none';
- }else if(wallet>0){
-  if(fmCheckoutUpiEnabled)options.push(`<option value="shopping_wallet_upi">Pay remaining ${money(due)} online (UPI)</option>`);
-  options.push(`<option value="shopping_wallet_cod">Pay remaining ${money(due)} by COD</option>`);
-  if(wrap)wrap.style.display='block';
-  if(!options.some(x=>x.includes('value="'+desired+'"')))desired=fmCheckoutUpiEnabled?'shopping_wallet_upi':'shopping_wallet_cod';
- }else{
-  if(fmCheckoutUpiEnabled)options.push(`<option value="upi">Pay total ${money(total)} online (UPI)</option>`);
-  options.push(`<option value="cod">Pay total ${money(total)} by COD</option>`);
-  if(wrap)wrap.style.display='block';
-  if(!options.some(x=>x.includes('value="'+desired+'"')))desired=fmCheckoutUpiEnabled?'upi':'cod';
- }
- sel.innerHTML=options.join('');
- sel.value=desired;
- if(summary){
-  if(wallet>0){
-   summary.style.display='block';
-   summary.innerHTML=`<div class="fm-split-row"><span>Your Shopping Wallet</span><strong>${money(wallet)}</strong></div><div class="fm-split-row"><span>Remaining Amount</span><strong>${money(due)}</strong></div>`;
+  const sel=document.getElementById('fmCheckoutPayment');
+  const btn=document.getElementById('fmPlaceOrderBtn');if(!btn||!sel)return;
+  const total=fmCheckoutGrandTotal();
+  const wallet=Math.min(Math.max(0,Number(fmCheckoutDailyAvailable)||0),total);
+  const due=Math.max(0,total-wallet);
+  const summary=document.getElementById('fmCheckoutSplitSummary');
+  const wrap=document.getElementById('fmCheckoutPaymentWrap');
+  const choices=document.getElementById('fmCheckoutPaymentChoices');
+  const money=n=>shopMoney(Math.max(0,Number(n)||0));
+  let options=[],desired=sel.value;
+  if(due<=0.009 && wallet>0){
+    options.push({value:'shopping_wallet',label:'Pay fully using Shopping Wallet'});
+    desired='shopping_wallet';
+  }else if(wallet>0){
+    if(fmCheckoutUpiEnabled)options.push({value:'shopping_wallet_upi',label:'Pay remaining '+money(due)+' online (UPI)'});
+    options.push({value:'shopping_wallet_cod',label:'Pay remaining '+money(due)+' by Cash on Delivery'});
+    if(!options.some(x=>x.value===desired))desired=fmCheckoutUpiEnabled?'shopping_wallet_upi':'shopping_wallet_cod';
   }else{
-   summary.style.display='block';
-   summary.innerHTML=`<div class="fm-split-row fm-split-total"><span>Total Amount</span><strong>${money(total)}</strong></div>`;
+    if(fmCheckoutUpiEnabled)options.push({value:'upi',label:'Pay total '+money(total)+' online (UPI)'});
+    options.push({value:'cod',label:'Pay total '+money(total)+' by Cash on Delivery'});
+    if(!options.some(x=>x.value===desired))desired=fmCheckoutUpiEnabled?'upi':'cod';
   }
- }
- btn.textContent=(desired==='upi'||desired==='shopping_wallet_upi')?'Continue to UPI QR':'Place an Order';
- btn.disabled=!desired;
- const msg=document.getElementById('fmCheckoutMsg');
- if(msg&&/Today you can use only/.test(msg.textContent||'')){msg.textContent='';msg.style.color='';}
+  sel.innerHTML=options.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.value=desired;
+  if(wrap)wrap.style.display=options.length?'block':'none';
+  if(choices){
+    choices.innerHTML=options.map(o=>`<label class="fm-payment-radio-option"><input type="radio" name="fmCheckoutPaymentChoice" value="${o.value}" ${o.value===desired?'checked':''} onchange="fmChooseCheckoutPayment(this.value)"><span>${o.label}</span></label>`).join('');
+  }
+  if(summary){
+    summary.style.display='block';
+    if(wallet>0){
+      summary.innerHTML=`<div class="fm-split-row fm-split-total"><span>Grand Total</span><strong>${money(total)}</strong></div><div class="fm-split-row"><span>Your Shopping Wallet</span><strong>${money(wallet)}</strong></div><div class="fm-split-row"><span>Remaining Amount</span><strong>${money(due)}</strong></div>`;
+    }else{
+      summary.innerHTML=`<div class="fm-split-row fm-split-total"><span>Grand Total</span><strong>${money(total)}</strong></div>`;
+    }
+  }
+  btn.textContent=(desired==='upi'||desired==='shopping_wallet_upi')?'Continue to UPI QR':(desired==='shopping_wallet'?'Place an Order':'Place an Order');
+  btn.disabled=!desired;
+  const msg=document.getElementById('fmCheckoutMsg');
+  if(msg&&/Today you can use only/.test(msg.textContent||'')){msg.textContent='';msg.style.color='';}
+}
+function fmChooseCheckoutPayment(value){
+  const sel=document.getElementById('fmCheckoutPayment');
+  if(sel){sel.value=value;fmUpdateCheckoutButton();}
 }
 
 async function fmPlaceOrder(){
