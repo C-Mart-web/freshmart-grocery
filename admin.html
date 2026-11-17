@@ -2468,39 +2468,33 @@ async function fmAdminLoadOneRupeeOffer(){
    fmOneRupeeFilterProducts();
    fmOneRupeeFilterExcludedProducts();
  };
- const timed=(promise,label,ms=10000)=>Promise.race([
-   promise,
-   new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' request timed out. Check Supabase connection and RLS.')),ms))
- ]);
  try{
-   // Load and render base products immediately. Variant/settings requests must not keep
-   // both product pickers stuck on "Loading products…".
-   const productResult=await timed(
-     fmSupabase.from('fm_products').select('id,product_name,is_active').eq('is_active',true).order('product_name').limit(1000),
-     'Product catalog'
-   );
-   if(productResult.error)throw new Error('Product catalog: '+productResult.error.message);
-   fmOneRupeeProductsCache=productResult.data||[];
-   renderPickers();
-   if(!fmOneRupeeProductsCache.length){
-     msg.textContent='Product query succeeded, but no active products were returned.';
-     return;
+   // Reuse the catalogue already loaded by the Admin Products module.
+   // Avoids a second fm_products request that can hang on mobile browsers.
+   if((typeof fmAdminProducts==='undefined'||!Array.isArray(fmAdminProducts)||!fmAdminProducts.length)
+      && typeof loadAdminProducts==='function'){
+     await loadAdminProducts();
    }
-   msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' products. Loading variants and saved offer settings…';
-
-   // Fetch variants and saved selections independently; a slow optional query cannot
-   // prevent the product-name list from appearing.
-   const variantPromise=timed(
-     fmSupabase.from('fm_product_variants').select('id,product_id,variant_name,unit,is_active,sort_order').eq('is_active',true).order('sort_order').limit(3000),
-     'Product variants',8000
-   ).then(r=>{if(r.error)throw r.error;variantRows=r.data||[];renderPickers();return true;})
-    .catch(e=>{console.warn('Offer variants:',e);msg.textContent='Products loaded. Variant list unavailable: '+(e.message||e);return false;});
-
-   const settingsPromise=timed(Promise.all([
-     fmSupabase.from('fm_one_rupee_offer_settings').select('*').eq('id',true).maybeSingle(),
-     fmSupabase.from('fm_one_rupee_offer_products').select('product_id,variant_id,is_active'),
-     fmSupabase.from('fm_one_rupee_offer_excluded_products').select('product_id,is_active')
-   ]),'Saved offer settings',10000).then(([s,p,ex])=>{
+   const adminProducts=(typeof fmAdminProducts!=='undefined'&&Array.isArray(fmAdminProducts))?fmAdminProducts:[];
+   if(!adminProducts.length){
+     const status=document.getElementById('productListMsg')?.textContent||'';
+     throw new Error(status.includes('Could not load')?status:'Admin product catalogue is empty/not loaded. Open Products & Categories and press Refresh.');
+   }
+   fmOneRupeeProductsCache=adminProducts.filter(x=>x&&x.is_active!==false).map(x=>({
+     id:x.id,product_name:x.product_name,is_active:x.is_active
+   }));
+   // Variants are already attached to each product by loadAdminProducts().
+   variantRows=adminProducts.flatMap(p=>(p.fm_product_variants||[])
+     .filter(v=>v.is_active!==false).map(v=>({...v,product_id:v.product_id??p.id})));
+   renderPickers();
+   msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' products. Search and select eligible / excluded products.';
+   // Settings are loaded separately so a settings/RLS issue cannot block product search.
+   try{
+     const [s,p,ex]=await Promise.all([
+       fmSupabase.from('fm_one_rupee_offer_settings').select('*').eq('id',true).maybeSingle(),
+       fmSupabase.from('fm_one_rupee_offer_products').select('product_id,variant_id,is_active'),
+       fmSupabase.from('fm_one_rupee_offer_excluded_products').select('product_id,is_active')
+     ]);
      if(s.error)throw new Error('Offer settings: '+s.error.message);
      if(p.error)throw new Error('Eligible product selections: '+p.error.message);
      if(ex.error)throw new Error('Excluded product selections: '+ex.error.message);
@@ -2518,11 +2512,11 @@ async function fmAdminLoadOneRupeeOffer(){
      (p.data||[]).filter(x=>x.is_active).forEach(x=>selected.add(String(x.product_id)+':'+String(x.variant_id||'')));
      (ex.data||[]).filter(x=>x.is_active).forEach(x=>excluded.add(String(x.product_id)));
      renderPickers();
-     return true;
-   }).catch(e=>{msg.textContent='Products loaded, but saved offer settings could not load: '+(e.message||e);console.error('₹1 offer settings:',e);return false;});
-
-   await Promise.all([variantPromise,settingsPromise]);
-   if(!msg.textContent.startsWith('Products loaded'))msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' products. Search and select eligible / excluded products.';
+     msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' products and saved offer settings.';
+   }catch(settingsError){
+     msg.textContent='Products loaded. Offer settings could not load: '+(settingsError.message||settingsError);
+     console.error('₹1 offer settings:',settingsError);
+   }
  }catch(e){
    const errorText=(e&&e.message)||String(e)||'Unknown database error';
    if(box)box.textContent='Could not load products: '+errorText;
