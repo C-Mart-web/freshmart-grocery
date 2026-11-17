@@ -2442,74 +2442,93 @@ async function fmAdminLoadOneRupeeOffer(){
  const msg=document.getElementById('fmOneRupeeAdminMsg');
  const box=document.getElementById('fmOneRupeeProductPicker');
  const exbox=document.getElementById('fmOneRupeeExcludePicker');
- if(!msg||!fmSupabase)return;
+ if(!msg)return;
+ if(typeof fmSupabase==='undefined'||!fmSupabase){
+   msg.textContent='Supabase client is not ready. Refresh the page and sign in again.';
+   if(box)box.textContent=msg.textContent;
+   if(exbox)exbox.textContent=msg.textContent;
+   return;
+ }
  if(box)box.textContent='Loading products…';
  if(exbox)exbox.textContent='Loading excluded products…';
  msg.textContent='Connecting to product catalog…';
- try{
-  // Load catalog independently so an offer-settings permission error cannot leave both pickers spinning.
-  const productResult=await fmSupabase.from('fm_products')
-    .select('id,product_name,is_active')
-    .eq('is_active',true).order('product_name').limit(1000);
-  if(productResult.error)throw new Error('Product catalog: '+productResult.error.message);
-  fmOneRupeeProductsCache=productResult.data||[];
-  if(!fmOneRupeeProductsCache.length){
-    if(box)box.textContent='No active products found in fm_products.';
-    if(exbox)exbox.textContent='No active products found in fm_products.';
-    msg.textContent='Product query succeeded, but no active products were returned.';
-    return;
-  }
-  let variantRows=[];
-  const variantResult=await fmSupabase.from('fm_product_variants')
-    .select('id,product_id,variant_name,unit,is_active,sort_order')
-    .eq('is_active',true).order('sort_order').limit(3000);
-  if(variantResult.error){
-    console.warn('Offer variant list could not load:',variantResult.error.message);
-    msg.textContent='Products loaded. Variants could not load: '+variantResult.error.message;
-  }else variantRows=variantResult.data||[];
-
-  // Render product pickers before loading settings/selection records.
-  const selected=new Set();
-  const excluded=new Set();
-  const renderPickers=()=>{
-   if(box)box.innerHTML=fmOneRupeeProductsCache.map(x=>{
-    const vs=variantRows.filter(v=>String(v.product_id)===String(x.id));
-    if(vs.length)return `<div class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="padding:7px 0;border-bottom:1px solid #edf1ed"><b>${fmAdmEsc(x.product_name)}<div style="padding-left:10px">${vs.map(v=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="${v.id}" ${selected.has(String(x.id)+':'+String(v.id))?'checked':''} style="width:auto"> ${fmAdmEsc(v.variant_name||v.unit||'Variant')}</label>`).join('')}</div></div>`;
-    return `<label class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="" ${selected.has(String(x.id)+':')?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)} <small>${fmAdmEsc(x.unit||'')}</small></label>`;
+ const selected=new Set();
+ const excluded=new Set();
+ let variantRows=[];
+ const renderPickers=()=>{
+   const products=fmOneRupeeProductsCache||[];
+   if(box)box.innerHTML=products.map(x=>{
+     const vs=variantRows.filter(v=>String(v.product_id)===String(x.id));
+     if(vs.length){
+       return `<div class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="padding:7px 0;border-bottom:1px solid #edf1ed"><b>${fmAdmEsc(x.product_name)}</b><div style="padding-left:10px">${vs.map(v=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="${v.id}" ${selected.has(String(x.id)+':'+String(v.id))?'checked':''} style="width:auto"> ${fmAdmEsc(v.variant_name||v.unit||'Variant')}</label>`).join('')}</div></div>`;
+     }
+     return `<label class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="" ${selected.has(String(x.id)+':')?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)}</label>`;
    }).join('')||'No active products found.';
-   if(exbox)exbox.innerHTML=fmOneRupeeProductsCache.map(x=>`<label class="fm-one-rupee-exclude-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-exclude" data-product="${x.id}" ${excluded.has(String(x.id))?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)} <small>${fmAdmEsc(x.unit||'')}</small></label>`).join('')||'No active products found.';
-  };
-  renderPickers();
+   if(exbox)exbox.innerHTML=products.map(x=>`<label class="fm-one-rupee-exclude-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-exclude" data-product="${x.id}" ${excluded.has(String(x.id))?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)}</label>`).join('')||'No active products found.';
+   fmOneRupeeFilterProducts();
+   fmOneRupeeFilterExcludedProducts();
+ };
+ const timed=(promise,label,ms=10000)=>Promise.race([
+   promise,
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' request timed out. Check Supabase connection and RLS.')),ms))
+ ]);
+ try{
+   // Load and render base products immediately. Variant/settings requests must not keep
+   // both product pickers stuck on "Loading products…".
+   const productResult=await timed(
+     fmSupabase.from('fm_products').select('id,product_name,is_active').eq('is_active',true).order('product_name').limit(1000),
+     'Product catalog'
+   );
+   if(productResult.error)throw new Error('Product catalog: '+productResult.error.message);
+   fmOneRupeeProductsCache=productResult.data||[];
+   renderPickers();
+   if(!fmOneRupeeProductsCache.length){
+     msg.textContent='Product query succeeded, but no active products were returned.';
+     return;
+   }
+   msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' products. Loading variants and saved offer settings…';
 
-  const [s,p,ex]=await Promise.all([
-   fmSupabase.from('fm_one_rupee_offer_settings').select('*').eq('id',true).maybeSingle(),
-   fmSupabase.from('fm_one_rupee_offer_products').select('product_id,variant_id,is_active'),
-   fmSupabase.from('fm_one_rupee_offer_excluded_products').select('product_id,is_active')
-  ]);
-  if(s.error)throw new Error('Offer settings: '+s.error.message);
-  if(p.error)throw new Error('Eligible product selections: '+p.error.message);
-  if(ex.error)throw new Error('Excluded product selections: '+ex.error.message);
-  const setting=s.data||{};
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
-  set('fmOneRupeeName',setting.offer_name||'Special Product Offer');
-  set('fmOneRupeeBannerText',setting.banner_text||'');
-  set('fmOneRupeeBannerImage',setting.banner_image_url||'');
-  fmOneRupeeSetBannerPreview(setting.banner_image_url||'');
-  set('fmOneRupeePrice',setting.offer_price??1);
-  set('fmOneRupeeThreshold',setting.min_purchase_amount||2000);
-  set('fmOneRupeeStart',setting.starts_at?new Date(setting.starts_at).toISOString().slice(0,16):'');
-  set('fmOneRupeeEnd',setting.ends_at?new Date(setting.ends_at).toISOString().slice(0,16):'');
-  const enabled=document.getElementById('fmOneRupeeEnabled');if(enabled)enabled.checked=!!setting.is_active;
-  (p.data||[]).filter(x=>x.is_active).forEach(x=>selected.add(String(x.product_id)+':'+String(x.variant_id||'')));
-  (ex.data||[]).filter(x=>x.is_active).forEach(x=>excluded.add(String(x.product_id)));
-  renderPickers();
-  msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' active products. Select eligible and excluded products.';
+   // Fetch variants and saved selections independently; a slow optional query cannot
+   // prevent the product-name list from appearing.
+   const variantPromise=timed(
+     fmSupabase.from('fm_product_variants').select('id,product_id,variant_name,unit,is_active,sort_order').eq('is_active',true).order('sort_order').limit(3000),
+     'Product variants',8000
+   ).then(r=>{if(r.error)throw r.error;variantRows=r.data||[];renderPickers();return true;})
+    .catch(e=>{console.warn('Offer variants:',e);msg.textContent='Products loaded. Variant list unavailable: '+(e.message||e);return false;});
+
+   const settingsPromise=timed(Promise.all([
+     fmSupabase.from('fm_one_rupee_offer_settings').select('*').eq('id',true).maybeSingle(),
+     fmSupabase.from('fm_one_rupee_offer_products').select('product_id,variant_id,is_active'),
+     fmSupabase.from('fm_one_rupee_offer_excluded_products').select('product_id,is_active')
+   ]),'Saved offer settings',10000).then(([s,p,ex])=>{
+     if(s.error)throw new Error('Offer settings: '+s.error.message);
+     if(p.error)throw new Error('Eligible product selections: '+p.error.message);
+     if(ex.error)throw new Error('Excluded product selections: '+ex.error.message);
+     const setting=s.data||{};
+     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
+     set('fmOneRupeeName',setting.offer_name||'Special Product Offer');
+     set('fmOneRupeeBannerText',setting.banner_text||'');
+     set('fmOneRupeeBannerImage',setting.banner_image_url||'');
+     fmOneRupeeSetBannerPreview(setting.banner_image_url||'');
+     set('fmOneRupeePrice',setting.offer_price??1);
+     set('fmOneRupeeThreshold',setting.min_purchase_amount||2000);
+     set('fmOneRupeeStart',setting.starts_at?new Date(setting.starts_at).toISOString().slice(0,16):'');
+     set('fmOneRupeeEnd',setting.ends_at?new Date(setting.ends_at).toISOString().slice(0,16):'');
+     const enabled=document.getElementById('fmOneRupeeEnabled');if(enabled)enabled.checked=!!setting.is_active;
+     (p.data||[]).filter(x=>x.is_active).forEach(x=>selected.add(String(x.product_id)+':'+String(x.variant_id||'')));
+     (ex.data||[]).filter(x=>x.is_active).forEach(x=>excluded.add(String(x.product_id)));
+     renderPickers();
+     return true;
+   }).catch(e=>{msg.textContent='Products loaded, but saved offer settings could not load: '+(e.message||e);console.error('₹1 offer settings:',e);return false;});
+
+   await Promise.all([variantPromise,settingsPromise]);
+   if(!msg.textContent.startsWith('Products loaded'))msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' products. Search and select eligible / excluded products.';
  }catch(e){
-  const errorText=(e&&e.message)||String(e)||'Unknown database error';
-  if(box)box.textContent='Could not load product/offer data: '+errorText;
-  if(exbox)exbox.textContent='Could not load product/offer data: '+errorText;
-  msg.textContent='Load failed: '+errorText;
-  console.error('₹1 offer loader:',e);
+   const errorText=(e&&e.message)||String(e)||'Unknown database error';
+   if(box)box.textContent='Could not load products: '+errorText;
+   if(exbox)exbox.textContent='Could not load products: '+errorText;
+   msg.textContent='Product loading failed: '+errorText;
+   console.error('₹1 offer loader:',e);
  }
 }
 function fmOneRupeeFilterProducts(){const q=(document.getElementById('fmOneRupeeProductSearch')?.value||'').trim().toLowerCase();document.querySelectorAll('.fm-one-rupee-product-row').forEach(r=>r.style.display=(!q||(r.dataset.search||'').includes(q))?'':'none');}
