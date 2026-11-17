@@ -2457,14 +2457,14 @@ async function fmAdminLoadOneRupeeOffer(){
  let variantRows=[];
  const renderPickers=()=>{
    const products=fmOneRupeeProductsCache||[];
-   if(box)box.innerHTML=products.map(x=>{
+   if(box)box.innerHTML=products.length?'<div class="fm-one-rupee-search-hint" style="padding:8px 0;color:#718078">Type a product name above to see matching products.</div>'+products.map(x=>{
      const vs=variantRows.filter(v=>String(v.product_id)===String(x.id));
      if(vs.length){
-       return `<div class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="padding:7px 0;border-bottom:1px solid #edf1ed"><b>${fmAdmEsc(x.product_name)}</b><div style="padding-left:10px">${vs.map(v=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="${v.id}" ${selected.has(String(x.id)+':'+String(v.id))?'checked':''} style="width:auto"> ${fmAdmEsc(v.variant_name||v.unit||'Variant')}</label>`).join('')}</div></div>`;
+       return `<div class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:none;padding:7px 0;border-bottom:1px solid #edf1ed"><b>${fmAdmEsc(x.product_name)}</b><div style="padding-left:10px">${vs.map(v=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="${v.id}" ${selected.has(String(x.id)+':'+String(v.id))?'checked':''} style="width:auto"> ${fmAdmEsc(v.variant_name||v.unit||'Variant')}</label>`).join('')}</div></div>`;
      }
-     return `<label class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="" ${selected.has(String(x.id)+':')?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)}</label>`;
-   }).join('')||'No active products found.';
-   if(exbox)exbox.innerHTML=products.map(x=>`<label class="fm-one-rupee-exclude-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-exclude" data-product="${x.id}" ${excluded.has(String(x.id))?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)}</label>`).join('')||'No active products found.';
+     return `<label class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:none;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="" ${selected.has(String(x.id)+':')?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)}</label>`;
+   }).join(''):'No active products found.';
+   if(exbox)exbox.innerHTML=products.length?'<div class="fm-one-rupee-exclude-search-hint" style="padding:8px 0;color:#718078">Type a product name above to see matching products.</div>'+products.map(x=>`<label class="fm-one-rupee-exclude-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:none;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-exclude" data-product="${x.id}" ${excluded.has(String(x.id))?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)}</label>`).join(''):'No active products found.';
    fmOneRupeeFilterProducts();
    fmOneRupeeFilterExcludedProducts();
  };
@@ -2531,8 +2531,20 @@ async function fmAdminLoadOneRupeeOffer(){
    console.error('₹1 offer loader:',e);
  }
 }
-function fmOneRupeeFilterProducts(){const q=(document.getElementById('fmOneRupeeProductSearch')?.value||'').trim().toLowerCase();document.querySelectorAll('.fm-one-rupee-product-row').forEach(r=>r.style.display=(!q||(r.dataset.search||'').includes(q))?'':'none');}
-function fmOneRupeeFilterExcludedProducts(){const q=(document.getElementById('fmOneRupeeExcludeSearch')?.value||'').trim().toLowerCase();document.querySelectorAll('.fm-one-rupee-exclude-row').forEach(r=>r.style.display=(!q||(r.dataset.search||'').includes(q))?'':'none');}
+function fmOneRupeeFilterProducts(){
+ const q=(document.getElementById('fmOneRupeeProductSearch')?.value||'').trim().toLowerCase();
+ const rows=[...document.querySelectorAll('#fmOneRupeeProductPicker .fm-one-rupee-product-row')];
+ let shown=0;rows.forEach(r=>{const match=!!q&&(r.dataset.search||'').includes(q);r.style.display=match?'':'none';if(match)shown++;});
+ const hint=document.querySelector('#fmOneRupeeProductPicker .fm-one-rupee-search-hint');
+ if(hint)hint.textContent=!q?'Type a product name above to see matching products.':(shown?'Matching products: '+shown:'No products match your search.');
+}
+function fmOneRupeeFilterExcludedProducts(){
+ const q=(document.getElementById('fmOneRupeeExcludeSearch')?.value||'').trim().toLowerCase();
+ const rows=[...document.querySelectorAll('#fmOneRupeeExcludePicker .fm-one-rupee-exclude-row')];
+ let shown=0;rows.forEach(r=>{const match=!!q&&(r.dataset.search||'').includes(q);r.style.display=match?'':'none';if(match)shown++;});
+ const hint=document.querySelector('#fmOneRupeeExcludePicker .fm-one-rupee-exclude-search-hint');
+ if(hint)hint.textContent=!q?'Type a product name above to see matching products.':(shown?'Matching products: '+shown:'No products match your search.');
+}
 function fmOneRupeeSetBannerPreview(url){
  const img=document.getElementById('fmOneRupeeBannerPreview'),remove=document.getElementById('fmOneRupeeRemoveBanner');
  if(!img)return;
