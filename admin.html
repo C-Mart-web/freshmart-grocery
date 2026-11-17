@@ -2439,29 +2439,78 @@ setTimeout(()=>{if(typeof fmLoginHeroLoad==='function')fmLoginHeroLoad();},1300)
 <script>
 let fmOneRupeeProductsCache=[];
 async function fmAdminLoadOneRupeeOffer(){
- const msg=document.getElementById('fmOneRupeeAdminMsg'); if(!msg||!fmSupabase)return;
+ const msg=document.getElementById('fmOneRupeeAdminMsg');
+ const box=document.getElementById('fmOneRupeeProductPicker');
+ const exbox=document.getElementById('fmOneRupeeExcludePicker');
+ if(!msg||!fmSupabase)return;
+ if(box)box.textContent='Loading products…';
+ if(exbox)exbox.textContent='Loading excluded products…';
+ msg.textContent='Connecting to product catalog…';
  try{
-  const [s,p,ex,products,variants]=await Promise.all([
+  // Load catalog independently so an offer-settings permission error cannot leave both pickers spinning.
+  const productResult=await fmSupabase.from('fm_products')
+    .select('id,product_name,unit,is_active')
+    .eq('is_active',true).order('product_name').limit(1000);
+  if(productResult.error)throw new Error('Product catalog: '+productResult.error.message);
+  fmOneRupeeProductsCache=productResult.data||[];
+  if(!fmOneRupeeProductsCache.length){
+    if(box)box.textContent='No active products found in fm_products.';
+    if(exbox)exbox.textContent='No active products found in fm_products.';
+    msg.textContent='Product query succeeded, but no active products were returned.';
+    return;
+  }
+  let variantRows=[];
+  const variantResult=await fmSupabase.from('fm_product_variants')
+    .select('id,product_id,variant_name,unit,is_active,sort_order')
+    .eq('is_active',true).order('sort_order').limit(3000);
+  if(variantResult.error){
+    console.warn('Offer variant list could not load:',variantResult.error.message);
+    msg.textContent='Products loaded. Variants could not load: '+variantResult.error.message;
+  }else variantRows=variantResult.data||[];
+
+  // Render product pickers before loading settings/selection records.
+  const selected=new Set();
+  const excluded=new Set();
+  const renderPickers=()=>{
+   if(box)box.innerHTML=fmOneRupeeProductsCache.map(x=>{
+    const vs=variantRows.filter(v=>String(v.product_id)===String(x.id));
+    if(vs.length)return `<div class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="padding:7px 0;border-bottom:1px solid #edf1ed"><b>${fmAdmEsc(x.product_name)}<div style="padding-left:10px">${vs.map(v=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="${v.id}" ${selected.has(String(x.id)+':'+String(v.id))?'checked':''} style="width:auto"> ${fmAdmEsc(v.variant_name||v.unit||'Variant')}</label>`).join('')}</div></div>`;
+    return `<label class="fm-one-rupee-product-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="" ${selected.has(String(x.id)+':')?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)} <small>${fmAdmEsc(x.unit||'')}</small></label>`;
+   }).join('')||'No active products found.';
+   if(exbox)exbox.innerHTML=fmOneRupeeProductsCache.map(x=>`<label class="fm-one-rupee-exclude-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-exclude" data-product="${x.id}" ${excluded.has(String(x.id))?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)} <small>${fmAdmEsc(x.unit||'')}</small></label>`).join('')||'No active products found.';
+  };
+  renderPickers();
+
+  const [s,p,ex]=await Promise.all([
    fmSupabase.from('fm_one_rupee_offer_settings').select('*').eq('id',true).maybeSingle(),
    fmSupabase.from('fm_one_rupee_offer_products').select('product_id,variant_id,is_active'),
-   fmSupabase.from('fm_one_rupee_offer_excluded_products').select('product_id,is_active'),
-   fmSupabase.from('fm_products').select('id,product_name,unit,is_active').eq('is_active',true).order('product_name'),
-   fmSupabase.from('fm_product_variants').select('id,product_id,variant_name,unit,is_active').eq('is_active',true).order('sort_order')
+   fmSupabase.from('fm_one_rupee_offer_excluded_products').select('product_id,is_active')
   ]);
-  if(s.error)throw s.error;if(p.error)throw p.error;if(ex.error)throw ex.error;if(products.error)throw products.error;if(variants.error)throw variants.error;
-  const setting=s.data||{}; const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
-  set('fmOneRupeeName',setting.offer_name||'Special Product Offer');set('fmOneRupeeBannerText',setting.banner_text||'');set('fmOneRupeeBannerImage',setting.banner_image_url||'');fmOneRupeeSetBannerPreview(setting.banner_image_url||'');set('fmOneRupeePrice',setting.offer_price??1);set('fmOneRupeeThreshold',setting.min_purchase_amount||2000);set('fmOneRupeeStart',setting.starts_at?new Date(setting.starts_at).toISOString().slice(0,16):'');set('fmOneRupeeEnd',setting.ends_at?new Date(setting.ends_at).toISOString().slice(0,16):'');
-  document.getElementById('fmOneRupeeEnabled').checked=!!setting.is_active;
-  fmOneRupeeProductsCache=products.data||[];
-  const selected=new Set((p.data||[]).filter(x=>x.is_active).map(x=>String(x.product_id)+':'+String(x.variant_id||'')));
-  const variantRows=variants.data||[];
-  const box=document.getElementById('fmOneRupeeProductPicker');
-  box.innerHTML=fmOneRupeeProductsCache.map(x=>{const vs=variantRows.filter(v=>String(v.product_id)===String(x.id));if(vs.length)return `<div class="fm-one-rupee-product-row" data-search="${fmAdmEsc(x.product_name.toLowerCase())}" style="padding:7px 0;border-bottom:1px solid #edf1ed"><b>${fmAdmEsc(x.product_name)}<div style="padding-left:10px">${vs.map(v=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="${v.id}" ${selected.has(String(x.id)+':'+String(v.id))?'checked':''} style="width:auto"> ${fmAdmEsc(v.variant_name||v.unit||'Variant')}</label>`).join('')}</div></div>`;return `<label class="fm-one-rupee-product-row" data-search="${fmAdmEsc(x.product_name.toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-product" data-product="${x.id}" data-variant="" ${selected.has(String(x.id)+':')?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)} <small>${fmAdmEsc(x.unit||'')}</small></label>`;}).join('')||'No active products found.';
-  const excluded=new Set((ex.data||[]).filter(x=>x.is_active).map(x=>String(x.product_id)));
-  const exbox=document.getElementById('fmOneRupeeExcludePicker');
-  exbox.innerHTML=fmOneRupeeProductsCache.map(x=>`<label class="fm-one-rupee-exclude-row" data-search="${fmAdmEsc((x.product_name||'').toLowerCase())}" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #edf1ed"><input type="checkbox" class="fm-one-rupee-exclude" data-product="${x.id}" ${excluded.has(String(x.id))?'checked':''} style="width:auto"> ${fmAdmEsc(x.product_name)} <small>${fmAdmEsc(x.unit||'')}</small></label>`).join('')||'No active products found.';
-  msg.textContent='Settings loaded. Select offer products and products to exclude from eligibility.';
- }catch(e){msg.textContent='Load failed: '+(e.message||e)+' — run the ₹1 Offer SQL first.';}
+  if(s.error)throw new Error('Offer settings: '+s.error.message);
+  if(p.error)throw new Error('Eligible product selections: '+p.error.message);
+  if(ex.error)throw new Error('Excluded product selections: '+ex.error.message);
+  const setting=s.data||{};
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
+  set('fmOneRupeeName',setting.offer_name||'Special Product Offer');
+  set('fmOneRupeeBannerText',setting.banner_text||'');
+  set('fmOneRupeeBannerImage',setting.banner_image_url||'');
+  fmOneRupeeSetBannerPreview(setting.banner_image_url||'');
+  set('fmOneRupeePrice',setting.offer_price??1);
+  set('fmOneRupeeThreshold',setting.min_purchase_amount||2000);
+  set('fmOneRupeeStart',setting.starts_at?new Date(setting.starts_at).toISOString().slice(0,16):'');
+  set('fmOneRupeeEnd',setting.ends_at?new Date(setting.ends_at).toISOString().slice(0,16):'');
+  const enabled=document.getElementById('fmOneRupeeEnabled');if(enabled)enabled.checked=!!setting.is_active;
+  (p.data||[]).filter(x=>x.is_active).forEach(x=>selected.add(String(x.product_id)+':'+String(x.variant_id||'')));
+  (ex.data||[]).filter(x=>x.is_active).forEach(x=>excluded.add(String(x.product_id)));
+  renderPickers();
+  msg.textContent='Loaded '+fmOneRupeeProductsCache.length+' active products. Select eligible and excluded products.';
+ }catch(e){
+  const errorText=(e&&e.message)||String(e)||'Unknown database error';
+  if(box)box.textContent='Could not load product/offer data: '+errorText;
+  if(exbox)exbox.textContent='Could not load product/offer data: '+errorText;
+  msg.textContent='Load failed: '+errorText;
+  console.error('₹1 offer loader:',e);
+ }
 }
 function fmOneRupeeFilterProducts(){const q=(document.getElementById('fmOneRupeeProductSearch')?.value||'').trim().toLowerCase();document.querySelectorAll('.fm-one-rupee-product-row').forEach(r=>r.style.display=(!q||(r.dataset.search||'').includes(q))?'':'none');}
 function fmOneRupeeFilterExcludedProducts(){const q=(document.getElementById('fmOneRupeeExcludeSearch')?.value||'').trim().toLowerCase();document.querySelectorAll('.fm-one-rupee-exclude-row').forEach(r=>r.style.display=(!q||(r.dataset.search||'').includes(q))?'':'none');}
