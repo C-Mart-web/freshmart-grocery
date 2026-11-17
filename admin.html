@@ -2449,7 +2449,7 @@ async function fmAdminLoadOneRupeeOffer(){
  try{
   // Load catalog independently so an offer-settings permission error cannot leave both pickers spinning.
   const productResult=await fmSupabase.from('fm_products')
-    .select('id,product_name,unit,is_active')
+    .select('id,product_name,is_active')
     .eq('is_active',true).order('product_name').limit(1000);
   if(productResult.error)throw new Error('Product catalog: '+productResult.error.message);
   fmOneRupeeProductsCache=productResult.data||[];
