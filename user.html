@@ -66,7 +66,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 @media(max-width:680px){.fm-category-strip-wrap{padding:11px 9px 12px;margin-bottom:14px}.fm-category-tile{flex-basis:88px;min-width:88px;min-height:102px;padding:8px 5px}.fm-category-tile .fm-cat-visual{width:54px;height:50px}.fm-page-banner img{max-height:170px;min-height:90px}}
 
 
-.fm-product-gallery{position:relative}.fm-product-gallery-main{width:100%;height:145px;object-fit:contain;background:#f7fbf8;border-radius:10px}.fm-product-thumbs{display:flex;gap:5px;overflow:auto;margin-top:5px}.fm-product-thumbs img{width:34px;height:34px;object-fit:cover;border:1px solid #dce9df;border-radius:6px;cursor:pointer}.fm-variant-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.fm-variant-pill{border:1px solid #dce8df;background:#fff;color:#45594d;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:800}.fm-variant-pill.active{border:2px solid #168447;background:#eaf8ef;color:#126b39}.fm-product-card{border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0}
+.fm-product-gallery{position:relative}.fm-product-gallery-main{width:100%;height:145px;object-fit:contain;background:#f7fbf8;border-radius:10px}.fm-product-thumbs{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;margin-top:6px;padding:2px 1px 4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}.fm-product-thumbs img{width:46px;height:46px;flex:0 0 46px;object-fit:cover;border:1px solid #dce9df;border-radius:7px;cursor:pointer}.fm-variant-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.fm-variant-pill{border:1px solid #dce8df;background:#fff;color:#45594d;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:800}.fm-variant-pill.active{border:2px solid #168447;background:#eaf8ef;color:#126b39}.fm-product-card{border:1px solid #e1eee5;border-radius:13px;padding:10px;background:#fff;min-width:0}
 @media(max-width:680px){.fm-product-gallery-main{height:125px}}
 
 /* Sticky shopping cart summary */
@@ -87,7 +87,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 @media(min-width:681px){.fm-sticky-cart{left:auto;right:24px;bottom:24px;width:350px}}
 
 /* Compact mobile grocery cards: use two columns and reduce vertical whitespace. */
-@media(max-width:640px){#freshMartProductGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.fm-product-card{padding:7px!important;border-radius:11px!important}.fm-product-gallery-main{height:105px!important}.fm-product-thumbs img{width:27px!important;height:27px!important}.fm-variant-list{gap:4px!important;margin-top:6px!important}.fm-variant-pill{padding:4px 6px!important;font-size:10px!important}.fm-product-card .hint{font-size:10px!important}}
+@media(max-width:640px){#freshMartProductGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.fm-product-card{padding:7px!important;border-radius:11px!important}.fm-product-gallery-main{height:105px!important}.fm-product-thumbs img{width:38px!important;height:38px!important;flex:0 0 38px!important}.fm-variant-list{gap:4px!important;margin-top:6px!important}.fm-variant-pill{padding:4px 6px!important;font-size:10px!important}.fm-product-card .hint{font-size:10px!important}}
 
 /* Friendly animated bottom navigation: no floating usage banner */
 @media(max-width:680px){
@@ -2834,7 +2834,7 @@ document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 #freshMartProductGrid .fm-product-card{min-width:0;overflow:hidden;padding:8px!important;border-radius:13px!important}
 #freshMartProductGrid .fm-product-gallery-main{height:112px!important;object-fit:contain!important}
 #freshMartProductGrid .fm-product-thumbs{gap:4px!important}
-#freshMartProductGrid .fm-product-thumbs img{width:28px!important;height:28px!important}
+#freshMartProductGrid .fm-product-thumbs img{width:38px!important;height:38px!important;flex:0 0 38px!important}
 #freshMartProductGrid .fm-product-card b[style*="font-size:13px"]{font-size:12px!important;line-height:1.25!important}
 #freshMartProductGrid .fm-product-card button[data-shop-change="1"]{width:auto!important;min-width:0!important;min-height:32px!important;padding:6px 10px!important;font-size:11px!important;border-radius:8px!important}
 #freshMartProductGrid .fm-product-card div[style*="justify-content:center"][style*="border:1px solid"]{gap:7px!important;padding:3px!important}
@@ -3615,7 +3615,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout
 #freshMartProductGrid .fm-product-card{min-width:0;overflow:hidden;padding:8px!important;border-radius:13px!important}
 #freshMartProductGrid .fm-product-gallery-main{height:112px!important;object-fit:contain!important}
 #freshMartProductGrid .fm-product-thumbs{gap:4px!important}
-#freshMartProductGrid .fm-product-thumbs img{width:28px!important;height:28px!important}
+#freshMartProductGrid .fm-product-thumbs img{width:38px!important;height:38px!important;flex:0 0 38px!important}
 #freshMartProductGrid .fm-product-card b[style*="font-size:13px"]{font-size:12px!important;line-height:1.25!important}
 #freshMartProductGrid .fm-product-card button[data-shop-change="1"]{width:auto!important;min-width:0!important;min-height:32px!important;padding:6px 10px!important;font-size:11px!important;border-radius:8px!important}
 #freshMartProductGrid .fm-product-card div[style*="justify-content:center"][style*="border:1px solid"]{gap:7px!important;padding:3px!important}
