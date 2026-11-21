@@ -292,7 +292,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button class="navbtn" data-page="team"><span class="ico">👥</span>My Team</button>
   <button class="navbtn" data-page="wallets"><span class="ico">👛</span>My Wallets</button>
   <button class="navbtn" data-page="rewards"><span class="ico">🎁</span>My Rewards</button>
-  <button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
+  <button class="navbtn" data-page="investments"><span>📈</span>Investment ROI</button>
+<button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
   <button class="navbtn" data-page="orders"><span class="ico">📦</span>My Orders</button>
   <button class="navbtn" data-page="myoffers"><span class="ico">🎁</span>Coupons & Offers</button>
   <div class="navlabel">ACCOUNT</div>
@@ -523,7 +524,19 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <div class="card" style="margin-top:17px"><h2 style="font-size:17px">Need help?</h2><p class="hint">For payment or order support, contact Rupee Mart support. Support contact details will be configured by Super Admin.</p><button class="btn btn-outline">Contact Support</button></div>
 </section>
 <div class="footer-note">© Rupee Mart · Fresh groceries, smarter shopping.</div>
-<section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">Spin attempts follow the limit set by Admin. If you get No Prize / Try Again, you can spin again while attempts remain. Wallet rewards are credited directly to your Shopping Wallet.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" id="fmMyGiftRewardsCard" style="margin-top:14px"><h2>🎁 My Gift Rewards</h2><p class="hint">Your won gifts stay here even if you close the Congratulations window. Check your purchase progress and claim whenever you become eligible.</p><div id="fmMyGiftRewardsList" class="hint">Checking your gift rewards…</div></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section></main>
+<section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">Spin attempts follow the limit set by Admin. If you get No Prize / Try Again, you can spin again while attempts remain. Wallet rewards are credited directly to your Shopping Wallet.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" id="fmMyGiftRewardsCard" style="margin-top:14px"><h2>🎁 My Gift Rewards</h2><p class="hint">Your won gifts stay here even if you close the Congratulations window. Check your purchase progress and claim whenever you become eligible.</p><div id="fmMyGiftRewardsList" class="hint">Checking your gift rewards…</div></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section><section class="page" id="investments">
+ <div class="welcome"><div><h1>Investment ROI 📈</h1><p>Separate investment account. Principal returns first; extra income starts on the next working day after principal completion. Saturday and Sunday are non-credit days.</p></div></div>
+ <div class="grid"><div class="card"><div class="stat-head">Investment Wallet</div><div class="stat-value" id="fmInvWalletBalance">₹0</div><div class="stat-note">Separate from Membership / Income Wallet</div></div>
+ <div class="card"><div class="stat-head">My Investments</div><div class="stat-value" id="fmInvCount">0</div><div class="stat-note">Pending, active and completed</div></div></div>
+ <div class="card" style="margin-top:14px"><h2>Available Investment Plans</h2><p class="hint">Choose a plan and submit a request. Your investment starts only after admin verification and activation.</p><div id="fmInvPlans" class="hint">Loading plans…</div></div>
+ <div class="card" style="margin-top:14px"><h2>My Investment Accounts</h2><div class="tablewrap"><table><thead><tr><th>Plan</th><th>Investment</th><th>Principal / Extra</th><th>Progress</th><th>Status</th></tr></thead><tbody id="fmInvMyRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div></div>
+ <div class="card" style="margin-top:14px"><h2>Withdraw Investment Wallet</h2><p class="hint">A 10% processing charge is currently applied. The net amount is shown before submitting.</p>
+ <div class="field"><label>Amount (₹)</label><input id="fmInvWithdrawAmount" type="number" min="1" step="0.01" placeholder="Enter amount"></div>
+ <button class="btn btn-green" type="button" onclick="fmInvUserWithdraw()">Request Withdrawal</button><p class="hint" id="fmInvUserMsg" aria-live="polite"></p></div>
+ <div class="card" style="margin-top:14px"><h2>Investment Transactions</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead><tbody id="fmInvTxRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
+ <div class="card" style="margin-top:14px"><h2>Withdrawal History</h2><div class="tablewrap"><table><thead><tr><th>Requested</th><th>Charge</th><th>Net</th><th>Status</th></tr></thead><tbody id="fmInvUserWithdrawalRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
+</section>
+</main>
 </div>
 
 <div id="fmSpinWelcomeModal" role="dialog" aria-modal="true" aria-labelledby="fmSpinWelcomeTitle">
@@ -3995,6 +4008,45 @@ async function fmLoadOneRupeeOffer(){
 (function(){const cfg={apiKey:"AIzaSyD4iTJtzLZ4egz-iCpUIF8L4lV-a-Y7GKI",authDomain:"rupee-mart.firebaseapp.com",projectId:"rupee-mart",storageBucket:"rupee-mart.firebasestorage.app",messagingSenderId:"114105173221",appId:"1:114105173221:web:e783d45180c6c262bb800c"},vapid="BGhDcsT6TRu-t5JknPI74fwKSO_ZT0XSQVBhuS85H69SaW22z4cyL_3UWUtzYQktOQQv0X8MyeI2dVTarCLyU-M";window.rmEnableCustomerPush=async function(){try{if(!('Notification'in window)||!('serviceWorker'in navigator))throw Error('This browser does not support push notifications.');const perm=await Notification.requestPermission();if(perm!=='granted')throw Error('Allow notifications in browser settings.');if(!firebase.apps.length)firebase.initializeApp(cfg);const sw=await navigator.serviceWorker.register('/firebase-messaging-sw.js');const messaging=firebase.messaging(),token=await messaging.getToken({vapidKey:vapid,serviceWorkerRegistration:sw});if(!token)throw Error('Could not create notification token.');const {data:{session}}=await fmShopClient.auth.getSession();if(!session)throw Error('Please sign in first.');const res=await fetch(SUPABASE_URL+'/rest/v1/fm_customer_push_devices?on_conflict=user_id,device_token',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,device_token:token,platform:'web',is_active:true,updated_at:new Date().toISOString()})});if(!res.ok)throw Error(await res.text());localStorage.setItem('rm_customer_push_enabled','1');const btn=document.getElementById('rmCustomerPushEnableBtn');if(btn)btn.remove();alert('Rupee Mart offer notifications enabled on this device.');}catch(e){alert('Push setup: '+e.message);}};window.addEventListener('load',()=>{if(localStorage.getItem('rm_customer_push_enabled')==='1'||('Notification'in window&&Notification.permission==='granted'))return;if(!document.getElementById('rmCustomerPushEnableBtn')){const b=document.createElement('button');b.id='rmCustomerPushEnableBtn';b.type='button';b.textContent='🔔 Enable Offer Alerts';b.style.cssText='position:fixed;right:12px;bottom:82px;z-index:9999;background:#168447;color:white;border:0;border-radius:24px;padding:11px 14px;font-weight:800;box-shadow:0 4px 14px #0003';b.onclick=window.rmEnableCustomerPush;document.body.appendChild(b);}});})();
 </script>
 
+<script>
+/* Investment ROI User UI - separate Investment Wallet only. */
+let fmInvUserCache={plans:[],investments:[],transactions:[],withdrawals:[],wallet_balance:0};
+function fmInvUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
+function fmInvUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function fmInvUserLoad(){
+ const msg=document.getElementById('fmInvUserMsg');
+ try{
+  const {data,error}=await fmShopClient.rpc('fm_investment_my_data_v1');if(error)throw error;fmInvUserCache=data||{};
+  document.getElementById('fmInvWalletBalance').textContent=fmInvUserMoney(data.wallet_balance);
+  document.getElementById('fmInvCount').textContent=(data.investments||[]).length;
+  document.getElementById('fmInvPlans').innerHTML=(data.plans||[]).map(p=>`<div class="card" style="margin:10px 0"><b>${fmInvUserEsc(p.plan_name)}</b><p class="hint">Amount: ${fmInvUserMoney(p.min_investment_amount)} – ${p.max_investment_amount==null?'No maximum':fmInvUserMoney(p.max_investment_amount)}<br>Principal return: ${Number(p.principal_days||p.duration_days)} working days<br>Extra income: ${fmInvUserMoney(p.extra_income_amount||0)} over ${Number(p.extra_days||0)} working days<br>Saturday & Sunday: No credit</p><div class="field"><label>Investment amount (₹)</label><input type="number" min="${Number(p.min_investment_amount)}" ${p.max_investment_amount==null?'':'max="'+Number(p.max_investment_amount)+'"'} step="0.01" id="fmInvAmount${Number(p.id)}" placeholder="${Number(p.min_investment_amount)}"></div><button class="btn btn-green" type="button" onclick="fmInvUserSubmit(${Number(p.id)})">Submit Investment Request</button></div>`).join('')||'No active investment plans are available.';
+  document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>`<tr><td>${fmInvUserEsc(x.plan_id)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
+  document.getElementById('fmInvTxRows').innerHTML=(data.transactions||[]).map(x=>`<tr><td>${x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'—'}</td><td>${fmInvUserEsc(x.transaction_type)}</td><td>${fmInvUserMoney(x.amount)}</td><td>${fmInvUserEsc(x.description||x.source_type||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No transactions.</td></tr>';
+  document.getElementById('fmInvUserWithdrawalRows').innerHTML=(data.withdrawals||[]).map(x=>`<tr><td>${fmInvUserMoney(x.requested_amount)}</td><td>${fmInvUserMoney(x.charge_amount)}</td><td>${fmInvUserMoney(x.net_amount)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="4">No withdrawal requests.</td></tr>';
+ }catch(e){if(msg)msg.textContent='Investment page could not load: '+(e.message||e);console.error(e);}
+}
+async function fmInvUserSubmit(planId){
+ const msg=document.getElementById('fmInvUserMsg');try{
+  const amount=Number(document.getElementById('fmInvAmount'+planId)?.value);
+  if(!Number.isFinite(amount)||amount<=0)throw new Error('Enter a valid investment amount.');
+  const {data,error}=await fmShopClient.rpc('fm_investment_submit_v1',{p_plan_id:planId,p_amount:amount});if(error)throw error;
+  if(msg)msg.textContent='Request submitted. Investment ID: '+data.investment_id+'. It will start after admin activation.';
+  await fmInvUserLoad();
+ }catch(e){if(msg)msg.textContent='Request failed: '+(e.message||e);}
+}
+async function fmInvUserWithdraw(){
+ const msg=document.getElementById('fmInvUserMsg');try{
+  const amount=Number(document.getElementById('fmInvWithdrawAmount').value);
+  if(!Number.isFinite(amount)||amount<=0)throw new Error('Enter a valid withdrawal amount.');
+  const charge=amount*.10,net=amount-charge;
+  if(!confirm('Request '+fmInvUserMoney(amount)+' withdrawal? 10% charge: '+fmInvUserMoney(charge)+'. Net: '+fmInvUserMoney(net)+'.'))return;
+  const {data,error}=await fmShopClient.rpc('fm_investment_withdraw_v1',{p_amount:amount});if(error)throw error;
+  if(msg)msg.textContent='Withdrawal request submitted. Reference: '+data.withdrawal_ref;
+  await fmInvUserLoad();
+ }catch(e){if(msg)msg.textContent='Withdrawal failed: '+(e.message||e);}
+}
+document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvUserLoad,250);},true);
+</script>
 </body>
 
 <style id="rm-user-install-button-mobile-fix">
