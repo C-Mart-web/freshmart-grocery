@@ -1,0 +1,26 @@
+{
+  "id": "/admin.html",
+  "name": "Rupee Mart Admin",
+  "short_name": "RM Admin",
+  "description": "Rupee Mart Super Admin Portal",
+  "start_url": "/admin.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6faf7",
+  "theme_color": "#168447",
+  "icons": [
+    {
+      "src": "/rm-admin-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/rm-admin-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
