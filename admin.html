@@ -76,9 +76,10 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <style>#fmAreaMap{height:300px;border:1px solid #dbe8de;border-radius:14px;z-index:1;margin:12px 0}.leaflet-container{font:inherit}</style>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
+<link rel="manifest" href="/manifest-admin.json"><meta name="theme-color" content="#168447"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Rupee Mart Admin"><link rel="apple-touch-icon" href="/rm-admin-icon-192.png">
 </head>
 <body>
-<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo" id="fmAdminBrandLogo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="fm-notify-wrap"><button type="button" class="fm-notify-bell" id="fmNotifyBell" onclick="fmNotifyToggle()" aria-label="Notifications">🔔<span id="fmNotifyBadge" class="fm-notify-badge" style="display:none">0</span></button><div class="fm-notify-panel" id="fmNotifyPanel"><div class="fm-notify-head"><strong>Notifications</strong><button type="button" class="btn btn-outline btn-sm" onclick="fmNotifyLoad()">Refresh</button></div><div id="fmNotifyPermissionArea" class="fm-notify-permission"><span id="fmNotifyDeviceStatus">Enable notifications on this device to receive alerts.</span><button type="button" class="btn btn-green btn-sm" id="fmEnablePushBtn" onclick="fmEnableAdminPush()">Enable</button></div><div id="fmNotifyRows" class="fm-notify-rows"><div class="empty">Sign in to view notifications.</div></div></div></div><div class="avatar">SA</div></div></header>
+<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo" id="fmAdminBrandLogo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><button type="button" id="fmAdminInstallBtn" class="btn btn-outline btn-sm" style="display:none">📲 Install Admin App</button><div class="fm-notify-wrap"><button type="button" class="fm-notify-bell" id="fmNotifyBell" onclick="fmNotifyToggle()" aria-label="Notifications">🔔<span id="fmNotifyBadge" class="fm-notify-badge" style="display:none">0</span></button><div class="fm-notify-panel" id="fmNotifyPanel"><div class="fm-notify-head"><strong>Notifications</strong><button type="button" class="btn btn-outline btn-sm" onclick="fmNotifyLoad()">Refresh</button></div><div id="fmNotifyPermissionArea" class="fm-notify-permission"><span id="fmNotifyDeviceStatus">Enable notifications on this device to receive alerts.</span><button type="button" class="btn btn-green btn-sm" id="fmEnablePushBtn" onclick="fmEnableAdminPush()">Enable</button></div><div id="fmNotifyRows" class="fm-notify-rows"><div class="empty">Sign in to view notifications.</div></div></div></div><div class="avatar">SA</div></div></header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
 <div class="layout">
 <aside class="sidebar">
@@ -2653,6 +2654,18 @@ const FM_FIREBASE_VAPID_KEY = "BGhDcsT6TRu-t5JknPI74fwKSO_ZT0XSQVBhuS85H69SaW22z
 let fmAdminPushMessaging = null;
 let fmAdminPushChannel = null;
 let fmAdminPushUserId = null;
+// Dedicated install prompt for the Super Admin PWA.
+(function fmAdminPwaInstall(){
+ let deferred=null;const btn=document.getElementById('fmAdminInstallBtn');
+ const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ if(!btn)return;
+ if(standalone()){btn.style.display='none';return;}
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.style.display='inline-flex';});
+ btn.addEventListener('click',async()=>{if(!deferred){alert('Chrome menu ⋮ → Add to Home screen / Install app select cheyyandi.');return;}deferred.prompt();try{const choice=await deferred.userChoice;if(choice?.outcome==='accepted')btn.style.display='none';}catch(e){console.warn('Admin install prompt:',e);}deferred=null;});
+ window.addEventListener('appinstalled',()=>{btn.style.display='none';deferred=null;});
+})();
+let fmAdminNotificationCache=[];
+
 
 function fmNotifyToggle(){
  const panel=document.getElementById('fmNotifyPanel');
@@ -2686,9 +2699,9 @@ async function fmNotifyLoad(){
    .select('id,event_type,title,body,data,is_read,created_at')
    .eq('recipient_admin_id',uid).order('created_at',{ascending:false}).limit(40);
   if(error)throw error;
-  const rows=data||[],unread=rows.filter(x=>!x.is_read).length;
+  const rows=data||[];fmAdminNotificationCache=rows;const unread=rows.filter(x=>!x.is_read).length;
   if(badge){badge.textContent=unread>99?'99+':String(unread);badge.style.display=unread?'inline-flex':'none';}
-  host.innerHTML=rows.length?rows.map(x=>`<div class="fm-notify-row ${x.is_read?'':'unread'}" data-notify-id="${fmNotifyEscape(x.id)}" onclick="fmNotifyMarkRead('${fmNotifyEscape(x.id)}')"><b>${fmNotifyEscape(x.title||'Notification')}</b><p>${fmNotifyEscape(x.body||'')}</p><small>${fmNotifyEscape(x.event_type||'Update')} · ${fmNotifyEscape(fmNotifyTime(x.created_at))}</small></div>`).join(''):'<div class="empty">No notifications yet.</div>';
+  host.innerHTML=rows.length?rows.map(x=>`<div class="fm-notify-row ${x.is_read?'':'unread'}" data-notify-id="${fmNotifyEscape(x.id)}" onclick="fmNotifyOpen('${fmNotifyEscape(x.id)}')"><b>${fmNotifyEscape(x.title||'Notification')}</b><p>${fmNotifyEscape(x.body||'')}</p><small>${fmNotifyEscape(x.event_type||'Update')} · ${fmNotifyEscape(fmNotifyTime(x.created_at))}</small></div>`).join(''):'<div class="empty">No notifications yet.</div>';
   const status=document.getElementById('fmNotifyDeviceStatus');
   if(status&&'Notification'in window)status.textContent=Notification.permission==='granted'?'This device is ready for push notifications.':Notification.permission==='denied'?'Notifications are blocked in browser settings.':'Enable notifications on this device to receive alerts.';
   const enable=document.getElementById('fmEnablePushBtn');
@@ -2698,12 +2711,24 @@ async function fmNotifyLoad(){
  }
 }
 async function fmNotifyMarkRead(id){
+ const uid=fmAdminPushUserId||await fmNotifyCurrentUser();
+ const {error}=await fmSupabase.from('fm_admin_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',id).eq('recipient_admin_id',uid);
+ if(error)throw error;
+}
+async function fmNotifyOpen(id){
  try{
-  const uid=fmAdminPushUserId||await fmNotifyCurrentUser();
-  const {error}=await fmSupabase.from('fm_admin_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',id).eq('recipient_admin_id',uid);
-  if(error)throw error;
+  const row=fmAdminNotificationCache.find(x=>String(x.id)===String(id));if(!row)return;
+  await fmNotifyMarkRead(id);
+  const panel=document.getElementById('fmNotifyPanel');panel?.classList.remove('open');
+  const type=String(row.event_type||'').toLowerCase(),d=row.data||{};
+  let target='dashboard';
+  if(d.order_id||type.includes('order'))target='orders';
+  else if(type.includes('payment')||type.includes('upi')||d.payment_id||d.request_id)target='payments';
+  showPage(target);
+  if(target==='orders'&&d.order_id){const q=document.getElementById('fmOrderSearch');if(q){q.value=String(d.order_number||d.order_id);if(typeof fmRenderOrders==='function')fmRenderOrders();}}
+  if(target==='payments'&&d.transaction_reference){const q=document.getElementById('paymentSearch');if(q){q.value=String(d.transaction_reference);q.dispatchEvent(new Event('input'));}}
   await fmNotifyLoad();
- }catch(e){console.warn('Notification read update failed:',e);}
+ }catch(e){console.warn('Notification open failed:',e);alert('Notification open failed: '+(e.message||e));}
 }
 async function fmEnableAdminPush(){
  const btn=document.getElementById('fmEnablePushBtn'),status=document.getElementById('fmNotifyDeviceStatus');

@@ -42,7 +42,7 @@
 <header class="topbar">
  <div class="topinner">
   <a class="brand" href="index.html" aria-label="Rupee Mart home"><div class="brandmark">🛒</div><div class="brandname">Rupee<span> Mart</span></div></a>
-  <div class="delivery"><small>Delivering to</small> <strong id="deliveryPlace">Your location</strong> <button type="button" id="changeLocation">Change</button></div>
+  <div class="delivery"><small>Delivering to</small> <strong id="deliveryPlace">Detecting location…</strong> <button type="button" id="changeLocation">Change</button></div>
   <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search for atta, milk, vegetables..." aria-label="Search products"><select id="voiceLanguage" class="voice-lang" aria-label="Voice search language"><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select><button id="voiceSearchBtn" class="voice-btn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
   <div class="actions"><a class="action" href="login.html">Login</a><a class="action primary" href="register.html">Join / Register</a><button class="action" type="button" id="indexCartButton" aria-label="Open Cart">🛒 <span class="cartcount" id="cartCount">0</span></button></div>
  </div>
@@ -281,7 +281,26 @@
  if(!SpeechRecognition){voiceBtn.disabled=true;voiceBtn.title='Voice search is not supported in this browser. Try Chrome.';voiceBtn.style.opacity='.45';}
  else{voiceBtn.addEventListener('click',()=>{try{const rec=new SpeechRecognition();rec.lang=voiceLang.value;rec.continuous=false;rec.interimResults=false;voiceBtn.classList.add('listening');voiceBtn.textContent='…';rec.onresult=e=>{const spoken=e.results?.[0]?.[0]?.transcript||'';if(spoken){search.value=spoken;filterProducts();showToast('Searching: '+spoken)}};rec.onerror=e=>showToast(e.error==='not-allowed'?'Please allow microphone access.':'Voice search failed. Please try again.');rec.onend=()=>{voiceBtn.classList.remove('listening');voiceBtn.textContent='🎤'};rec.start();}catch(e){voiceBtn.classList.remove('listening');voiceBtn.textContent='🎤';showToast('Voice search could not start. Use HTTPS Chrome and allow microphone.')}})}
 
- document.getElementById('changeLocation').addEventListener('click',()=>{const pin=prompt('Enter your 6-digit delivery pincode:');if(pin===null)return;if(!/^[0-9]{6}$/.test(pin)){showToast('Please enter a valid 6-digit pincode');return}document.getElementById('deliveryPlace').textContent='Pincode '+pin;showToast('Location selected for this browsing session')});
+ const RM_PIN_KEY='rm_delivery_pincode';
+ function rmShowPincode(pin,area){const el=document.getElementById('deliveryPlace');if(el)el.textContent=(area?area+' · ':'')+'PIN '+pin;}
+ function rmSavePincode(pin,area){localStorage.setItem(RM_PIN_KEY,pin);if(area)localStorage.setItem('rm_delivery_area',area);else localStorage.removeItem('rm_delivery_area');rmShowPincode(pin,area||'');}
+ async function rmDetectPincode(){
+   const saved=localStorage.getItem(RM_PIN_KEY),savedArea=localStorage.getItem('rm_delivery_area');
+   if(saved&&/^[0-9]{6}$/.test(saved)){rmShowPincode(saved,savedArea||'');return;}
+   const el=document.getElementById('deliveryPlace');if(el)el.textContent='Detecting location…';
+   if(!navigator.geolocation){if(el)el.textContent='Choose delivery PIN';return;}
+   navigator.geolocation.getCurrentPosition(async pos=>{
+     try{
+       const url='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+encodeURIComponent(pos.coords.latitude)+'&longitude='+encodeURIComponent(pos.coords.longitude)+'&localityLanguage=en';
+       const res=await fetch(url,{headers:{'Accept':'application/json'}});if(!res.ok)throw new Error('Location lookup failed');
+       const place=await res.json();const pin=String(place.postcode||'').replace(/\D/g,'').slice(0,6);
+       if(!/^[0-9]{6}$/.test(pin))throw new Error('Pincode not available for this location');
+       const area=place.locality||place.city||place.principalSubdivision||'';rmSavePincode(pin,area);showToast('Delivery location detected');
+     }catch(e){if(el)el.textContent='Choose delivery PIN';console.warn('Pincode lookup:',e);}
+   },()=>{if(el)el.textContent='Choose delivery PIN';},{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+ }
+ document.getElementById('changeLocation').addEventListener('click',()=>{const pin=prompt('Enter your 6-digit delivery pincode:',localStorage.getItem(RM_PIN_KEY)||'');if(pin===null)return;const clean=pin.trim();if(!/^[0-9]{6}$/.test(clean)){showToast('Please enter a valid 6-digit pincode');return}rmSavePincode(clean,'');showToast('Delivery pincode saved on this device')});
+ rmDetectPincode();
  async function loadFreshMartOffers(){const box=document.getElementById('fmLiveOfferGrid');if(!box||!db)return;try{const {data,error}=await db.from('fm_offer_campaigns').select('id,title,description,offer_type,badge_text,discount_type,discount_value,starts_at,ends_at,is_active,sort_order').eq('is_active',true).order('sort_order').limit(8);if(error)throw error;const now=Date.now(),rows=(data||[]).filter(x=>(!x.starts_at||new Date(x.starts_at).getTime()<=now)&&(!x.ends_at||new Date(x.ends_at).getTime()>=now));box.innerHTML=rows.length?rows.map(x=>'<article class="offer green"><div><small>'+esc(x.badge_text||'SPECIAL OFFER')+'</small><h3>'+esc(x.title)+'</h3><p>'+esc(x.description||'Shop now at Rupee Mart')+'</p>'+(x.discount_value>0?'<b style="color:#168447">'+(x.discount_type==='percent'?Number(x.discount_value)+'% OFF':'₹'+Number(x.discount_value)+' OFF')+'</b>':'')+'</div><div class="offer-icon">🎁</div></article>').join(''):'<div class="offer yellow"><div><small>Rupee Mart</small><h3>Offers coming soon</h3><p>Check back for new deals.</p></div><div class="offer-icon">🛍️</div></div>';}catch(e){box.innerHTML='<div class="offer yellow"><div><small>Offers</small><h3>Deals coming soon</h3><p>Refresh to check current offers.</p></div><div class="offer-icon">🎁</div></div>';}}
  loadLiveStore();loadFreshMartOffers();
 })();
