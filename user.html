@@ -277,6 +277,15 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
+<div id="fmInvestmentNoticeModal" role="dialog" aria-modal="true" aria-labelledby="fmInvestmentNoticeTitle" style="display:none;position:fixed;inset:0;z-index:12000;background:rgba(5,20,12,.68);padding:18px;align-items:center;justify-content:center;">
+ <div style="width:min(100%,430px);background:#fff;border-radius:20px;padding:25px 20px;text-align:center;box-shadow:0 18px 60px #0004;border:1px solid #dcebe0;">
+  <div id="fmInvestmentNoticeIcon" style="font-size:46px;margin-bottom:8px">🎉</div>
+  <h2 id="fmInvestmentNoticeTitle" style="margin:0 0 10px;color:#176b3d;font-size:23px">Payment Submitted Successfully!</h2>
+  <p id="fmInvestmentNoticeText" style="margin:0;color:#52645a;font-size:15px;line-height:1.55">Your payment details have been submitted successfully. Your investment plan will be activated after company verification.</p>
+  <div id="fmInvestmentNoticeStatus" style="display:inline-block;margin:15px 0 4px;padding:7px 13px;border-radius:20px;background:#fff4d8;color:#956500;font-size:12px;font-weight:850">Pending Company Verification</div>
+  <div><button type="button" id="fmInvestmentNoticeOk" class="btn btn-green" style="min-width:125px;margin-top:13px" onclick="fmInvCloseNotice()">OK</button></div>
+ </div>
+</div>
 <header class="topbar">
   <button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button>
   <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
@@ -528,8 +537,8 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  <div class="welcome"><div><h1>Investment ROI 📈</h1><p>Separate investment account. Principal returns first; extra income starts on the next working day after principal completion. Saturday and Sunday are non-credit days.</p></div></div>
  <div class="grid"><div class="card"><div class="stat-head">Investment Wallet</div><div class="stat-value" id="fmInvWalletBalance">₹0</div><div class="stat-note">Separate from Membership / Income Wallet</div></div>
  <div class="card"><div class="stat-head">My Investments</div><div class="stat-value" id="fmInvCount">0</div><div class="stat-note">Pending, active and completed</div></div></div>
- <div class="card" style="margin-top:14px"><h2>Available Investment Plans</h2><p class="hint">Choose a plan and submit a request. Your investment starts only after admin verification and activation.</p><div id="fmInvPlans" class="hint">Loading plans…</div></div>
- <div class="card" id="fmInvPaymentBox" style="display:none;margin-top:14px"><h2>Complete Investment Payment</h2><p class="hint">Pay the exact amount using the UPI details below. After payment, enter UTR and upload screenshot.</p><div id="fmInvQrArea" style="text-align:center;margin:12px 0"></div><p><b>Payee:</b> <span id="fmInvPayee"></span><br><b>UPI ID:</b> <span id="fmInvUpi"></span><br><b>Amount:</b> <span id="fmInvPayAmount"></span><br><b>Reference:</b> <span id="fmInvPayRef"></span></p><div class="field"><label>UTR / Transaction ID</label><input id="fmInvUtr" maxlength="80" placeholder="Enter UTR after payment"></div><div class="field"><label>Payment Screenshot</label><input id="fmInvProofFile" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-green" type="button" onclick="fmInvSubmitPayment()">Submit Payment Details</button><button class="btn btn-outline" type="button" onclick="fmInvClosePayment()">Close</button><p class="hint" id="fmInvPaymentUserMsg" aria-live="polite"></p></div>
+ <div class="card" style="margin-top:14px"><h2>Available Investment Plans</h2><p class="hint">Choose a plan and submit a request. Your investment starts only after company verification and activation.</p><div id="fmInvPlans" class="hint">Loading plans…</div></div>
+ <div class="card" id="fmInvPaymentBox" style="display:none;margin-top:14px"><h2>Complete Investment Payment</h2><p class="hint">Pay the exact amount using the UPI details below. After payment, enter UTR and upload screenshot.</p><div id="fmInvQrArea" style="text-align:center;margin:12px 0"></div><p><b>Payee:</b> <span id="fmInvPayee"></span><br><b>UPI ID:</b> <span id="fmInvUpi"></span><br><b>Amount:</b> <span id="fmInvPayAmount"></span><br><b>Reference:</b> <span id="fmInvPayRef"></span></p><div class="field"><label>UTR / Transaction ID</label><input id="fmInvUtr" maxlength="80" placeholder="Enter UTR after payment"></div><div class="field"><label>Payment Screenshot</label><input id="fmInvProofFile" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-green" type="button" onclick="fmInvSubmitPayment()">Submit Payment Details</button><button class="btn btn-outline" type="button" onclick="fmInvClosePayment()">Close</button><p class="hint" id="fmInvPaymentUserMsg" aria-live="polite" style="display:none"></p></div>
  <div class="card" style="margin-top:14px"><h2>My Investment Accounts</h2><div class="tablewrap"><table><thead><tr><th>Plan</th><th>Investment</th><th>Principal / Extra</th><th>Progress</th><th>Status</th></tr></thead><tbody id="fmInvMyRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div></div>
  <div class="card" style="margin-top:14px"><h2>Withdraw Investment Wallet</h2><p class="hint">A 10% processing charge is currently applied. The net amount is shown before submitting.</p>
  <div class="field"><label>Amount (₹)</label><input id="fmInvWithdrawAmount" type="number" min="1" step="0.01" placeholder="Enter amount"></div>
@@ -4017,6 +4026,42 @@ async function fmLoadOneRupeeOffer(){
 let fmInvUserCache={plans:[],investments:[],transactions:[],withdrawals:[],wallet_balance:0};
 function fmInvUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
 function fmInvUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+let fmInvNoticeQueue=[];
+let fmInvNoticeCurrent=null;let fmInvNoticeUserId=null;
+function fmInvShowNotice(kind,investment){
+ const modal=document.getElementById('fmInvestmentNoticeModal');if(!modal)return;
+ fmInvNoticeCurrent={kind,investment,userId:fmInvNoticeUserId};
+ const activation=kind==='activation';
+ document.getElementById('fmInvestmentNoticeIcon').textContent=activation?'🎉':'✓';
+ document.getElementById('fmInvestmentNoticeTitle').textContent=activation?'Plan Successfully Activated!':'Payment Submitted Successfully!';
+ document.getElementById('fmInvestmentNoticeText').textContent=activation?'Your investment plan has been successfully activated. You can now view your investment details and Investment Wallet.':'Your payment details have been submitted successfully. Your investment plan will be activated after company verification.';
+ const status=document.getElementById('fmInvestmentNoticeStatus');status.textContent=activation?'Plan Activated':'Pending Company Verification';status.style.background=activation?'#e4f8eb':'#fff4d8';status.style.color=activation?'#177440':'#956500';
+ modal.style.display='flex';
+}
+function fmInvCloseNotice(){
+ const modal=document.getElementById('fmInvestmentNoticeModal');if(modal)modal.style.display='none';
+ if(fmInvNoticeCurrent?.kind==='activation'&&fmInvNoticeCurrent.investment){
+  try{const key='rm_inv_activation_seen_'+fmInvNoticeCurrent.userId;const seen=JSON.parse(localStorage.getItem(key)||'[]');if(!seen.includes(String(fmInvNoticeCurrent.investment.id))){seen.push(String(fmInvNoticeCurrent.investment.id));localStorage.setItem(key,JSON.stringify(seen));}}catch(e){console.warn('Could not save investment notice state',e);}
+ }
+ fmInvNoticeCurrent=null;
+ if(fmInvNoticeQueue.length){const next=fmInvNoticeQueue.shift();fmInvNoticeCurrent={kind:'activation',investment:next,userId:fmInvNoticeUserId};fmInvShowNotice('activation',next);}
+}
+async function fmInvCheckActivationNotices(){
+ try{
+  const noticeModal=document.getElementById('fmInvestmentNoticeModal');if(noticeModal&&noticeModal.style.display==='flex')return;
+  if(!fmShopClient)return;
+  const {data:{user},error}=await fmShopClient.auth.getUser();if(error||!user)return;
+  const {data,error:rpcError}=await fmShopClient.rpc('fm_investment_my_data_v1');if(rpcError||!data)return;
+  fmInvUserCache=data;
+  const key='rm_inv_activation_seen_'+user.id;let seen=[];try{seen=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(seen))seen=[];}catch(e){seen=[];}
+  const unseen=(data.investments||[]).filter(x=>String(x.status||'').toLowerCase()==='active'&&x.activated_at&&!seen.includes(String(x.id))).sort((a,b)=>new Date(a.activated_at)-new Date(b.activated_at));
+  if(!unseen.length)return;
+  const next=unseen[0];fmInvNoticeQueue=unseen.slice(1);fmInvNoticeUserId=user.id;fmInvNoticeCurrent={kind:'activation',investment:next,userId:user.id};
+  fmInvShowNotice('activation',next);
+ }catch(e){console.warn('Investment activation notice check failed:',e);}
+}
+
 async function fmInvUserLoad(){
  const msg=document.getElementById('fmInvUserMsg');
  const plansBox=document.getElementById('fmInvPlans');
@@ -4033,7 +4078,7 @@ async function fmInvUserLoad(){
   document.getElementById('fmInvWalletBalance').textContent=fmInvUserMoney(data.wallet_balance);
   document.getElementById('fmInvCount').textContent=(data.investments||[]).length;
   document.getElementById('fmInvPlans').innerHTML=(data.plans||[]).map(p=>`<div class="card" style="margin:10px 0"><b>${fmInvUserEsc(p.plan_name)}</b><p class="hint">Fixed investment amount: <strong>${fmInvUserMoney(p.min_investment_amount)}</strong><br>Principal return: ${Number(p.principal_days||p.duration_days)} working days<br>Extra income: ${fmInvUserMoney(p.extra_income_amount||0)} over ${Number(p.extra_days||0)} working days<br>Saturday & Sunday: No credit</p><button class="btn btn-green" type="button" onclick="fmInvUserSubmit(${Number(p.id)})">Invest ${fmInvUserMoney(p.min_investment_amount)}</button></div>`).join('')||'No active investment plans are available.';
-  document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>{const planName=(data.plans||[]).find(p=>Number(p.id)===Number(x.plan_id))?.plan_name||('Plan #'+x.plan_id);return `<tr><td>${fmInvUserEsc(planName)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`}).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
+  document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>{const planName=(data.plans||[]).find(p=>Number(p.id)===Number(x.plan_id))?.plan_name||('Plan #'+x.plan_id);return `<tr><td>${fmInvUserEsc(planName)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${String(x.status||'').toLowerCase()==='active'?'Plan Activated':String(x.status||'').toLowerCase()==='pending'?'Pending Company Verification':String(x.status||'').toLowerCase()==='rejected'?'Payment Rejected':fmInvUserEsc(x.status)}</td></tr>`}).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
   document.getElementById('fmInvTxRows').innerHTML=(data.transactions||[]).map(x=>`<tr><td>${x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'—'}</td><td>${fmInvUserEsc(x.transaction_type)}</td><td>${fmInvUserMoney(x.amount)}</td><td>${fmInvUserEsc(x.description||x.source_type||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No transactions.</td></tr>';
   document.getElementById('fmInvUserWithdrawalRows').innerHTML=(data.withdrawals||[]).map(x=>`<tr><td>${fmInvUserMoney(x.requested_amount)}</td><td>${fmInvUserMoney(x.charge_amount)}</td><td>${fmInvUserMoney(x.net_amount)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="4">No withdrawal requests.</td></tr>';
  }catch(e){
@@ -4061,7 +4106,7 @@ async function fmInvUserSubmit(planId){
  }catch(e){if(msg)msg.textContent='Request failed: '+(e.message||e);}
 }
 function fmInvClosePayment(){document.getElementById('fmInvPaymentBox').style.display='none';}
-async function fmInvSubmitPayment(){const msg=document.getElementById('fmInvPaymentUserMsg');try{if(!fmInvCurrentPayment)throw new Error('No payment request is selected.');const utr=document.getElementById('fmInvUtr').value.trim();const file=document.getElementById('fmInvProofFile').files[0];if(!file)throw new Error('Select payment screenshot.');if(!/^image\/(png|jpeg|webp)$/.test(file.type))throw new Error('Upload PNG, JPG or WEBP image.');if(file.size>5*1024*1024)throw new Error('Screenshot must be 5 MB or smaller.');const {data:{user},error:ue}=await fmShopClient.auth.getUser();if(ue)throw ue;if(!user)throw new Error('Please sign in again.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path='common-upi/'+user.id+'/investment-'+fmInvCurrentPayment.investment_id+'-'+Date.now()+'.'+ext;const up=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;const res=await fmShopClient.rpc('fm_investment_payment_submit_v1',{p_payment_id:fmInvCurrentPayment.id,p_utr_number:utr,p_screenshot_path:path});if(res.error)throw res.error;msg.textContent='Payment submitted successfully; please wait 5–10 minutes while Admin verifies.';document.getElementById('fmInvUserMsg').textContent='Payment submitted. Investment will activate only after Admin verification.';document.getElementById('fmInvUtr').value='';document.getElementById('fmInvProofFile').value='';await fmInvUserLoad();}catch(e){msg.textContent='Payment submission failed: '+(e.message||e);}}
+async function fmInvSubmitPayment(){const msg=document.getElementById('fmInvPaymentUserMsg');try{if(!fmInvCurrentPayment)throw new Error('No payment request is selected.');const utr=document.getElementById('fmInvUtr').value.trim();const file=document.getElementById('fmInvProofFile').files[0];if(!file)throw new Error('Select payment screenshot.');if(!/^image\/(png|jpeg|webp)$/.test(file.type))throw new Error('Upload PNG, JPG or WEBP image.');if(file.size>5*1024*1024)throw new Error('Screenshot must be 5 MB or smaller.');const {data:{user},error:ue}=await fmShopClient.auth.getUser();if(ue)throw ue;if(!user)throw new Error('Please sign in again.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path='common-upi/'+user.id+'/investment-'+fmInvCurrentPayment.investment_id+'-'+Date.now()+'.'+ext;const up=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;const res=await fmShopClient.rpc('fm_investment_payment_submit_v1',{p_payment_id:fmInvCurrentPayment.id,p_utr_number:utr,p_screenshot_path:path});if(res.error)throw res.error;document.getElementById('fmInvUtr').value='';document.getElementById('fmInvProofFile').value='';document.getElementById('fmInvPaymentBox').style.display='none';fmInvCurrentPayment=null;if(msg)msg.textContent='';document.getElementById('fmInvUserMsg').textContent='';await fmInvUserLoad();fmInvShowNotice('payment');}catch(e){msg.textContent='Payment submission failed: '+(e.message||e);}}
 
 async function fmInvUserWithdraw(){
  const msg=document.getElementById('fmInvUserMsg');try{
@@ -4077,8 +4122,15 @@ async function fmInvUserWithdraw(){
 document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvUserLoad,250);},true);
 // Also load when the browser opens or restores the page directly at #investments.
 window.addEventListener('load',function(){
- if(decodeURIComponent((location.hash||'').slice(1))==='investments') fmInvUserLoad();
+ const current=decodeURIComponent((location.hash||'').slice(1));
+ if(current==='investments') fmInvUserLoad();
+ // Check activations on every login/page load, even when the member opens another page.
+ setTimeout(fmInvCheckActivationNotices,1800);
+ // Keep checking while the member stays on the site so activation appears without navigation.
+ window.setInterval(fmInvCheckActivationNotices,20000);
 });
+document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fmInvCheckActivationNotices,500);});
+window.addEventListener('focus',function(){setTimeout(fmInvCheckActivationNotices,500);});
 </script>
 </body>
 
