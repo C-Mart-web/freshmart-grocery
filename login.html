@@ -65,6 +65,12 @@ body{flex-direction:column;align-items:center;justify-content:flex-start;gap:0;p
 }
 </style>
 
+ <link rel="manifest" href="/manifest.json">
+ <meta name="theme-color" content="#198754">
+ <meta name="mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-title" content="Rupee Mart">
+ <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
 <div class="rm-login-ambient" aria-hidden="true"><div class="rm-float cart">🛒</div><div class="rm-float grocery">🥬</div><div class="rm-float wallet">👛</div><div class="rm-float coins">🪙</div><div class="rm-flow"><span>🛒</span><span>→</span><span>📦</span><span>→</span><span>💰</span></div></div>
@@ -188,6 +194,63 @@ document.getElementById('forgot').addEventListener('click',async e=>{
     if(ambient)ambient.style.display='block';
   }
  }catch(e){console.warn('Login hero design could not be loaded; default floating grocery design remains.',e);}
+})();
+</script>
+
+
+<script id="rupee-mart-pwa-install">
+(function(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(function(reg){console.log('Rupee Mart service worker ready:',reg.scope);})
+        .catch(function(err){console.warn('Rupee Mart service worker registration failed:',err);});
+    });
+  }
+  var deferredPrompt=null;
+  var loginBtn=document.getElementById('rmLoginInstallBtn');
+  var userBtn=document.getElementById('rmUserInstallBtn');
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone===true;
+  }
+  function hideButtons(){
+    if(loginBtn)loginBtn.style.display='none';
+    if(userBtn)userBtn.style.display='none';
+  }
+  function showEligibleButton(){
+    if(isStandalone()){hideButtons();return;}
+    if(deferredPrompt){
+      if(loginBtn)loginBtn.style.display='block';
+      if(userBtn)userBtn.style.display='inline-block';
+    }
+  }
+  window.addEventListener('beforeinstallprompt',function(event){
+    event.preventDefault();
+    deferredPrompt=event;
+    showEligibleButton();
+  });
+  async function installApp(){
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    try{
+      var choice=await deferredPrompt.userChoice;
+      if(choice && choice.outcome==='accepted')hideButtons();
+    }catch(e){console.warn('Install prompt result:',e);}
+    deferredPrompt=null;
+  }
+  if(loginBtn)loginBtn.addEventListener('click',installApp);
+  if(userBtn)userBtn.addEventListener('click',installApp);
+  window.addEventListener('appinstalled',function(){
+    deferredPrompt=null;hideButtons();
+    try{localStorage.setItem('rm_pwa_installed','1');}catch(e){}
+  });
+  if(isStandalone())hideButtons();
+  // A regular browser visit after an uninstall should be eligible again.
+  if(!isStandalone()){
+    try{localStorage.removeItem('rm_pwa_installed');}catch(e){}
+  }
 })();
 </script>
 

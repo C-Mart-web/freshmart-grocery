@@ -269,12 +269,18 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 .fm-wallet-compact .fm-wallet-daily{font-size:11px;line-height:1.3;font-weight:800;color:#176b3d;background:#effaf2;border-radius:8px;padding:7px 8px;margin-top:8px}
 .fm-wallet-compact .btn{margin-top:9px!important;padding:9px 10px!important;font-size:13px}
 </style>
-<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style></head>
+<style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style> <link rel="manifest" href="/manifest.json">
+ <meta name="theme-color" content="#198754">
+ <meta name="mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-title" content="Rupee Mart">
+ <link rel="apple-touch-icon" href="/icon-192.png">
+</head>
 <body>
 <header class="topbar">
   <button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button>
   <div class="brand"><div class="logo">🛒</div><span>Rupee Mart</span></div>
-  <div class="topright"><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><button class="signout-btn" type="button" onclick="showPage('cart')" aria-label="Open Cart" style="position:relative;font-size:18px;padding:8px 11px"><span class="fm-top-cart-visual"><span class="fm-cart-goods">🥬🥕</span><span class="fm-cart-basket">🛒</span></span><span id="fmTopCartCount" style="font-size:10px;background:#d8f36a;color:#173a26;border-radius:20px;padding:2px 6px;margin-left:3px">0</span></button><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
+  <div class="topright"><button type="button" id="rmUserInstallBtn" class="signout-btn" style="display:none">📲 Install App</button><div class="userlabel"><strong id="topWelcome">Welcome, Member</strong><div class="small" id="topUserCode">Your grocery & rewards hub</div></div><button class="signout-btn" type="button" onclick="showPage('cart')" aria-label="Open Cart" style="position:relative;font-size:18px;padding:8px 11px"><span class="fm-top-cart-visual"><span class="fm-cart-goods">🥬🥕</span><span class="fm-cart-basket">🛒</span></span><span id="fmTopCartCount" style="font-size:10px;background:#d8f36a;color:#173a26;border-radius:20px;padding:2px 6px;margin-left:3px">0</span></button><div class="avatar" id="userAvatar">FM</div><button class="signout-btn" type="button" onclick="signOut()">Sign Out</button></div>
 </header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
 <div class="layout">
@@ -3128,6 +3134,63 @@ async function fmLoadOneRupeeOffer(){
  }catch(e){const bn=document.getElementById('fmOneRupeeTopBanner');if(bn)bn.style.display='none';console.warn('Special offer unavailable:',e);fmOneRupeeSettings=null;fmOneRupeeAllowed=[];fmOneRupeeExcludedIds=new Set();fmOneRupeeRender();}
 }
 </script>
+
+<script id="rupee-mart-pwa-install">
+(function(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(function(reg){console.log('Rupee Mart service worker ready:',reg.scope);})
+        .catch(function(err){console.warn('Rupee Mart service worker registration failed:',err);});
+    });
+  }
+  var deferredPrompt=null;
+  var loginBtn=document.getElementById('rmLoginInstallBtn');
+  var userBtn=document.getElementById('rmUserInstallBtn');
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone===true;
+  }
+  function hideButtons(){
+    if(loginBtn)loginBtn.style.display='none';
+    if(userBtn)userBtn.style.display='none';
+  }
+  function showEligibleButton(){
+    if(isStandalone()){hideButtons();return;}
+    if(deferredPrompt){
+      if(loginBtn)loginBtn.style.display='block';
+      if(userBtn)userBtn.style.display='inline-block';
+    }
+  }
+  window.addEventListener('beforeinstallprompt',function(event){
+    event.preventDefault();
+    deferredPrompt=event;
+    showEligibleButton();
+  });
+  async function installApp(){
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    try{
+      var choice=await deferredPrompt.userChoice;
+      if(choice && choice.outcome==='accepted')hideButtons();
+    }catch(e){console.warn('Install prompt result:',e);}
+    deferredPrompt=null;
+  }
+  if(loginBtn)loginBtn.addEventListener('click',installApp);
+  if(userBtn)userBtn.addEventListener('click',installApp);
+  window.addEventListener('appinstalled',function(){
+    deferredPrompt=null;hideButtons();
+    try{localStorage.setItem('rm_pwa_installed','1');}catch(e){}
+  });
+  if(isStandalone())hideButtons();
+  // A regular browser visit after an uninstall should be eligible again.
+  if(!isStandalone()){
+    try{localStorage.removeItem('rm_pwa_installed');}catch(e){}
+  }
+})();
+</script>
+
 </body>
 
 <style>
@@ -3853,5 +3916,62 @@ async function fmLoadOneRupeeOffer(){
 </script>
 <div id="fmOneRupeeTopBanner" style="display:none;margin:10px 12px;padding:12px;border-radius:12px;background:#fff4d6;border:1px solid #f0d58a;color:#503b08;text-align:center;box-shadow:0 2px 8px #0000000d"><img id="fmOneRupeeTopBannerImage" alt="Special offer" style="display:none;width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px"><b id="fmOneRupeeTopBannerTitle">Special Product Offer</b><div id="fmOneRupeeTopBannerText" style="font-size:13px;margin-top:4px"></div></div>
 <script>function fmRenderOneRupeeTopBanner(s){const b=document.getElementById('fmOneRupeeTopBanner');if(!b)return;b.style.display='block';document.getElementById('fmOneRupeeTopBannerTitle').textContent=s.offer_name||'Special Product Offer';document.getElementById('fmOneRupeeTopBannerText').textContent=s.banner_text||`Shop for ${shopMoney(s.min_purchase_amount)} and get special products at ${shopMoney(s.offer_price||1)} each.`;const im=document.getElementById('fmOneRupeeTopBannerImage');if(s.banner_image_url){im.src=s.banner_image_url;im.style.display='block';}else{im.removeAttribute('src');im.style.display='none';}}</script>
+
+<script id="rupee-mart-pwa-install">
+(function(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(function(reg){console.log('Rupee Mart service worker ready:',reg.scope);})
+        .catch(function(err){console.warn('Rupee Mart service worker registration failed:',err);});
+    });
+  }
+  var deferredPrompt=null;
+  var loginBtn=document.getElementById('rmLoginInstallBtn');
+  var userBtn=document.getElementById('rmUserInstallBtn');
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.navigator.standalone===true;
+  }
+  function hideButtons(){
+    if(loginBtn)loginBtn.style.display='none';
+    if(userBtn)userBtn.style.display='none';
+  }
+  function showEligibleButton(){
+    if(isStandalone()){hideButtons();return;}
+    if(deferredPrompt){
+      if(loginBtn)loginBtn.style.display='block';
+      if(userBtn)userBtn.style.display='inline-block';
+    }
+  }
+  window.addEventListener('beforeinstallprompt',function(event){
+    event.preventDefault();
+    deferredPrompt=event;
+    showEligibleButton();
+  });
+  async function installApp(){
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt();
+    try{
+      var choice=await deferredPrompt.userChoice;
+      if(choice && choice.outcome==='accepted')hideButtons();
+    }catch(e){console.warn('Install prompt result:',e);}
+    deferredPrompt=null;
+  }
+  if(loginBtn)loginBtn.addEventListener('click',installApp);
+  if(userBtn)userBtn.addEventListener('click',installApp);
+  window.addEventListener('appinstalled',function(){
+    deferredPrompt=null;hideButtons();
+    try{localStorage.setItem('rm_pwa_installed','1');}catch(e){}
+  });
+  if(isStandalone())hideButtons();
+  // A regular browser visit after an uninstall should be eligible again.
+  if(!isStandalone()){
+    try{localStorage.removeItem('rm_pwa_installed');}catch(e){}
+  }
+})();
+</script>
+
 </body>
 </html>
