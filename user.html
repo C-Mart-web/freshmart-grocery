@@ -4015,6 +4015,9 @@ function fmInvUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{max
 function fmInvUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function fmInvUserLoad(){
  const msg=document.getElementById('fmInvUserMsg');
+ const plansBox=document.getElementById('fmInvPlans');
+ if(plansBox) plansBox.textContent='Loading investment data…';
+ if(msg) msg.textContent='Connecting to Investment service…';
  try{
   const {data,error}=await fmShopClient.rpc('fm_investment_my_data_v1');if(error)throw error;fmInvUserCache=data||{};
   document.getElementById('fmInvWalletBalance').textContent=fmInvUserMoney(data.wallet_balance);
@@ -4023,7 +4026,13 @@ async function fmInvUserLoad(){
   document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>{const planName=(data.plans||[]).find(p=>Number(p.id)===Number(x.plan_id))?.plan_name||('Plan #'+x.plan_id);return `<tr><td>${fmInvUserEsc(planName)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`}).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
   document.getElementById('fmInvTxRows').innerHTML=(data.transactions||[]).map(x=>`<tr><td>${x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'—'}</td><td>${fmInvUserEsc(x.transaction_type)}</td><td>${fmInvUserMoney(x.amount)}</td><td>${fmInvUserEsc(x.description||x.source_type||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No transactions.</td></tr>';
   document.getElementById('fmInvUserWithdrawalRows').innerHTML=(data.withdrawals||[]).map(x=>`<tr><td>${fmInvUserMoney(x.requested_amount)}</td><td>${fmInvUserMoney(x.charge_amount)}</td><td>${fmInvUserMoney(x.net_amount)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="4">No withdrawal requests.</td></tr>';
- }catch(e){if(msg)msg.textContent='Investment page could not load: '+(e.message||e);console.error(e);}
+  if(msg)msg.textContent='';
+ }catch(e){
+  const errorText='Investment page could not load: '+(e.message||e);
+  if(msg)msg.textContent=errorText;
+  if(plansBox)plansBox.innerHTML='<span style="color:#b42318;font-weight:700">'+fmInvUserEsc(errorText)+'</span>';
+  console.error('Investment RPC load failed:',e);
+ }
 }
 async function fmInvUserSubmit(planId){
  const msg=document.getElementById('fmInvUserMsg');try{
@@ -4047,7 +4056,24 @@ async function fmInvUserWithdraw(){
   await fmInvUserLoad();
  }catch(e){if(msg)msg.textContent='Withdrawal failed: '+(e.message||e);}
 }
-document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvUserLoad,250);},true);
+// Load reliably whenever the Investment page is opened, including hash/deep-link entry.
+(function(){
+ const originalShowPage=window.showPage;
+ if(typeof originalShowPage==='function'){
+  window.showPage=function(id,...args){
+   const result=originalShowPage.call(this,id,...args);
+   if(id==='investments') setTimeout(fmInvUserLoad,200);
+   return result;
+  };
+ }
+ function loadIfInvestmentPage(){
+  const active=document.querySelector('.page.active')?.id;
+  const hash=decodeURIComponent((location.hash||'').slice(1));
+  if(active==='investments'||hash==='investments') fmInvUserLoad();
+ }
+ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadIfInvestmentPage,{once:true});
+ else setTimeout(loadIfInvestmentPage,300);
+})();
 </script>
 </body>
 
