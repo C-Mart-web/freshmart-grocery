@@ -535,14 +535,18 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <div class="footer-note">© Rupee Mart · Fresh groceries, smarter shopping.</div>
 <section class="page" id="myoffers"><div class="welcome"><div><h1>Coupons & Offers 🎁</h1><p>Special deals, your coupons and rewards.</p></div><button class="btn btn-outline" onclick="fmLoadMyOffers()">Refresh</button></div><div class="card"><h2>Active Offers</h2><div id="fmUserOfferList" class="hint">Loading offers…</div></div><div class="card" style="margin-top:14px"><h2>My Coupons</h2><span class="badge approved" id="fmMyCouponCount">0 AVAILABLE</span><div id="fmUserCouponList" class="hint">Loading coupons…</div></div><div class="card" style="margin-top:14px"><h2>Spin & Win 🎡</h2><p class="hint">Spin attempts follow the limit set by Admin. If you get No Prize / Try Again, you can spin again while attempts remain. Wallet rewards are credited directly to your Shopping Wallet.</p><button class="btn btn-green" id="fmSpinButton" onclick="fmPlaySpin()">Spin Now</button><p id="fmSpinResult" class="hint"></p></div><div class="card" id="fmMyGiftRewardsCard" style="margin-top:14px"><h2>🎁 My Gift Rewards</h2><p class="hint">Your won gifts stay here even if you close the Congratulations window. Check your purchase progress and claim whenever you become eligible.</p><div id="fmMyGiftRewardsList" class="hint">Checking your gift rewards…</div></div><div class="card" style="margin-top:14px"><h2>Scratch Cards ✨</h2><div id="fmScratchList" class="hint">Loading…</div></div></section><section class="page" id="investments">
  <div class="welcome"><div><h1>Investment ROI 📈</h1><p>Separate investment account. Principal returns first; extra income starts on the next working day after principal completion. Saturday and Sunday are non-credit days.</p></div></div>
- <div class="grid"><div class="card"><div class="stat-head">Investment Wallet</div><div class="stat-value" id="fmInvWalletBalance">₹0</div><div class="stat-note">Separate from Membership / Income Wallet</div></div>
+ <div class="grid"><div class="card"><div class="stat-head">Investment Wallet</div><div class="stat-value" id="fmInvWalletBalance">₹0</div><div class="stat-note">Separate from Membership / Income Wallet</div><div class="hint" id="fmInvWalletEarned" style="margin-top:7px">Total credited: ₹0</div></div>
  <div class="card"><div class="stat-head">My Investments</div><div class="stat-value" id="fmInvCount">0</div><div class="stat-note">Pending, active and completed</div></div></div>
  <div class="card" style="margin-top:14px"><h2>Available Investment Plans</h2><p class="hint">Choose a plan and submit a request. Your investment starts only after company verification and activation.</p><div id="fmInvPlans" class="hint">Loading plans…</div></div>
  <div class="card" id="fmInvPaymentBox" style="display:none;margin-top:14px"><h2>Complete Investment Payment</h2><p class="hint">Pay the exact amount using the UPI details below. After payment, enter UTR and upload screenshot.</p><div id="fmInvQrArea" style="text-align:center;margin:12px 0"></div><p><b>Payee:</b> <span id="fmInvPayee"></span><br><b>UPI ID:</b> <span id="fmInvUpi"></span><br><b>Amount:</b> <span id="fmInvPayAmount"></span><br><b>Reference:</b> <span id="fmInvPayRef"></span></p><div class="field"><label>UTR / Transaction ID</label><input id="fmInvUtr" maxlength="80" placeholder="Enter UTR after payment"></div><div class="field"><label>Payment Screenshot</label><input id="fmInvProofFile" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-green" type="button" onclick="fmInvSubmitPayment()">Submit Payment Details</button><button class="btn btn-outline" type="button" onclick="fmInvClosePayment()">Close</button><p class="hint" id="fmInvPaymentUserMsg" aria-live="polite" style="display:none"></p></div>
  <div class="card" style="margin-top:14px"><h2>My Investment Accounts</h2><div class="tablewrap"><table><thead><tr><th>Plan</th><th>Investment</th><th>Principal / Extra</th><th>Progress</th><th>Status</th></tr></thead><tbody id="fmInvMyRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div></div>
- <div class="card" style="margin-top:14px"><h2>Withdraw Investment Wallet</h2><p class="hint">A 10% processing charge is currently applied. The net amount is shown before submitting.</p>
- <div class="field"><label>Amount (₹)</label><input id="fmInvWithdrawAmount" type="number" min="1" step="0.01" placeholder="Enter amount"></div>
- <button class="btn btn-green" type="button" onclick="fmInvUserWithdraw()">Request Withdrawal</button><p class="hint" id="fmInvUserMsg" aria-live="polite"></p></div>
+ <div class="card" style="margin-top:14px" id="fmInvWithdrawalCard"><h2>Withdraw Investment Wallet</h2>
+ <p class="hint" id="fmInvWithdrawRule">Loading withdrawal settings…</p>
+ <div class="field"><label>Available Investment Wallet (₹)</label><input id="fmInvWithdrawBalance" type="text" value="₹0" readonly></div>
+ <div class="card" style="margin:12px 0;background:#f7fcf8;border:1px solid #dceee1;box-shadow:none"><div class="section-head"><h3 style="font-size:15px;margin:0">Bank / UPI Details</h3><button class="btn btn-outline btn-sm" type="button" onclick="fmInvGoBankDetails()">Profile / Bank Details</button></div><div id="fmInvWithdrawBankSummary" class="hint">Loading saved bank details…</div></div>
+ <div class="field"><label>Withdrawal Amount (₹)</label><input id="fmInvWithdrawAmount" type="number" min="500" step="0.01" placeholder="Minimum ₹500" oninput="fmInvUpdateWithdrawPreview()"></div>
+ <div id="fmInvWithdrawPreview" class="hint" style="margin-top:9px">Enter an amount to see processing charge and net payable.</div>
+ <button class="btn btn-green" id="fmInvWithdrawBtn" type="button" style="margin-top:12px" onclick="fmInvUserWithdraw()">Request Withdrawal</button><p class="hint" id="fmInvUserMsg" aria-live="polite"></p></div>
  <div class="card" style="margin-top:14px"><h2>Investment Transactions</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead><tbody id="fmInvTxRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
  <div class="card" style="margin-top:14px"><h2>Withdrawal History</h2><div class="tablewrap"><table><thead><tr><th>Requested</th><th>Charge</th><th>Net</th><th>Status</th></tr></thead><tbody id="fmInvUserWithdrawalRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
 </section>
@@ -4024,6 +4028,7 @@ async function fmLoadOneRupeeOffer(){
 <script>
 /* Investment ROI User UI - separate Investment Wallet only. */
 let fmInvUserCache={plans:[],investments:[],transactions:[],withdrawals:[],wallet_balance:0};
+let fmInvWithdrawConfig={enabled:false,min_amount:500,max_amount:50000,charge_percent:10,bank_details_present:false,bank_details:null};
 function fmInvUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
 function fmInvUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -4062,6 +4067,29 @@ async function fmInvCheckActivationNotices(){
  }catch(e){console.warn('Investment activation notice check failed:',e);}
 }
 
+function fmInvGoBankDetails(){showPage('profile');setTimeout(()=>{const el=document.getElementById('fmBankDetailsCard');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},180);}
+function fmInvUpdateWithdrawPreview(){
+ const amount=Number(document.getElementById('fmInvWithdrawAmount')?.value||0),box=document.getElementById('fmInvWithdrawPreview');
+ if(!box)return;const c=Number(fmInvWithdrawConfig.charge_percent||0),min=Number(fmInvWithdrawConfig.min_amount||500),max=Number(fmInvWithdrawConfig.max_amount||50000),bal=Number(fmInvUserCache.wallet_balance||0);
+ if(!amount){box.textContent=`Minimum ${fmInvUserMoney(min)} · Maximum ${fmInvUserMoney(max)} · Processing charge ${c}%`;return;}
+ const charge=Math.round(amount*c)/100,net=amount-charge;
+ box.textContent=`Processing charge (${c}%): ${fmInvUserMoney(charge)} · Net payable: ${fmInvUserMoney(net)} · Limit: ${fmInvUserMoney(min)}–${fmInvUserMoney(max)} · Available: ${fmInvUserMoney(bal)}`;
+}
+async function fmInvLoadWithdrawalInfo(){
+ const rule=document.getElementById('fmInvWithdrawRule');if(!rule)return;
+ try{
+  const {data,error}=await fmShopClient.rpc('fm_investment_get_withdrawal_info_v1');if(error)throw error;
+  fmInvWithdrawConfig={...fmInvWithdrawConfig,...(data||{})};
+  document.getElementById('fmInvWithdrawBalance').value=fmInvUserMoney(data.balance||0);
+  const b=document.getElementById('fmInvWithdrawBankSummary');
+  if(data.bank_details_present){const p=data.bank_details||{};b.innerHTML=`<b>${fmInvUserEsc(p.account_holder||'')}</b><br>${fmInvUserEsc(p.bank_name||'')}<br>Account: ${fmInvUserEsc(p.account_number||'')}<br>IFSC: ${fmInvUserEsc(p.ifsc||'')}<br>UPI: ${fmInvUserEsc(p.upi_id||'Not added')}`;}
+  else{b.innerHTML='Bank details are not saved yet. Add your bank details in Profile before requesting a withdrawal. <button type="button" class="btn btn-green btn-sm" onclick="fmInvGoBankDetails()">Add Bank Details</button>';}
+  rule.textContent=data.enabled?`Minimum withdrawal ${fmInvUserMoney(data.min_amount)} · Maximum ${fmInvUserMoney(data.max_amount)} · Processing charge ${Number(data.charge_percent||0)}%`:'Investment wallet withdrawals are currently disabled by the Company.';
+  const btn=document.getElementById('fmInvWithdrawBtn');if(btn)btn.disabled=!data.enabled||!data.bank_details_present;
+  const amount=document.getElementById('fmInvWithdrawAmount');if(amount){amount.min=String(data.min_amount||500);amount.max=String(data.max_amount||50000);amount.placeholder=`Minimum ${fmInvUserMoney(data.min_amount||500)}`;}
+  fmInvUpdateWithdrawPreview();
+ }catch(e){rule.textContent='Withdrawal settings could not load: '+(e.message||e);const btn=document.getElementById('fmInvWithdrawBtn');if(btn)btn.disabled=true;}
+}
 async function fmInvUserLoad(){
  const msg=document.getElementById('fmInvUserMsg');
  const plansBox=document.getElementById('fmInvPlans');
@@ -4076,11 +4104,13 @@ async function fmInvUserLoad(){
   if(!data || typeof data!=='object') throw new Error('Investment service returned an empty response.');
   fmInvUserCache=data;
   document.getElementById('fmInvWalletBalance').textContent=fmInvUserMoney(data.wallet_balance);
+  const credited=(data.transactions||[]).filter(t=>String(t.transaction_type||'').toLowerCase()==='credit'&&String(t.status||'completed').toLowerCase()==='completed').reduce((a,t)=>a+Number(t.amount||0),0);const earnedEl=document.getElementById('fmInvWalletEarned');if(earnedEl)earnedEl.textContent='Total credited to Investment Wallet: '+fmInvUserMoney(credited);
   document.getElementById('fmInvCount').textContent=(data.investments||[]).length;
   document.getElementById('fmInvPlans').innerHTML=(data.plans||[]).map(p=>`<div class="card" style="margin:10px 0"><b>${fmInvUserEsc(p.plan_name)}</b><p class="hint">Fixed investment amount: <strong>${fmInvUserMoney(p.min_investment_amount)}</strong><br>Principal return: ${Number(p.principal_days||p.duration_days)} working days<br>Extra income: ${fmInvUserMoney(p.extra_income_amount||0)} over ${Number(p.extra_days||0)} working days<br>Saturday & Sunday: No credit</p><button class="btn btn-green" type="button" onclick="fmInvUserSubmit(${Number(p.id)})">Invest ${fmInvUserMoney(p.min_investment_amount)}</button></div>`).join('')||'No active investment plans are available.';
   document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>{const planName=(data.plans||[]).find(p=>Number(p.id)===Number(x.plan_id))?.plan_name||('Plan #'+x.plan_id);return `<tr><td>${fmInvUserEsc(planName)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${String(x.status||'').toLowerCase()==='active'?'Plan Activated':String(x.status||'').toLowerCase()==='pending'?'Pending Company Verification':String(x.status||'').toLowerCase()==='rejected'?'Payment Rejected':fmInvUserEsc(x.status)}</td></tr>`}).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
   document.getElementById('fmInvTxRows').innerHTML=(data.transactions||[]).map(x=>`<tr><td>${x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'—'}</td><td>${fmInvUserEsc(x.transaction_type)}</td><td>${fmInvUserMoney(x.amount)}</td><td>${fmInvUserEsc(x.description||x.source_type||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No transactions.</td></tr>';
   document.getElementById('fmInvUserWithdrawalRows').innerHTML=(data.withdrawals||[]).map(x=>`<tr><td>${fmInvUserMoney(x.requested_amount)}</td><td>${fmInvUserMoney(x.charge_amount)}</td><td>${fmInvUserMoney(x.net_amount)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="4">No withdrawal requests.</td></tr>';
+  await fmInvLoadWithdrawalInfo();
  }catch(e){
   const detail=(e && (e.message||e.details||e.hint)) || String(e||'Unknown error');
   if(plansBox) plansBox.textContent='Unable to load investment plans: '+detail;
@@ -4106,19 +4136,27 @@ async function fmInvUserSubmit(planId){
  }catch(e){if(msg)msg.textContent='Request failed: '+(e.message||e);}
 }
 function fmInvClosePayment(){document.getElementById('fmInvPaymentBox').style.display='none';}
-async function fmInvSubmitPayment(){const msg=document.getElementById('fmInvPaymentUserMsg');try{if(!fmInvCurrentPayment)throw new Error('No payment request is selected.');const utr=document.getElementById('fmInvUtr').value.trim();const file=document.getElementById('fmInvProofFile').files[0];if(!file)throw new Error('Select payment screenshot.');if(!/^image\/(png|jpeg|webp)$/.test(file.type))throw new Error('Upload PNG, JPG or WEBP image.');if(file.size>5*1024*1024)throw new Error('Screenshot must be 5 MB or smaller.');const {data:{user},error:ue}=await fmShopClient.auth.getUser();if(ue)throw ue;if(!user)throw new Error('Please sign in again.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path='common-upi/'+user.id+'/investment-'+fmInvCurrentPayment.investment_id+'-'+Date.now()+'.'+ext;const up=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;const res=await fmShopClient.rpc('fm_investment_payment_submit_v1',{p_payment_id:fmInvCurrentPayment.id,p_utr_number:utr,p_screenshot_path:path});if(res.error)throw res.error;document.getElementById('fmInvUtr').value='';document.getElementById('fmInvProofFile').value='';document.getElementById('fmInvPaymentBox').style.display='none';fmInvCurrentPayment=null;if(msg)msg.textContent='';document.getElementById('fmInvUserMsg').textContent='';await fmInvUserLoad();fmInvShowNotice('payment');}catch(e){msg.textContent='Payment submission failed: '+(e.message||e);}}
+async function fmInvSubmitPayment(){const msg=document.getElementById('fmInvPaymentUserMsg');try{if(!fmInvCurrentPayment)throw new Error('No payment request is selected.');const utr=document.getElementById('fmInvUtr').value.trim();const file=document.getElementById('fmInvProofFile').files[0];if(!utr)throw new Error('Enter UTR / Transaction ID.');if(utr.length<6||utr.length>80)throw new Error('Enter a valid UTR / Transaction ID (6–80 characters).');if(!file)throw new Error('Payment screenshot is required. Please choose the screenshot.');if(!/^image\/(png|jpeg|webp)$/.test(file.type))throw new Error('Upload PNG, JPG or WEBP image.');if(file.size>5*1024*1024)throw new Error('Screenshot must be 5 MB or smaller.');const {data:{user},error:ue}=await fmShopClient.auth.getUser();if(ue)throw ue;if(!user)throw new Error('Please sign in again.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path='common-upi/'+user.id+'/investment-'+fmInvCurrentPayment.investment_id+'-'+Date.now()+'.'+ext;const up=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;const res=await fmShopClient.rpc('fm_investment_payment_submit_v1',{p_payment_id:fmInvCurrentPayment.id,p_utr_number:utr,p_screenshot_path:path});if(res.error)throw res.error;document.getElementById('fmInvUtr').value='';document.getElementById('fmInvProofFile').value='';document.getElementById('fmInvPaymentBox').style.display='none';fmInvCurrentPayment=null;if(msg)msg.textContent='';document.getElementById('fmInvUserMsg').textContent='';await fmInvUserLoad();fmInvShowNotice('payment');}catch(e){msg.textContent='Payment submission failed: '+(e.message||e);}}
 
 async function fmInvUserWithdraw(){
- const msg=document.getElementById('fmInvUserMsg');try{
-  const amount=Number(document.getElementById('fmInvWithdrawAmount').value);
-  if(!Number.isFinite(amount)||amount<=0)throw new Error('Enter a valid withdrawal amount.');
-  const charge=amount*.10,net=amount-charge;
-  if(!confirm('Request '+fmInvUserMoney(amount)+' withdrawal? 10% charge: '+fmInvUserMoney(charge)+'. Net: '+fmInvUserMoney(net)+'.'))return;
+ const msg=document.getElementById('fmInvUserMsg'),btn=document.getElementById('fmInvWithdrawBtn');
+ try{
+  const amount=Number(document.getElementById('fmInvWithdrawAmount').value),min=Number(fmInvWithdrawConfig.min_amount||500),max=Number(fmInvWithdrawConfig.max_amount||50000),bal=Number(fmInvUserCache.wallet_balance||0);
+  if(!fmInvWithdrawConfig.enabled)throw new Error('Investment wallet withdrawals are currently disabled by the Company.');
+  if(!fmInvWithdrawConfig.bank_details_present)throw new Error('Please save your bank details in Profile before requesting a withdrawal.');
+  if(!Number.isFinite(amount)||amount<min)throw new Error('Minimum withdrawal amount is '+fmInvUserMoney(min)+'.');
+  if(amount>max)throw new Error('Maximum withdrawal amount is '+fmInvUserMoney(max)+'.');
+  if(amount>bal)throw new Error('Insufficient Investment Wallet balance. Available: '+fmInvUserMoney(bal));
+  const charge=amount*Number(fmInvWithdrawConfig.charge_percent||0)/100,net=amount-charge;
+  if(!confirm('Request '+fmInvUserMoney(amount)+' withdrawal? Processing charge: '+fmInvUserMoney(charge)+'. Net payable: '+fmInvUserMoney(net)+'.'))return;
+  if(btn){btn.disabled=true;btn.textContent='Submitting…';}
   const {data,error}=await fmShopClient.rpc('fm_investment_withdraw_v1',{p_amount:amount});if(error)throw error;
-  if(msg)msg.textContent='Withdrawal request submitted. Reference: '+data.withdrawal_ref;
-  await fmInvUserLoad();
+  if(msg)msg.textContent='Withdrawal request submitted successfully. Reference: '+data.withdrawal_ref+'. Net payable: '+fmInvUserMoney(data.net_amount)+'.';
+  document.getElementById('fmInvWithdrawAmount').value='';await fmInvUserLoad();
  }catch(e){if(msg)msg.textContent='Withdrawal failed: '+(e.message||e);}
+ finally{if(btn){btn.disabled=!fmInvWithdrawConfig.enabled||!fmInvWithdrawConfig.bank_details_present;btn.textContent='Request Withdrawal';}fmInvUpdateWithdrawPreview();}
 }
+
 document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvUserLoad,250);},true);
 // Also load when the browser opens or restores the page directly at #investments.
 window.addEventListener('load',function(){
