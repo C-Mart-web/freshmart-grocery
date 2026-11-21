@@ -55,12 +55,30 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 .fm-featured-item strong{color:#168447;font-size:13px}
 @media(max-width:680px){.fm-featured-item{flex-basis:132px}.fm-featured-item img{height:92px}}
 
+
+
+/* Admin push notification panel */
+.fm-notify-wrap{position:relative}
+.fm-notify-bell{position:relative;border:1px solid var(--line);background:#fff;border-radius:11px;width:42px;height:42px;font-size:19px}
+.fm-notify-badge{position:absolute;right:-5px;top:-6px;background:#dc4545;color:#fff;border-radius:20px;min-width:18px;height:18px;padding:1px 5px;font-size:10px;font-weight:800}
+.fm-notify-panel{display:none;position:absolute;right:0;top:50px;width:min(370px,calc(100vw - 24px));max-height:72vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 35px #163c2630;z-index:100;padding:12px}
+.fm-notify-panel.open{display:block}
+.fm-notify-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.fm-notify-permission{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:10px 0;font-size:11px;color:var(--muted);border-bottom:1px solid var(--line)}
+.fm-notify-row{padding:11px 8px;border-bottom:1px solid #edf3ee;border-radius:8px;cursor:pointer}
+.fm-notify-row.unread{background:#f0faf3}
+.fm-notify-row b{font-size:12px;display:block;margin-bottom:4px}
+.fm-notify-row p{font-size:11px;line-height:1.45;margin:0;color:#52645a;white-space:normal}
+.fm-notify-row small{display:block;color:#87958d;font-size:10px;margin-top:5px}
+@media(max-width:680px){.fm-notify-panel{position:fixed;top:66px;right:8px;left:8px;width:auto;max-height:72vh}.topright{gap:8px}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <style>#fmAreaMap{height:300px;border:1px solid #dbe8de;border-radius:14px;z-index:1;margin:12px 0}.leaflet-container{font:inherit}</style>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 </head>
 <body>
-<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo" id="fmAdminBrandLogo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="avatar">SA</div></div></header>
+<header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo" id="fmAdminBrandLogo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><div class="fm-notify-wrap"><button type="button" class="fm-notify-bell" id="fmNotifyBell" onclick="fmNotifyToggle()" aria-label="Notifications">🔔<span id="fmNotifyBadge" class="fm-notify-badge" style="display:none">0</span></button><div class="fm-notify-panel" id="fmNotifyPanel"><div class="fm-notify-head"><strong>Notifications</strong><button type="button" class="btn btn-outline btn-sm" onclick="fmNotifyLoad()">Refresh</button></div><div id="fmNotifyPermissionArea" class="fm-notify-permission"><span id="fmNotifyDeviceStatus">Enable notifications on this device to receive alerts.</span><button type="button" class="btn btn-green btn-sm" id="fmEnablePushBtn" onclick="fmEnableAdminPush()">Enable</button></div><div id="fmNotifyRows" class="fm-notify-rows"><div class="empty">Sign in to view notifications.</div></div></div></div><div class="avatar">SA</div></div></header>
 <div class="mobile-menu-backdrop" onclick="fmToggleMobileMenu(false)" aria-hidden="true"></div>
 <div class="layout">
 <aside class="sidebar">
@@ -2620,5 +2638,147 @@ async function fmAdminSaveOneRupeeOffer(){
   msg.textContent='Offer settings, eligible products and excluded products saved successfully.';
  }catch(e){msg.textContent='Save failed: '+(e.message||e);}
 }
-</script></body>
+</script>
+<script id="fm-admin-push-notifications">
+/* Rupee Mart Admin Push Notifications — Firebase Web Push + Supabase storage */
+const FM_FIREBASE_CONFIG = {
+ apiKey: "AIzaSyD4iTJtzLZ4egz-iCpUIF8L4lV-a-Y7GKI",
+ authDomain: "rupee-mart.firebaseapp.com",
+ projectId: "rupee-mart",
+ storageBucket: "rupee-mart.firebasestorage.app",
+ messagingSenderId: "114105173221",
+ appId: "1:114105173221:web:e783d45180c6c262bb800c"
+};
+const FM_FIREBASE_VAPID_KEY = "BGhDcsT6TRu-t5JknPI74fwKSO_ZT0XSQVBhuS85H69SaW22z4cyL_3UWUtzYQktOQQv0X8MyeI2dVTarCLyU-M";
+let fmAdminPushMessaging = null;
+let fmAdminPushChannel = null;
+let fmAdminPushUserId = null;
+
+function fmNotifyToggle(){
+ const panel=document.getElementById('fmNotifyPanel');
+ panel?.classList.toggle('open');
+ if(panel?.classList.contains('open'))fmNotifyLoad();
+}
+function fmNotifyEscape(v){
+ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmNotifyTime(v){
+ try{return new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});}catch(_){return '';}
+}
+async function fmNotifyCurrentUser(){
+ const {data:{session},error}=await fmSupabase.auth.getSession();
+ if(error)throw error;
+ if(!session?.user?.id)throw new Error('Please sign in to Admin first.');
+ const {data:profile,error:pe}=await fmSupabase.from('fm_profiles')
+  .select('id,role').eq('id',session.user.id).maybeSingle();
+ if(pe)throw pe;
+ if(!profile||!['super_admin','super admin','admin'].includes(String(profile.role||'').toLowerCase()))
+  throw new Error('Only Super Admin can enable admin push notifications in this panel.');
+ return session.user.id;
+}
+async function fmNotifyLoad(){
+ const host=document.getElementById('fmNotifyRows'),badge=document.getElementById('fmNotifyBadge');
+ if(!host)return;
+ try{
+  const uid=await fmNotifyCurrentUser();
+  fmAdminPushUserId=uid;
+  const {data,error}=await fmSupabase.from('fm_admin_notifications')
+   .select('id,event_type,title,body,data,is_read,created_at')
+   .eq('recipient_admin_id',uid).order('created_at',{ascending:false}).limit(40);
+  if(error)throw error;
+  const rows=data||[],unread=rows.filter(x=>!x.is_read).length;
+  if(badge){badge.textContent=unread>99?'99+':String(unread);badge.style.display=unread?'inline-flex':'none';}
+  host.innerHTML=rows.length?rows.map(x=>`<div class="fm-notify-row ${x.is_read?'':'unread'}" data-notify-id="${fmNotifyEscape(x.id)}" onclick="fmNotifyMarkRead('${fmNotifyEscape(x.id)}')"><b>${fmNotifyEscape(x.title||'Notification')}</b><p>${fmNotifyEscape(x.body||'')}</p><small>${fmNotifyEscape(x.event_type||'Update')} · ${fmNotifyEscape(fmNotifyTime(x.created_at))}</small></div>`).join(''):'<div class="empty">No notifications yet.</div>';
+  const status=document.getElementById('fmNotifyDeviceStatus');
+  if(status&&'Notification'in window)status.textContent=Notification.permission==='granted'?'This device is ready for push notifications.':Notification.permission==='denied'?'Notifications are blocked in browser settings.':'Enable notifications on this device to receive alerts.';
+  const enable=document.getElementById('fmEnablePushBtn');
+  if(enable)enable.style.display=( 'Notification'in window && Notification.permission==='granted')?'none':'inline-flex';
+ }catch(e){
+  host.innerHTML='<div class="empty">Could not load notifications: '+fmNotifyEscape(e.message||e)+'</div>';
+ }
+}
+async function fmNotifyMarkRead(id){
+ try{
+  const uid=fmAdminPushUserId||await fmNotifyCurrentUser();
+  const {error}=await fmSupabase.from('fm_admin_notifications').update({is_read:true,read_at:new Date().toISOString()}).eq('id',id).eq('recipient_admin_id',uid);
+  if(error)throw error;
+  await fmNotifyLoad();
+ }catch(e){console.warn('Notification read update failed:',e);}
+}
+async function fmEnableAdminPush(){
+ const btn=document.getElementById('fmEnablePushBtn'),status=document.getElementById('fmNotifyDeviceStatus');
+ if(!('Notification'in window)||!('serviceWorker'in navigator)){
+  if(status)status.textContent='This browser does not support web push. Please use Chrome on HTTPS.';
+  return;
+ }
+ try{
+  if(btn){btn.disabled=true;btn.textContent='Enabling…';}
+  const uid=await fmNotifyCurrentUser();
+  if(!window.isSecureContext)throw new Error('Admin website must be opened using HTTPS.');
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted')throw new Error('Notification permission was not granted. Allow it in Chrome site settings.');
+  if(!window.firebase)throw new Error('Firebase SDK could not load. Refresh the page and try again.');
+  if(!firebase.apps.length)firebase.initializeApp(FM_FIREBASE_CONFIG);
+  fmAdminPushMessaging=firebase.messaging();
+  const sw=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  await navigator.serviceWorker.ready;
+  const token=await fmAdminPushMessaging.getToken({vapidKey:FM_FIREBASE_VAPID_KEY,serviceWorkerRegistration:sw});
+  if(!token)throw new Error('Firebase did not return a device token. Check Web Push certificate and service worker path.');
+  const {data:existing,error:findError}=await fmSupabase.from('fm_admin_push_devices')
+   .select('id').eq('admin_id',uid).eq('device_token',token).maybeSingle();
+  if(findError)throw findError;
+  const payload={admin_id:uid,device_token:token,platform:'web',device_label:(navigator.userAgent||'Web Admin').slice(0,180),is_active:true,updated_at:new Date().toISOString()};
+  const saved=existing?.id
+   ?await fmSupabase.from('fm_admin_push_devices').update(payload).eq('id',existing.id)
+   :await fmSupabase.from('fm_admin_push_devices').insert(payload);
+  if(saved.error)throw saved.error;
+  if(status)status.textContent='Notifications enabled on this device.';
+  if(btn)btn.style.display='none';
+  fmAdminPushMessaging.onMessage(payload=>{
+   const title=payload?.notification?.title||payload?.data?.title||'Rupee Mart Admin';
+   const body=payload?.notification?.body||payload?.data?.body||'You have a new update.';
+   if(Notification.permission==='granted')new Notification(title,{body,icon:'/icons/icon-192.png'});
+   fmNotifyLoad();
+  });
+  await fmNotifyLoad();
+ }catch(e){
+  console.error('Admin push enable failed:',e);
+  if(status)status.textContent='Setup failed: '+(e.message||String(e));
+  alert('Push notification setup failed: '+(e.message||String(e)));
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent='Enable';}
+ }
+}
+function fmNotifySubscribe(){
+ if(fmAdminPushChannel){fmSupabase.removeChannel(fmAdminPushChannel);fmAdminPushChannel=null;}
+ if(!fmAdminPushUserId)return;
+ fmAdminPushChannel=fmSupabase.channel('fm-admin-notifications-'+fmAdminPushUserId)
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'fm_admin_notifications',filter:'recipient_admin_id=eq.'+fmAdminPushUserId},()=>fmNotifyLoad())
+  .subscribe();
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ setTimeout(async()=>{
+  try{
+   const uid=await fmNotifyCurrentUser();
+   fmAdminPushUserId=uid;
+   fmNotifySubscribe();
+   fmNotifyLoad();
+  }catch(e){console.info('Admin notifications await Super Admin sign-in:',e.message||e);}
+ },1200);
+});
+if(typeof fmSupabase!=='undefined'){
+ fmSupabase.auth.onAuthStateChange((_event,session)=>{
+  setTimeout(async()=>{
+   if(session?.user?.id){
+    try{fmAdminPushUserId=await fmNotifyCurrentUser();fmNotifySubscribe();fmNotifyLoad();}
+    catch(e){console.info('Push notification account state:',e.message||e);}
+   }else{
+    if(fmAdminPushChannel){fmSupabase.removeChannel(fmAdminPushChannel);fmAdminPushChannel=null;}
+    fmAdminPushUserId=null;
+   }
+  },300);
+ });
+}
+</script>
+</body>
 </html>
