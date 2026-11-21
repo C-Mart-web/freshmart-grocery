@@ -447,8 +447,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
   <input type="hidden" id="fmInvPlanId">
   <div class="formgrid">
    <div class="field"><label>Plan name</label><input id="fmInvPlanName" placeholder="Investment Plan"></div>
-   <div class="field"><label>Minimum amount (₹)</label><input id="fmInvMin" type="number" min="1"></div>
-   <div class="field"><label>Maximum amount (₹, optional)</label><input id="fmInvMax" type="number" min="0" placeholder="No maximum"></div>
+   <div class="field"><label>Fixed Investment Amount (₹)</label><input id="fmInvAmount" type="number" min="1" step="0.01" placeholder="Example: 2000"></div>
    <div class="field"><label>Principal Return Working Days</label><input id="fmInvDays" type="number" min="1" placeholder="Example: 360"></div>
    <div class="field"><label>Extra Income Amount (₹)</label><input id="fmInvExtra" type="number" min="0" step="0.01" placeholder="Example: 5000"></div>
    <div class="field"><label>Extra Income Working Days</label><input id="fmInvExtraDays" type="number" min="0" placeholder="Example: 150"></div>
@@ -456,7 +455,7 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
   </div>
   <button class="btn btn-green" type="button" onclick="fmInvAdminSavePlan()">Save Investment Plan</button>
   <p class="hint" id="fmInvAdminMsg" aria-live="polite"></p>
-  <div class="tablewrap"><table><thead><tr><th>Plan</th><th>Range</th><th>Principal Days</th><th>Extra Income</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmInvPlanRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
+  <div class="tablewrap"><table><thead><tr><th>Plan</th><th>Fixed Investment Amount</th><th>Principal Days</th><th>Extra Income</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmInvPlanRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
  </div>
  <div class="card" style="margin-top:16px"><h2>Investment Requests / Accounts</h2><div class="tablewrap"><table><thead><tr><th>Member</th><th>Amount</th><th>Daily Credit</th><th>Principal / Extra Progress</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmInvRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div></div>
  <div class="card" style="margin-top:16px"><h2>Investment Withdrawal Requests</h2><div class="tablewrap"><table><thead><tr><th>Member</th><th>Requested</th><th>Charge</th><th>Net</th><th>Status</th><th>Action</th></tr></thead><tbody id="fmInvWithdrawalRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div></div>
@@ -2893,7 +2892,7 @@ async function fmInvAdminLoad(){
  const msg=document.getElementById('fmInvAdminMsg');if(msg)msg.textContent='Loading Investment data…';
  try{
   const d=await fmInvAdminRpc('fm_admin_investment_data_v1');fmInvAdminCache=d;
-  document.getElementById('fmInvPlanRows').innerHTML=(d.plans||[]).map(p=>`<tr><td>${fmInvEsc(p.plan_name)}</td><td>${fmInvMoney(p.min_investment_amount)} – ${p.max_investment_amount==null?'No max':fmInvMoney(p.max_investment_amount)}</td><td>${Number(p.principal_days||p.duration_days)} working days</td><td>${fmInvMoney(p.extra_income_amount||0)} / ${Number(p.extra_days||0)} days</td><td>${p.is_active?'ACTIVE':'INACTIVE'}</td><td><button class="btn btn-outline btn-sm" onclick="fmInvEditPlan(${Number(p.id)})">Edit</button></td></tr>`).join('')||'<tr><td colspan="6">No plans yet.</td></tr>';
+  document.getElementById('fmInvPlanRows').innerHTML=(d.plans||[]).map(p=>`<tr><td>${fmInvEsc(p.plan_name)}</td><td>${fmInvMoney(p.min_investment_amount)}</td><td>${Number(p.principal_days||p.duration_days)} working days</td><td>${fmInvMoney(p.extra_income_amount||0)} / ${Number(p.extra_days||0)} days</td><td>${p.is_active?'ACTIVE':'INACTIVE'}</td><td><button class="btn btn-outline btn-sm" onclick="fmInvEditPlan(${Number(p.id)})">Edit</button></td></tr>`).join('')||'<tr><td colspan="6">No plans yet.</td></tr>';
   document.getElementById('fmInvRows').innerHTML=(d.investments||[]).map(x=>`<tr><td>${fmInvEsc(x.display_name||x.username||x.user_code||x.user_id)}</td><td>${fmInvMoney(x.investment_amount)}</td><td>${fmInvMoney(x.principal_daily_amount||x.daily_roi_amount)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)} · Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${fmInvEsc(x.status)}</td><td>${x.status==='pending'?`<button class="btn btn-green btn-sm" onclick="fmInvActivate(${Number(x.id)})">Activate</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="6">No investment requests.</td></tr>';
   document.getElementById('fmInvWithdrawalRows').innerHTML=(d.withdrawals||[]).map(x=>`<tr><td>${fmInvEsc(x.display_name||x.username||x.user_code||x.user_id)}</td><td>${fmInvMoney(x.requested_amount)}</td><td>${fmInvMoney(x.charge_amount)}</td><td>${fmInvMoney(x.net_amount)}</td><td>${fmInvEsc(x.status)}</td><td>${x.status==='pending'?`<button class="btn btn-green btn-sm" onclick="fmInvReview(${Number(x.id)},true)">Approve</button> <button class="btn btn-outline btn-sm" onclick="fmInvReview(${Number(x.id)},false)">Reject</button>`:'—'}</td></tr>`).join('')||'<tr><td colspan="6">No withdrawal requests.</td></tr>';
   if(msg)msg.textContent='Investment data loaded.';
@@ -2901,14 +2900,23 @@ async function fmInvAdminLoad(){
 }
 function fmInvEditPlan(id){const p=(fmInvAdminCache.plans||[]).find(x=>Number(x.id)===id);if(!p)return;
  document.getElementById('fmInvPlanId').value=p.id;document.getElementById('fmInvPlanName').value=p.plan_name||'';
- document.getElementById('fmInvMin').value=p.min_investment_amount??'';document.getElementById('fmInvMax').value=p.max_investment_amount??'';
+ document.getElementById('fmInvAmount').value=p.min_investment_amount??'';
  document.getElementById('fmInvDays').value=p.principal_days??p.duration_days??'';document.getElementById('fmInvExtra').value=p.extra_income_amount??0;document.getElementById('fmInvExtraDays').value=p.extra_days??0;document.getElementById('fmInvActive').value=String(!!p.is_active);
  document.getElementById('fmInvPlanName').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function fmInvAdminSavePlan(){const msg=document.getElementById('fmInvAdminMsg');
  try{const id=document.getElementById('fmInvPlanId').value;
- await fmInvAdminRpc('fm_admin_investment_plan_save_v2',{p_id:id?Number(id):null,p_plan_name:document.getElementById('fmInvPlanName').value.trim(),p_min_amount:Number(document.getElementById('fmInvMin').value),p_max_amount:document.getElementById('fmInvMax').value===''?null:Number(document.getElementById('fmInvMax').value),p_principal_days:Number(document.getElementById('fmInvDays').value),p_extra_amount:Number(document.getElementById('fmInvExtra').value||0),p_extra_days:Number(document.getElementById('fmInvExtraDays').value||0),p_is_active:document.getElementById('fmInvActive').value==='true'});
- document.getElementById('fmInvPlanId').value='';await fmInvAdminLoad();if(msg)msg.textContent='Plan saved successfully.';
+ const planName=document.getElementById('fmInvPlanName').value.trim();
+ const fixedAmount=Number(document.getElementById('fmInvAmount').value);
+ const principalDays=Number(document.getElementById('fmInvDays').value);
+ const extraAmount=Number(document.getElementById('fmInvExtra').value||0);
+ const extraDays=Number(document.getElementById('fmInvExtraDays').value||0);
+ if(!planName)throw new Error('Enter a plan name.');
+ if(!Number.isFinite(fixedAmount)||fixedAmount<=0)throw new Error('Enter a valid fixed investment amount.');
+ if(!Number.isInteger(principalDays)||principalDays<1)throw new Error('Enter principal return working days.');
+ if(!Number.isFinite(extraAmount)||extraAmount<0||!Number.isInteger(extraDays)||extraDays<0)throw new Error('Enter valid extra income details.');
+ await fmInvAdminRpc('fm_admin_investment_plan_save_v2',{p_id:id?Number(id):null,p_plan_name:planName,p_min_amount:fixedAmount,p_max_amount:fixedAmount,p_principal_days:principalDays,p_extra_amount:extraAmount,p_extra_days:extraDays,p_is_active:document.getElementById('fmInvActive').value==='true'});
+ document.getElementById('fmInvPlanId').value='';document.getElementById('fmInvAmount').value='';await fmInvAdminLoad();if(msg)msg.textContent='Plan saved successfully. Each member can take this plan more than once.';
  }catch(e){if(msg)msg.textContent='Save failed: '+(e.message||e);}}
 async function fmInvActivate(id){if(!confirm('Activate this investment? ROI schedule starts after activation.'))return;try{await fmInvAdminRpc('fm_admin_investment_activate_v1',{p_investment_id:id});await fmInvAdminLoad();}catch(e){alert('Activation failed: '+(e.message||e));}}
 async function fmInvReview(id,approve){const note=prompt(approve?'Optional approval note':'Please enter rejection reason:','');if(!approve&&note===null)return;try{await fmInvAdminRpc('fm_admin_investment_withdrawal_review_v1',{p_withdrawal_id:id,p_approve:approve,p_note:note||null});await fmInvAdminLoad();}catch(e){alert('Review failed: '+(e.message||e));}}
