@@ -4025,7 +4025,7 @@ async function fmInvUserLoad(){
  if(rowsBox) rowsBox.innerHTML='<tr><td colspan="5">Loading investment accounts…</td></tr>';
  if(msg) msg.textContent='Connecting to Investment service…';
  try{
-  if(!window.fmShopClient) throw new Error('Supabase client is not ready. Refresh the page and sign in again.');
+  if(typeof fmShopClient==='undefined' || !fmShopClient) throw new Error('Supabase client could not be initialized. Please refresh and sign in again.');
   const {data,error}=await fmShopClient.rpc('fm_investment_my_data_v1');
   if(error) throw error;
   if(!data || typeof data!=='object') throw new Error('Investment service returned an empty response.');
