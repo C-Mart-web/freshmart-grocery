@@ -2172,6 +2172,9 @@ function showPage(id,fromHistory=false){
  fmUpdateNavCoach(id);
  if(!fromHistory){history.pushState({fmUserPage:id},'', '#'+encodeURIComponent(id));}
  window.scrollTo({top:0,behavior:'smooth'});
+ // Always fetch investment data whenever the Investment ROI page is opened,
+ // including navigation through programmatic/mobile menu routes.
+ if(id==='investments' && typeof fmInvUserLoad==='function') fmInvUserLoad();
 }
 (function initUserBackNavigation(){
  const validPages=new Set(Array.from(document.querySelectorAll('.page')).map(p=>p.id));
@@ -4016,15 +4019,30 @@ function fmInvUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{max
 function fmInvUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function fmInvUserLoad(){
  const msg=document.getElementById('fmInvUserMsg');
+ const plansBox=document.getElementById('fmInvPlans');
+ const rowsBox=document.getElementById('fmInvMyRows');
+ if(plansBox) plansBox.textContent='Loading investment plans…';
+ if(rowsBox) rowsBox.innerHTML='<tr><td colspan="5">Loading investment accounts…</td></tr>';
+ if(msg) msg.textContent='Connecting to Investment service…';
  try{
-  const {data,error}=await fmShopClient.rpc('fm_investment_my_data_v1');if(error)throw error;fmInvUserCache=data||{};
+  if(!window.fmShopClient) throw new Error('Supabase client is not ready. Refresh the page and sign in again.');
+  const {data,error}=await fmShopClient.rpc('fm_investment_my_data_v1');
+  if(error) throw error;
+  if(!data || typeof data!=='object') throw new Error('Investment service returned an empty response.');
+  fmInvUserCache=data;
   document.getElementById('fmInvWalletBalance').textContent=fmInvUserMoney(data.wallet_balance);
   document.getElementById('fmInvCount').textContent=(data.investments||[]).length;
   document.getElementById('fmInvPlans').innerHTML=(data.plans||[]).map(p=>`<div class="card" style="margin:10px 0"><b>${fmInvUserEsc(p.plan_name)}</b><p class="hint">Fixed investment amount: <strong>${fmInvUserMoney(p.min_investment_amount)}</strong><br>Principal return: ${Number(p.principal_days||p.duration_days)} working days<br>Extra income: ${fmInvUserMoney(p.extra_income_amount||0)} over ${Number(p.extra_days||0)} working days<br>Saturday & Sunday: No credit</p><button class="btn btn-green" type="button" onclick="fmInvUserSubmit(${Number(p.id)})">Invest ${fmInvUserMoney(p.min_investment_amount)}</button></div>`).join('')||'No active investment plans are available.';
   document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>{const planName=(data.plans||[]).find(p=>Number(p.id)===Number(x.plan_id))?.plan_name||('Plan #'+x.plan_id);return `<tr><td>${fmInvUserEsc(planName)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`}).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
   document.getElementById('fmInvTxRows').innerHTML=(data.transactions||[]).map(x=>`<tr><td>${x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'—'}</td><td>${fmInvUserEsc(x.transaction_type)}</td><td>${fmInvUserMoney(x.amount)}</td><td>${fmInvUserEsc(x.description||x.source_type||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No transactions.</td></tr>';
   document.getElementById('fmInvUserWithdrawalRows').innerHTML=(data.withdrawals||[]).map(x=>`<tr><td>${fmInvUserMoney(x.requested_amount)}</td><td>${fmInvUserMoney(x.charge_amount)}</td><td>${fmInvUserMoney(x.net_amount)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="4">No withdrawal requests.</td></tr>';
- }catch(e){if(msg)msg.textContent='Investment page could not load: '+(e.message||e);console.error(e);}
+ }catch(e){
+  const detail=(e && (e.message||e.details||e.hint)) || String(e||'Unknown error');
+  if(plansBox) plansBox.textContent='Unable to load investment plans: '+detail;
+  if(rowsBox) rowsBox.innerHTML='<tr><td colspan="5">Unable to load investment accounts. Please refresh this page.</td></tr>';
+  if(msg) msg.textContent='Investment page could not load: '+detail;
+  console.error('Rupee Mart investment load failed:',e);
+ }
 }
 let fmInvCurrentPayment=null;
 async function fmInvUserSubmit(planId){
@@ -4057,6 +4075,10 @@ async function fmInvUserWithdraw(){
  }catch(e){if(msg)msg.textContent='Withdrawal failed: '+(e.message||e);}
 }
 document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvUserLoad,250);},true);
+// Also load when the browser opens or restores the page directly at #investments.
+window.addEventListener('load',function(){
+ if(decodeURIComponent((location.hash||'').slice(1))==='investments') fmInvUserLoad();
+});
 </script>
 </body>
 
