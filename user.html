@@ -529,6 +529,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  <div class="grid"><div class="card"><div class="stat-head">Investment Wallet</div><div class="stat-value" id="fmInvWalletBalance">₹0</div><div class="stat-note">Separate from Membership / Income Wallet</div></div>
  <div class="card"><div class="stat-head">My Investments</div><div class="stat-value" id="fmInvCount">0</div><div class="stat-note">Pending, active and completed</div></div></div>
  <div class="card" style="margin-top:14px"><h2>Available Investment Plans</h2><p class="hint">Choose a plan and submit a request. Your investment starts only after admin verification and activation.</p><div id="fmInvPlans" class="hint">Loading plans…</div></div>
+ <div class="card" id="fmInvPaymentBox" style="display:none;margin-top:14px"><h2>Complete Investment Payment</h2><p class="hint">Pay the exact amount using the UPI details below. After payment, enter UTR and upload screenshot.</p><div id="fmInvQrArea" style="text-align:center;margin:12px 0"></div><p><b>Payee:</b> <span id="fmInvPayee"></span><br><b>UPI ID:</b> <span id="fmInvUpi"></span><br><b>Amount:</b> <span id="fmInvPayAmount"></span><br><b>Reference:</b> <span id="fmInvPayRef"></span></p><div class="field"><label>UTR / Transaction ID</label><input id="fmInvUtr" maxlength="80" placeholder="Enter UTR after payment"></div><div class="field"><label>Payment Screenshot</label><input id="fmInvProofFile" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-green" type="button" onclick="fmInvSubmitPayment()">Submit Payment Details</button><button class="btn btn-outline" type="button" onclick="fmInvClosePayment()">Close</button><p class="hint" id="fmInvPaymentUserMsg" aria-live="polite"></p></div>
  <div class="card" style="margin-top:14px"><h2>My Investment Accounts</h2><div class="tablewrap"><table><thead><tr><th>Plan</th><th>Investment</th><th>Principal / Extra</th><th>Progress</th><th>Status</th></tr></thead><tbody id="fmInvMyRows"><tr><td colspan="5">Loading…</td></tr></tbody></table></div></div>
  <div class="card" style="margin-top:14px"><h2>Withdraw Investment Wallet</h2><p class="hint">A 10% processing charge is currently applied. The net amount is shown before submitting.</p>
  <div class="field"><label>Amount (₹)</label><input id="fmInvWithdrawAmount" type="number" min="1" step="0.01" placeholder="Enter amount"></div>
@@ -4015,9 +4016,6 @@ function fmInvUserMoney(v){return '₹'+Number(v||0).toLocaleString('en-IN',{max
 function fmInvUserEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function fmInvUserLoad(){
  const msg=document.getElementById('fmInvUserMsg');
- const plansBox=document.getElementById('fmInvPlans');
- if(plansBox) plansBox.textContent='Loading investment data…';
- if(msg) msg.textContent='Connecting to Investment service…';
  try{
   const {data,error}=await fmShopClient.rpc('fm_investment_my_data_v1');if(error)throw error;fmInvUserCache=data||{};
   document.getElementById('fmInvWalletBalance').textContent=fmInvUserMoney(data.wallet_balance);
@@ -4026,25 +4024,27 @@ async function fmInvUserLoad(){
   document.getElementById('fmInvMyRows').innerHTML=(data.investments||[]).map(x=>{const planName=(data.plans||[]).find(p=>Number(p.id)===Number(x.plan_id))?.plan_name||('Plan #'+x.plan_id);return `<tr><td>${fmInvUserEsc(planName)}</td><td>${fmInvUserMoney(x.investment_amount)}</td><td>${fmInvUserMoney(x.principal_amount_credited||0)} / ${fmInvUserMoney(x.extra_income_amount_snapshot||0)}</td><td>Principal ${Number(x.principal_days_credited||x.days_credited||0)} / ${Number(x.principal_days_snapshot||x.roi_days||0)}; Extra ${Number(x.extra_days_credited||0)} / ${Number(x.extra_days_snapshot||0)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`}).join('')||'<tr><td colspan="5">No investments submitted.</td></tr>';
   document.getElementById('fmInvTxRows').innerHTML=(data.transactions||[]).map(x=>`<tr><td>${x.created_at?new Date(x.created_at).toLocaleString('en-IN'):'—'}</td><td>${fmInvUserEsc(x.transaction_type)}</td><td>${fmInvUserMoney(x.amount)}</td><td>${fmInvUserEsc(x.description||x.source_type||'—')}</td></tr>`).join('')||'<tr><td colspan="4">No transactions.</td></tr>';
   document.getElementById('fmInvUserWithdrawalRows').innerHTML=(data.withdrawals||[]).map(x=>`<tr><td>${fmInvUserMoney(x.requested_amount)}</td><td>${fmInvUserMoney(x.charge_amount)}</td><td>${fmInvUserMoney(x.net_amount)}</td><td>${fmInvUserEsc(x.status)}</td></tr>`).join('')||'<tr><td colspan="4">No withdrawal requests.</td></tr>';
-  if(msg)msg.textContent='';
- }catch(e){
-  const errorText='Investment page could not load: '+(e.message||e);
-  if(msg)msg.textContent=errorText;
-  if(plansBox)plansBox.innerHTML='<span style="color:#b42318;font-weight:700">'+fmInvUserEsc(errorText)+'</span>';
-  console.error('Investment RPC load failed:',e);
- }
+ }catch(e){if(msg)msg.textContent='Investment page could not load: '+(e.message||e);console.error(e);}
 }
+let fmInvCurrentPayment=null;
 async function fmInvUserSubmit(planId){
  const msg=document.getElementById('fmInvUserMsg');try{
-  const plan=(fmInvUserCache.plans||[]).find(p=>Number(p.id)===Number(planId));
-  const amount=Number(plan?.min_investment_amount);
-  if(!Number.isFinite(amount)||amount<=0)throw new Error('This investment plan has an invalid fixed amount. Please contact support.');
-  if(!confirm('Submit investment request for '+fmInvUserMoney(amount)+'? You can select this plan again for another separate investment.'))return;
+  const plan=(fmInvUserCache.plans||[]).find(p=>Number(p.id)===Number(planId));const amount=Number(plan?.min_investment_amount);
+  if(!Number.isFinite(amount)||amount<=0)throw new Error('Invalid fixed plan amount.');
+  if(!confirm('Continue to payment for '+fmInvUserMoney(amount)+'?'))return;
   const {data,error}=await fmShopClient.rpc('fm_investment_submit_v1',{p_plan_id:planId,p_amount:amount});if(error)throw error;
-  if(msg)msg.textContent='Request submitted. Investment ID: '+data.investment_id+'. It will start after admin activation.';
-  await fmInvUserLoad();
+  const investmentId=data.investment_id;
+  const prep=await fmShopClient.rpc('fm_investment_payment_prepare_v1',{p_investment_id:investmentId});if(prep.error)throw prep.error;
+  fmInvCurrentPayment={...prep.data,investment_id:investmentId};
+  document.getElementById('fmInvPaymentBox').style.display='block';document.getElementById('fmInvPayee').textContent=prep.data.payee_name;document.getElementById('fmInvUpi').textContent=prep.data.upi_id;document.getElementById('fmInvPayAmount').textContent=fmInvUserMoney(prep.data.amount);document.getElementById('fmInvPayRef').textContent=prep.data.txn_ref;
+  const uri='upi://pay?pa='+encodeURIComponent(prep.data.upi_id)+'&pn='+encodeURIComponent(prep.data.payee_name)+'&am='+encodeURIComponent(Number(prep.data.amount).toFixed(2))+'&cu=INR&tn='+encodeURIComponent(prep.data.txn_ref);
+  document.getElementById('fmInvQrArea').innerHTML='<img alt="Investment UPI QR" style="width:220px;max-width:100%;border:1px solid #ddd;border-radius:12px" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(uri)+'"><p><a href="'+uri.replace(/&/g,'&amp;')+'">Open UPI app</a></p>';
+  document.getElementById('fmInvPaymentUserMsg').textContent='Investment request created. Pay exact amount and submit UTR + screenshot.';if(msg)msg.textContent='Investment request created. Complete payment below.';await fmInvUserLoad();document.getElementById('fmInvPaymentBox').scrollIntoView({behavior:'smooth',block:'center'});
  }catch(e){if(msg)msg.textContent='Request failed: '+(e.message||e);}
 }
+function fmInvClosePayment(){document.getElementById('fmInvPaymentBox').style.display='none';}
+async function fmInvSubmitPayment(){const msg=document.getElementById('fmInvPaymentUserMsg');try{if(!fmInvCurrentPayment)throw new Error('No payment request is selected.');const utr=document.getElementById('fmInvUtr').value.trim();const file=document.getElementById('fmInvProofFile').files[0];if(!file)throw new Error('Select payment screenshot.');if(!/^image\/(png|jpeg|webp)$/.test(file.type))throw new Error('Upload PNG, JPG or WEBP image.');if(file.size>5*1024*1024)throw new Error('Screenshot must be 5 MB or smaller.');const {data:{user},error:ue}=await fmShopClient.auth.getUser();if(ue)throw ue;if(!user)throw new Error('Please sign in again.');const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path='common-upi/'+user.id+'/investment-'+fmInvCurrentPayment.investment_id+'-'+Date.now()+'.'+ext;const up=await fmShopClient.storage.from('fm-payment-proofs').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;const res=await fmShopClient.rpc('fm_investment_payment_submit_v1',{p_payment_id:fmInvCurrentPayment.id,p_utr_number:utr,p_screenshot_path:path});if(res.error)throw res.error;msg.textContent='Payment submitted successfully; please wait 5–10 minutes while Admin verifies.';document.getElementById('fmInvUserMsg').textContent='Payment submitted. Investment will activate only after Admin verification.';document.getElementById('fmInvUtr').value='';document.getElementById('fmInvProofFile').value='';await fmInvUserLoad();}catch(e){msg.textContent='Payment submission failed: '+(e.message||e);}}
+
 async function fmInvUserWithdraw(){
  const msg=document.getElementById('fmInvUserMsg');try{
   const amount=Number(document.getElementById('fmInvWithdrawAmount').value);
@@ -4056,24 +4056,7 @@ async function fmInvUserWithdraw(){
   await fmInvUserLoad();
  }catch(e){if(msg)msg.textContent='Withdrawal failed: '+(e.message||e);}
 }
-// Load reliably whenever the Investment page is opened, including hash/deep-link entry.
-(function(){
- const originalShowPage=window.showPage;
- if(typeof originalShowPage==='function'){
-  window.showPage=function(id,...args){
-   const result=originalShowPage.call(this,id,...args);
-   if(id==='investments') setTimeout(fmInvUserLoad,200);
-   return result;
-  };
- }
- function loadIfInvestmentPage(){
-  const active=document.querySelector('.page.active')?.id;
-  const hash=decodeURIComponent((location.hash||'').slice(1));
-  if(active==='investments'||hash==='investments') fmInvUserLoad();
- }
- if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',loadIfInvestmentPage,{once:true});
- else setTimeout(loadIfInvestmentPage,300);
-})();
+document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvUserLoad,250);},true);
 </script>
 </body>
 
