@@ -37,6 +37,15 @@
 </style>
 <style>.brandmark img,.brand .logo img{width:100%;height:100%;object-fit:contain;display:block}</style><style id="fm-home-offer-slider-style">
 #fmHomeOfferSlider{margin:14px 0 20px;display:none}#fmHomeOfferTrack{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px 1px 8px}#fmHomeOfferTrack::-webkit-scrollbar{display:none}.fm-home-offer-card{flex:0 0 100%;min-width:0;border:0;padding:0;background:transparent;border-radius:17px;overflow:hidden;scroll-snap-align:start;box-shadow:0 7px 20px #183b2010;cursor:pointer}.fm-home-offer-card img{display:block;width:100%;height:clamp(105px,24vw,190px);object-fit:cover;border-radius:17px}#fmHomeOfferDots{display:flex;justify-content:center;gap:6px;margin-top:5px}#fmHomeOfferDots button{width:9px;height:9px;border:0;border-radius:99px;background:#cbd8ce;padding:0}#fmHomeOfferDots button.active{width:28px;background:#35a765}@media(max-width:620px){#fmHomeOfferSlider{margin:10px 0 16px}.fm-home-offer-card img{height:clamp(105px,34vw,150px);object-fit:cover}}
+</style>
+<style id="fm-index-product-card-fix">
+/* Keep product photos inside their image area so they never cover details. */
+.product-art{height:125px;min-height:125px;max-height:125px;overflow:hidden;position:relative;}
+.product-art img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;}
+@media(max-width:620px){.product-art{height:105px;min-height:105px;max-height:105px;overflow:hidden;}}
+.product h3,.product .quantity,.product .price-row,.product .fm-index-stock,.product .product-meta{position:relative;z-index:1;}
+.product .price-row{min-height:22px;}
+.product .reward-points{display:inline-block;}
 </style></head>
 <body>
 <header class="topbar">
@@ -121,7 +130,7 @@
  function baseVariant(p){return productVariants(p).find(v=>v.is_base_product===true)||null}
  function defaultVariant(p){const vs=visibleProductVariants(p),base=baseVariant(p);return vs.find(v=>v.is_default===true)||(base&&variantVisible(base)?base:null)||vs[0]||null}
  function selectedVariant(p){const all=productVariants(p),choice=indexSelectedVariants[String(p.id)];if(choice!==undefined){const v=all.find(x=>String(x.id)===String(choice));if(v&&variantVisible(v))return v;}return defaultVariant(p)}
- function indexVariantPrice(p,v){return Number(v?(v.retail_price??v.offer_price??p.retail_price??p.offer_price??0):(p.retail_price??p.offer_price??p.central_price??0))}
+ function indexVariantPrice(p,v){return Number(v?(v.retail_price??v.offer_price??v.central_price??p.retail_price??p.offer_price??p.central_price??p.price??0):(p.retail_price??p.offer_price??p.central_price??p.price??0))}
  function indexVariantMrp(p,v){return Number(v?.mrp??p.mrp??0)}
  function indexVariantStock(p,v){return Number(v?.stock_quantity??p.stock_quantity??0)}
  function indexVariantSoldOut(p,v){return (v?.is_manual_sold_out??p.is_manual_sold_out)===true||indexVariantStock(p,v)<=0}
@@ -210,11 +219,11 @@
      const price=indexVariantPrice(p,v),mrp=indexVariantMrp(p,v),qty=esc(variantLabel);
      const image=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+name+'" loading="lazy" style="width:100%;height:100%;object-fit:contain;border-radius:12px">':iconFor(cat);
      const discount=mrp>price&&mrp>0?'<span class="discount">'+Math.round((mrp-price)*100/mrp)+'% OFF</span>':'';
-     const points=Number(v?.retail_reward_points??p.retail_reward_points??p.reward_points??0);
+     const points=Number(v?.retail_reward_points??v?.reward_points??p.retail_reward_points??p.reward_points??0);
      const vid=v?String(v.id):'',count=quantityInCart(p.id,vid),stock=indexVariantStock(p,v),soldOut=indexVariantSoldOut(p,v);
      const cartControl=soldOut?'<span class="badge rejected" style="display:inline-block;padding:7px 10px;font-size:10px">Sold Out</span>':(count>0?'<div class="qty-stepper"><button type="button" data-cart-delta="-1" data-product="'+esc(p.id)+'" data-variant-id="'+esc(vid)+'" data-variant-name="'+esc(variantLabel)+'">−</button><b>'+count+'</b><button type="button" data-cart-delta="1" data-product="'+esc(p.id)+'" data-variant-id="'+esc(vid)+'" data-variant-name="'+esc(variantLabel)+'" '+(count>=stock?'disabled title="Maximum stock reached"':'')+'>+</button></div>':'<button class="add" type="button" data-cart-delta="1" data-product="'+esc(p.id)+'" data-variant-id="'+esc(vid)+'" data-variant-name="'+esc(variantLabel)+'">ADD +</button>');
      const variantHtml=variants.length>0?'<div class="fm-index-variants">'+variants.map(x=>'<button type="button" class="fm-index-variant '+(v&&String(v.id)===String(x.id)?'active':'')+'" data-index-variant="'+esc(p.id)+'" data-variant-id="'+esc(x.id)+'">'+esc(x.variant_name||x.unit||'Size')+'</button>').join('')+'</div>':'<small class="quantity">'+qty+'</small>';
-     return '<article class="product" data-name="'+name+'" data-category="'+cat+'"><div class="product-art">'+discount+image+'</div><h3>'+name+'</h3>'+variantHtml+'<div class="price-row"><div class="price-stack"><span class="price">₹'+price.toFixed(2).replace(/\.00$/,'')+'</span>'+(mrp>price?'<span class="old">MRP ₹'+mrp.toFixed(2).replace(/\.00$/,'')+'</span>':'')+'</div></div>'+(soldOut?'':'<small class="fm-index-stock">In Stock</small>')+'<div class="product-meta">'+(points>0?'<span class="reward-points">⭐ '+points+' reward points</span>':'<span></span>')+cartControl+'</div></article>';
+     return '<article class="product" data-name="'+name+'" data-category="'+cat+'"><div class="product-art">'+discount+image+'</div><h3>'+name+'</h3>'+variantHtml+'<div class="price-row"><div class="price-stack"><span class="price">₹'+price.toFixed(2).replace(/\.00$/,'')+'</span>'+(mrp>price?'<span class="old">MRP ₹'+mrp.toFixed(2).replace(/\.00$/,'')+'</span>':'')+'</div></div>'+(soldOut?'':'<small class="fm-index-stock">In Stock</small>')+'<div class="product-meta">'+'<span class="reward-points">⭐ '+points+' reward points</span>'+cartControl+'</div></article>';
    }).join('');
    grid.querySelectorAll('[data-cart-delta]').forEach(btn=>btn.addEventListener('click',()=>{const p=allProducts.find(x=>String(x.id)===btn.dataset.product);changeCartQty(btn.dataset.product,Number(btn.dataset.cartDelta),btn.dataset.variantId,btn.dataset.variantName);showToast((p?.product_name||'Product')+' cart quantity updated.')}));
    grid.querySelectorAll('[data-index-variant]').forEach(btn=>btn.addEventListener('click',()=>indexSelectVariant(btn.dataset.indexVariant,btn.dataset.variantId)));
