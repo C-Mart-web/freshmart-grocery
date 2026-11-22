@@ -653,14 +653,27 @@ function fmProductCategoryName(p){
 }
 function fmCategoryKey(v){return String(v??'').normalize('NFC').replace(/[\u200c\u200d]/g,'').trim().replace(/\s+/g,' ').toLocaleLowerCase();}
 function fmIsExplicitlyHidden(value){if(value===false||value===0)return true;return ['hidden','hide','no','false','0','disabled','inactive','off','private'].includes(String(value??'').trim().toLowerCase());}
-function fmProductVisible(p){return p?.is_active!==false&&!fmIsExplicitlyHidden(p?.product_visibility);}
+function fmProductVisible(p){
+ if(!p||p.is_active===false||p.is_active===0||['false','0','no','inactive','disabled'].includes(String(p.is_active??'').trim().toLowerCase()))return false;
+ const visibility=String(p.product_visibility??'both').trim().toLowerCase().replace(/[ -]+/g,'_');
+ if(fmIsExplicitlyHidden(visibility))return false;
+ // Product-level Retail/Wholesale restriction remains in force.
+ if(visibility==='retail_only'&&fmIsWholesale())return false;
+ if(visibility==='wholesale_only'&&!fmIsWholesale())return false;
+ return true;
+}
 function fmVariantVisible(p,v){
  if(!v)return false;
  const active=v.is_active;
  if(active===false||active===0||['false','0','no','inactive','disabled'].includes(String(active??'').trim().toLowerCase()))return false;
- // Product visibility (both / retail_only / wholesale_only) belongs to the
- // product/account type; it is not a variant hide flag. Only honor an
- // explicit variant-level visibility field when one exists.
+ // Variant-level visibility is independent for Retail and Wholesale.
+ // Older variants without these columns remain visible by default.
+ const hiddenValue=value=>value===false||value===0||['false','0','no','inactive','disabled','off'].includes(String(value??'').trim().toLowerCase());
+ if(fmIsWholesale()){
+  if(v.wholesale_enabled!==undefined&&v.wholesale_enabled!==null&&hiddenValue(v.wholesale_enabled))return false;
+ }else{
+  if(v.retail_enabled!==undefined&&v.retail_enabled!==null&&hiddenValue(v.retail_enabled))return false;
+ }
  if(v.product_visibility!==undefined&&v.product_visibility!==null&&fmIsExplicitlyHidden(v.product_visibility))return false;
  return true;
 }
