@@ -710,6 +710,13 @@ function fmProductVisible(p){
  if(visibility==='wholesale_only'&&!fmIsWholesale())return false;
  return true;
 }
+function fmProductHasVisibleVariant(p){
+ const variants=Array.isArray(p?.fm_product_variants)?p.fm_product_variants:[];
+ // Legacy products without variant rows keep the existing product-level visibility.
+ if(!variants.length)return true;
+ // Hide the whole product when none of its variants is enabled for this account type.
+ return variants.some(v=>fmVariantVisible(p,v));
+}
 function fmVariantVisible(p,v){
  if(!v)return false;
  const active=v.is_active;
@@ -730,7 +737,7 @@ function fmRenderCategoryCards(){
  let cats=(fmShopCategories||[]).map(c=>({id:String(c.id),name:c.category_name,icon:c.icon||''}));
  if(!cats.length){const seen=new Set();cats=(fmShopProducts||[]).map(p=>({id:fmProductCategoryId(p),name:fmProductCategoryName(p),icon:''})).filter(c=>c.id&&c.name&&!seen.has(c.id)&&seen.add(c.id));}
  if(!cats.length){host.innerHTML='<span class="hint">Categories will appear here after admin adds them.</span>';return;}
- host.innerHTML=cats.map((cat,i)=>{const name=cat.name,t=fmCategoryTranslations(name),c=fmCategoryPalette[i%fmCategoryPalette.length],product=fmShopProducts.find(p=>fmProductCategoryId(p)===cat.id),icon=cat.icon||fmRelationCategory(product)?.icon||t.icon,count=fmShopProducts.filter(p=>fmProductCategoryId(p)===cat.id&&fmProductVisible(p)).length;
+ host.innerHTML=cats.map((cat,i)=>{const name=cat.name,t=fmCategoryTranslations(name),c=fmCategoryPalette[i%fmCategoryPalette.length],product=fmShopProducts.find(p=>fmProductCategoryId(p)===cat.id),icon=cat.icon||fmRelationCategory(product)?.icon||t.icon,count=fmShopProducts.filter(p=>fmProductCategoryId(p)===cat.id&&fmProductVisible(p)&&fmProductHasVisibleVariant(p)).length;
  const visual=/^https?:\/\//i.test(String(icon||''))?'<img src="'+shopEsc(icon)+'" alt="'+shopEsc(name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':shopEsc(icon);
  return '<button type="button" class="fm-category-tile" style="--cat-a:'+c[0]+';--cat-b:'+c[1]+'" data-fm-category-id="'+shopEsc(cat.id)+'" data-fm-category-name="'+shopEsc(name)+'"><span class="fm-cat-visual">'+visual+'</span><b>'+shopEsc(name)+'</b><small>'+t.te+' · '+t.hi+'</small><small>'+count+' products</small></button>';}).join('');
  host.querySelectorAll('[data-fm-category-id]').forEach(b=>b.addEventListener('click',()=>{const s=document.getElementById('shopProductCategory');if(s){s.value=b.dataset.fmCategoryId;window.fmActiveHomeOfferProductIds=null;window.fmActiveHomeOfferTitle='';host.querySelectorAll('[data-fm-category-id]').forEach(x=>x.classList.toggle('fm-category-active',x===b));renderFreshMartProducts();}document.getElementById('shopProductsHeading')?.scrollIntoView({behavior:'smooth',block:'center'});}));
@@ -836,7 +843,7 @@ function renderFreshMartProducts(){
  const selectedCategory=(fmShopCategories||[]).find(c=>String(c.id)===String(catId));
  const heading=document.getElementById('shopProductsHeading');if(heading)heading.textContent=selectedCategory?.category_name||window.fmActiveHomeOfferTitle||'All Products';
  const terms=q.split(/\s+/).filter(Boolean);
- const matched=fmShopProducts.map(p=>{const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,fmProductCategoryName(p),...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>fmProductVisible(x.p)&&(!window.fmActiveHomeOfferProductIds||window.fmActiveHomeOfferProductIds.includes(String(x.p.id)))&&(!catId||fmProductCategoryId(x.p)===String(catId))&&(!q||x.hits>0)).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits);
+ const matched=fmShopProducts.map(p=>{const hay=fmSearchNorm([p.product_name,p.product_code,p.barcode,p.description,p.subcategory,fmProductCategoryName(p),...(Array.isArray(p.search_aliases)?p.search_aliases:[])].join(' '));const hits=terms.filter(t=>hay.includes(t)).length;return {p,hits,all:terms.length>0&&hits===terms.length};}).filter(x=>fmProductVisible(x.p)&&fmProductHasVisibleVariant(x.p)&&(!window.fmActiveHomeOfferProductIds||window.fmActiveHomeOfferProductIds.includes(String(x.p.id)))&&(!catId||fmProductCategoryId(x.p)===String(catId))&&(!q||x.hits>0)).sort((a,b)=>Number(b.all)-Number(a.all)||b.hits-a.hits);
  const isFlashProduct=p=>{const prefix=String(p.id)+'|';for(const k of fmFlashPriceMap.keys())if(k.startsWith(prefix))return true;return false;};
  const saleRows=fmShopPincode?matched.filter(x=>isFlashProduct(x.p)):[],normalRows=fmShopPincode?matched.filter(x=>!isFlashProduct(x.p)):matched;
  const renderProductCard=p=>{
