@@ -599,6 +599,54 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <button type="button" onclick="fmToggleMobileMenu(true)" aria-label="More menu"><span>☰</span>More</button>
 </nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style id="rm-user-branded-alert-style">
+#rmUserAlertOverlay{display:none;position:fixed;inset:0;z-index:20000;background:rgba(8,28,16,.58);padding:18px;align-items:center;justify-content:center}
+#rmUserAlertOverlay.show{display:flex}
+#rmUserAlertBox{width:min(100%,390px);background:#fff;border:1px solid #dcebe0;border-radius:20px;padding:22px 20px 17px;box-shadow:0 18px 60px rgba(0,0,0,.24);font-family:Inter,Arial,sans-serif;animation:rmUserAlertIn .18s ease-out}
+#rmUserAlertHead{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+#rmUserAlertLogo{width:39px;height:39px;flex:0 0 39px;border-radius:12px;background:#168447;color:#fff;display:grid;place-items:center;font-size:21px}
+#rmUserAlertBrand{font-size:18px;font-weight:900;color:#168447}
+#rmUserAlertMessage{font-size:15px;line-height:1.55;color:#35483c;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 19px}
+#rmUserAlertOk{display:block;margin-left:auto;min-width:92px;border:0;border-radius:10px;background:#168447;color:#fff;padding:10px 18px;font-weight:850;font-size:14px}
+#rmUserAlertOk:active{transform:scale(.97)}
+@keyframes rmUserAlertIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+</style>
+<div id="rmUserAlertOverlay" role="alertdialog" aria-modal="true" aria-labelledby="rmUserAlertBrand" aria-describedby="rmUserAlertMessage">
+ <div id="rmUserAlertBox">
+  <div id="rmUserAlertHead"><div id="rmUserAlertLogo">🛒</div><div id="rmUserAlertBrand">Rupee Mart</div></div>
+  <p id="rmUserAlertMessage"></p>
+  <button id="rmUserAlertOk" type="button">OK</button>
+ </div>
+</div>
+<script id="rm-user-branded-alert">
+(function(){
+ let queue=[],opened=false;
+ const overlay=document.getElementById('rmUserAlertOverlay');
+ const message=document.getElementById('rmUserAlertMessage');
+ const ok=document.getElementById('rmUserAlertOk');
+ if(!overlay||!message||!ok)return;
+ function closeCurrent(){
+  overlay.classList.remove('show');opened=false;
+  queue.shift();
+  if(queue.length)setTimeout(showNext,80);
+ }
+ function showNext(){
+  if(!queue.length){opened=false;return;}
+  opened=true;
+  message.textContent=String(queue[0]??'');
+  overlay.classList.add('show');
+  ok.focus({preventScroll:true});
+ }
+ ok.addEventListener('click',closeCurrent);
+ overlay.addEventListener('click',function(e){if(e.target===overlay)closeCurrent();});
+ document.addEventListener('keydown',function(e){
+  if(!opened)return;
+  if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();closeCurrent();}
+ });
+ window.alert=function(text){queue.push(String(text??''));if(!opened)showNext();};
+})();
+</script>
 <script>
 // Load the currently signed-in Supabase member and auto-generate referral links.
 const SUPABASE_URL='https://wmquhgmrvdlcxmgarxqp.supabase.co';
