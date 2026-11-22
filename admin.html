@@ -180,13 +180,21 @@ main{padding:25px;max-width:1500px;width:100%;margin:auto}.welcome{display:flex;
 <div class="card" id="fmProductImageLibraryCard" style="margin-bottom:16px;border:1px solid #bfe4ca">
  <div class="section-head"><h2>🖼 Product Images Library</h2><span class="badge approved">ADMIN ONLY</span></div>
  <p class="hint">Images ni ikkada upload chesi code assign cheyyandi. Excel row lo image_code = 1, extra_image_code_1 = 1.1, extra_image_code_2 = 1.2 ila enter చేస్తే product images అదే క్రమంలో main, second, third images గా attach అవుతాయి. Next product ki 2, 2.1, 2.2 codes వాడండి. ఒక product కి maximum 6 images.</p>
+ <div class="card" style="padding:13px;margin:10px 0;border:1px solid #dcebe0;box-shadow:none">
+  <b>📁 Bulk Upload Images (Recommended)</b>
+  <p class="hint" style="margin:6px 0 10px">ఒక Folder లో అన్ని images పెట్టి Folder Select చేయండి. ప్రతి file పేరు image code గా ఉండాలి: 1.jpg, 1.1.jpg, 1.2.jpg, 2.jpg, 2.1.jpg. ఒక్కొక్క image విడిగా upload చేయాల్సిన అవసరం లేదు.</p>
+  <div class="field"><label>Select Product Images Folder</label><input id="fmLibBulkFolder" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" webkitdirectory directory multiple></div>
+  <div class="field" style="margin-top:9px"><label>Or Select Multiple Images (Mobile supported)</label><input id="fmLibBulkFiles" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple></div>
+  <button class="btn btn-green" type="button" id="fmLibBulkUploadBtn" onclick="fmImageLibraryBulkUpload()" style="margin-top:10px">⬆ Upload All Selected Images</button>
+  <p class="hint">Supported: JPG, PNG, WEBP · Max 3 MB per image · Filename must be numeric code · Existing codes will be skipped.</p>
+ </div>
  <div class="formgrid">
   <div class="field"><label>Image Code *</label><input id="fmLibImageCode" placeholder="1 or 1.1 or 2.1" maxlength="30"></div>
   <div class="field"><label>Image Label</label><input id="fmLibImageLabel" placeholder="Main image / Second image"></div>
   <div class="field"><label>Choose Image *</label><input id="fmLibImageFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
  </div>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-  <button class="btn btn-green" type="button" id="fmLibUploadBtn" onclick="fmImageLibraryUpload()">Upload Image</button>
+  <button class="btn btn-green" type="button" id="fmLibUploadBtn" onclick="fmImageLibraryUpload()">Upload Single Image</button>
   <button class="btn btn-outline" type="button" onclick="fmImageLibraryLoad()">Refresh Library</button>
   <button class="btn btn-outline" type="button" onclick="fmImageLibraryDownloadExcel()">Download Image Codes Excel</button>
  </div>
@@ -1669,6 +1677,45 @@ async function fmImageLibraryUpload(){
  }catch(e){if(msg)msg.textContent='Upload failed: '+(e.message||String(e));}
  finally{btn.disabled=false;}
 }
+async function fmImageLibraryBulkUpload(){
+ const input=document.getElementById('fmLibBulkFolder'),multi=document.getElementById('fmLibBulkFiles'),btn=document.getElementById('fmLibBulkUploadBtn'),msg=document.getElementById('fmImageLibraryMsg');
+ const files=[...Array.from(input?.files||[]),...Array.from(multi?.files||[])];if(!files.length){if(msg)msg.textContent='Please select the Product Images folder first.';return;}
+ btn.disabled=true;
+ try{
+  const {data:{session},error:se}=await fmSupabase.auth.getSession();if(se)throw se;if(!session)throw new Error('Admin sign-in required. Please sign in again.');
+  const allowedExt=['jpg','jpeg','png','webp'];
+  const prepared=files.map(file=>{const name=(file.name||'').trim();const ext=(name.split('.').pop()||'').toLowerCase();const code=name.replace(/\.[^.]+$/,'').trim();return {file,ext,code};}).filter(x=>allowedExt.includes(x.ext));
+  if(!prepared.length)throw new Error('Selected folder lo JPG, PNG or WEBP images levu.');
+  const invalid=prepared.filter(x=>!fmImageCodeValid(x.code));
+  if(invalid.length)throw new Error('Invalid filename(s): '+invalid.slice(0,5).map(x=>x.file.name).join(', ')+'. File names 1.jpg, 1.1.jpg laga numeric codes undali.');
+  const duplicateNames=prepared.map(x=>x.code).filter((c,i,a)=>a.indexOf(c)!==i);
+  if(duplicateNames.length)throw new Error('Folder lo duplicate image code undi: '+[...new Set(duplicateNames)].join(', ')+'. Each code ki one image only.');
+  const tooLarge=prepared.filter(x=>x.file.size>3*1024*1024);if(tooLarge.length)throw new Error('3 MB kanna pedda images: '+tooLarge.slice(0,5).map(x=>x.file.name).join(', ')+'. Images compress chesi malli upload cheyyandi.');
+  const {data:existing,error:ce}=await fmSupabase.from('fm_product_image_library').select('image_code').in('image_code',prepared.map(x=>x.code));if(ce)throw ce;
+  const existingSet=new Set((existing||[]).map(x=>String(x.image_code).trim()));
+  const pending=prepared.filter(x=>!existingSet.has(x.code));
+  if(!pending.length)throw new Error('Ee folder lo unna image codes anni already library lo unnayi. New codes use cheyyandi.');
+  let success=0,failed=[];
+  for(let i=0;i<pending.length;i++){
+   const x=pending[i];if(msg)msg.textContent=`Uploading ${i+1}/${pending.length}: ${x.file.name}`;
+   const mime=x.ext==='png'?'image/png':x.ext==='webp'?'image/webp':'image/jpeg';
+   const path='product-library/'+x.code.replace(/\./g,'-')+'-'+Date.now()+'-'+i+'.'+x.ext;
+   let storedPath=null;
+   try{
+    const {data:stored,error:ue}=await fmSupabase.storage.from('fm-product-images').upload(path,x.file,{contentType:mime,upsert:false});if(ue)throw ue;storedPath=stored.path;
+    const url=fmSupabase.storage.from('fm-product-images').getPublicUrl(storedPath).data.publicUrl;
+    const label=x.code.includes('.')?('Additional image '+x.code):('Product '+x.code+' main image');
+    const {error:ie}=await fmSupabase.from('fm_product_image_library').insert({image_code:x.code,image_label:label,image_url:url,storage_path:storedPath,is_active:true,created_by:session.user.id});
+    if(ie){await fmSupabase.storage.from('fm-product-images').remove([storedPath]);throw ie;}
+    success++;
+   }catch(e){failed.push(x.file.name+': '+(e.message||String(e)));}
+  }
+  if(input)input.value='';if(multi)multi.value='';await fmImageLibraryLoad();
+  if(msg)msg.textContent=`Bulk upload complete: ${success} uploaded, ${existingSet.size} already existed and skipped, ${failed.length} failed.`+(failed.length?' Details: '+failed.slice(0,3).join(' | '):'');
+ }catch(e){if(msg)msg.textContent='Bulk upload failed: '+(e.message||String(e));}
+ finally{btn.disabled=false;}
+}
+
 async function fmImageLibraryToggle(id,active){
  const msg=document.getElementById('fmImageLibraryMsg');
  try{const {error}=await fmSupabase.from('fm_product_image_library').update({is_active:active}).eq('id',id);if(error)throw error;await fmImageLibraryLoad();}
