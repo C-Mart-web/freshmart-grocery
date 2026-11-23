@@ -3106,11 +3106,26 @@ function fmShowNotice(message){
 #fmMemberViewModal .fm-view-head{background:#123d2b;color:#fff;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 #fmMemberViewModal .fm-view-banner{background:#fff4d7;color:#755000;border-bottom:1px solid #f0d58b;padding:10px 16px;font-weight:800;text-align:center}
 #fmMemberViewModal .fm-view-body{padding:16px;max-height:75vh;overflow:auto}
-#fmMemberViewModal .fm-view-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}
-#fmMemberViewModal .fm-view-card{border:1px solid #e2e9e4;border-radius:11px;padding:12px;background:#fbfdfb;min-width:0}
-#fmMemberViewModal .fm-view-card h3{margin:0 0 8px;color:#174b34;font-size:15px}
-#fmMemberViewModal pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7f6;border:1px solid #e3e9e5;border-radius:9px;padding:11px;font:12px/1.5 ui-monospace,monospace;max-height:420px;overflow:auto;margin:0}
+#fmMemberViewModal .fm-view-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-bottom:14px;align-items:stretch}
+#fmMemberViewModal .fm-view-card{border:1px solid #e2e9e4;border-radius:13px;padding:14px;background:#fff;min-width:0;box-shadow:0 2px 8px #123d2b08}
+#fmMemberViewModal .fm-view-card h3{margin:0 0 12px;color:#174b34;font-size:15px;display:flex;align-items:center;gap:7px}
+#fmMemberViewModal .fm-view-card h3:before{content:'';width:5px;height:17px;border-radius:5px;background:#15945b;display:inline-block}
+#fmMemberViewModal .fm-view-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px}
+#fmMemberViewModal .fm-view-stat{background:#f4faf6;border:1px solid #e2eee6;border-radius:10px;padding:11px;min-width:0}
+#fmMemberViewModal .fm-view-stat small{display:block;color:#63766a;font-size:11px;margin-bottom:5px}
+#fmMemberViewModal .fm-view-stat strong{display:block;color:#173f2d;font-size:16px;overflow-wrap:anywhere}
+#fmMemberViewModal .fm-view-kv{display:grid;grid-template-columns:minmax(105px, .8fr) minmax(0,1.2fr);gap:8px;padding:8px 0;border-bottom:1px solid #edf1ee;font-size:13px}
+#fmMemberViewModal .fm-view-kv:last-child{border-bottom:0}
+#fmMemberViewModal .fm-view-kv span{color:#68786e;overflow-wrap:anywhere}
+#fmMemberViewModal .fm-view-kv b{color:#243b2e;text-align:right;overflow-wrap:anywhere;font-weight:650}
+#fmMemberViewModal .fm-view-pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#e8f6ed;color:#17683e;font-size:11px;font-weight:800}
+#fmMemberViewModal .fm-view-table-wrap{overflow:auto;border:1px solid #e7ece8;border-radius:10px}
+#fmMemberViewModal .fm-view-table{border-collapse:collapse;width:100%;font-size:12px;min-width:520px}
+#fmMemberViewModal .fm-view-table th{background:#eff7f1;color:#315b42;text-align:left;padding:9px;white-space:nowrap}
+#fmMemberViewModal .fm-view-table td{padding:9px;border-top:1px solid #edf1ee;color:#35483b;vertical-align:top}
+#fmMemberViewModal .fm-view-empty{padding:14px;border:1px dashed #d7e3da;border-radius:10px;color:#758278;text-align:center;font-size:13px;background:#fafcfb}
 #fmMemberViewModal .fm-view-actions{display:flex;gap:8px;align-items:center}
+@media(max-width:600px){#fmMemberViewModal .fm-view-grid{grid-template-columns:1fr}#fmMemberViewModal .fm-view-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#fmMemberViewModal{padding:5px}#fmMemberViewModal .fm-view-shell{margin:4px auto}#fmMemberViewModal .fm-view-body{padding:10px;max-height:80vh}}
 </style>
 <div id="fmMemberViewModal" role="dialog" aria-modal="true" aria-labelledby="fmMemberViewTitle">
@@ -3121,19 +3136,73 @@ function fmShowNotice(message){
  </div>
 </div>
 <script>
-function fmMemberPretty(value){try{return JSON.stringify(value??{},null,2)}catch(_){return String(value??'—')}}
-function fmMemberCard(title,value){return `<section class="fm-view-card"><h3>${escapeHtml(title)}</h3><pre>${escapeHtml(fmMemberPretty(value))}</pre></section>`}
+function fmMemberEsc(v){return escapeHtml(String(v??'—'));}
+function fmMemberLabel(k){return String(k||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function fmMemberMoney(v){const n=Number(v);return Number.isFinite(n)?'₹'+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):fmMemberEsc(v);}
+function fmMemberValue(k,v){
+ if(v===null||v===undefined||v==='')return '—';
+ if(typeof v==='boolean')return v?'Yes':'No';
+ if(typeof v==='number'&&/(amount|balance|wallet|roi|income|charge|percent|price|fee|paid|total)/i.test(k))return fmMemberMoney(v);
+ if(typeof v==='string'&&/(date|_at|_on|start|end|expiry)/i.test(k)&&!Number.isNaN(Date.parse(v)))return new Date(v).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+ if(typeof v==='object')return Array.isArray(v)?(v.length+' records'):'Details available';
+ return fmMemberEsc(v);
+}
+function fmMemberKV(obj,exclude=[]){
+ if(!obj||typeof obj!=='object'||Array.isArray(obj))return '<div class="fm-view-empty">No details available</div>';
+ const entries=Object.entries(obj).filter(([k,v])=>!exclude.includes(k)&&v!==undefined);
+ if(!entries.length)return '<div class="fm-view-empty">No details available</div>';
+ return entries.map(([k,v])=>`<div class="fm-view-kv"><span>${fmMemberEsc(fmMemberLabel(k))}</span><b>${fmMemberValue(k,v)}</b></div>`).join('');
+}
+function fmMemberCard(title,body){return `<section class="fm-view-card"><h3>${fmMemberEsc(title)}</h3>${body}</section>`}
+function fmMemberStats(items){return '<div class="fm-view-stat-grid">'+items.map(([label,value])=>`<div class="fm-view-stat"><small>${fmMemberEsc(label)}</small><strong>${fmMemberEsc(value)}</strong></div>`).join('')+'</div>'}
+function fmMemberTable(rows,columns){
+ if(!Array.isArray(rows)||!rows.length)return '<div class="fm-view-empty">No records available</div>';
+ return '<div class="fm-view-table-wrap"><table class="fm-view-table"><thead><tr>'+columns.map(([k,l])=>`<th>${fmMemberEsc(l)}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+columns.map(([k])=>`<td>${fmMemberValue(k,r?.[k])}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
+}
+function fmMemberTableAuto(rows,preferred){
+ if(!Array.isArray(rows)||!rows.length)return '<div class="fm-view-empty">No records available</div>';
+ const first=rows.find(x=>x&&typeof x==='object')||{};
+ const keys=[...(preferred||[]).filter(k=>Object.prototype.hasOwnProperty.call(first,k)),...Object.keys(first).filter(k=>!['id','user_id','created_by','updated_by'].includes(k)&&!(preferred||[]).includes(k))].slice(0,8);
+ if(!keys.length)return '<div class="fm-view-empty">Records are available</div>';
+ return fmMemberTable(rows,keys.map(k=>[k,fmMemberLabel(k)]));
+}
+function fmMemberArrayCards(rows,titleKey,subKey){
+ if(!Array.isArray(rows)||!rows.length)return '<div class="fm-view-empty">No records available</div>';
+ return '<div class="fm-view-grid">'+rows.map((r,i)=>`<section class="fm-view-card"><h3>${fmMemberEsc(r?.[titleKey]||('Record '+(i+1)))}</h3>${fmMemberKV(r,[titleKey])}</section>`).join('')+'</div>';
+}
+function fmRenderMemberSnapshot(m,s,result){
+ const dashboard=s.dashboard||{},allocation=s.membership_allocation||{},activation=allocation.activation||null,investment=s.investment||{};
+ const profile={user_code:m.user_code,display_name:m.display_name,username:m.username,mobile_number:m.mobile_number,account_type:m.account_type,account_status:m.account_status,created_at:m.created_at};
+ const walletItems=[['Income Wallet',fmMemberMoney(dashboard.income_wallet_balance)],['Shopping Wallet',fmMemberMoney(dashboard.shopping_wallet_balance)],['ROI Balance',fmMemberMoney(dashboard.roi_balance)],['Investment Wallet',fmMemberMoney(investment.wallet_balance)]];
+ const planItems=[['Active Plan',dashboard.active_plan||'No Active Plan'],['Plan Amount',fmMemberMoney(dashboard.plan_amount)],['Activation Status',dashboard.activation_status||activation?.status||'Not available'],['Plan Start',dashboard.plan_start_date?new Date(dashboard.plan_start_date).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'—'],['Plan Expiry',dashboard.plan_expiry_date?new Date(dashboard.plan_expiry_date).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'—']];
+ let html='<div class="fm-view-grid">';
+ html+=fmMemberCard('Member Profile',fmMemberKV(profile));
+ html+=fmMemberCard('Dashboard & Wallets',fmMemberStats(walletItems));
+ html+=fmMemberCard('Membership Overview',fmMemberStats(planItems)+(activation?'<div style="margin-top:12px">'+fmMemberKV(activation)+'</div>':'<div class="fm-view-empty" style="margin-top:10px">No membership activation details returned for this member.</div>'));
+ html+='</div>';
+ html+=fmMemberCard('Income Transactions',fmMemberTable(s.income_transactions,[['created_at','Date'],['wallet_type','Wallet'],['transaction_type','Type'],['amount','Amount'],['source_type','Source'],['description','Description'],['status','Status']]));
+ html+='<div class="fm-view-grid" style="margin-top:12px">';
+ html+=fmMemberCard('Investment Wallet',fmMemberStats([['Wallet Balance',fmMemberMoney(investment.wallet_balance)],['Investment Plans',Array.isArray(investment.plans)?investment.plans.length:0],['Investments',Array.isArray(investment.investments)?investment.investments.length:0],['Withdrawals',Array.isArray(investment.withdrawals)?investment.withdrawals.length:0]]));
+ html+=fmMemberCard('Investment Plans',fmMemberArrayCards(investment.plans,'plan_name'));
+ html+='</div>';
+ html+='<div class="fm-view-grid">';
+ html+=fmMemberCard('Investment Records',fmMemberTableAuto(investment.investments,['created_at','plan_name','plan_id','amount','status','start_date','end_date']));
+ html+=fmMemberCard('Investment Transactions',fmMemberTableAuto(investment.transactions,['created_at','transaction_type','amount','description','status','wallet_type']));
+ html+=fmMemberCard('Investment Withdrawals',fmMemberTableAuto(investment.withdrawals,['created_at','amount','charge_amount','net_amount','status','admin_note']));
+ html+='</div>';
+ return html;
+}
 async function fmOpenMemberReadOnly(memberId){
  const modal=document.getElementById('fmMemberViewModal'),status=document.getElementById('fmMemberViewStatus'),content=document.getElementById('fmMemberViewContent');
  if(!modal||!status||!content)return;
  modal.classList.add('show');document.body.style.overflow='hidden';status.textContent='Loading secure read-only member data…';content.innerHTML='';document.getElementById('fmMemberViewIdentity').textContent='Member ID: '+memberId;
  try{
   const result=await fmAdminPaymentCall('admin_member_view',{member_id:memberId});
+  if(!result?.success)throw new Error(result?.error||'Unable to load member snapshot.');
   const m=result.member||{},s=result.snapshot||{};
   document.getElementById('fmMemberViewIdentity').textContent=[m.display_name||m.username||'Member',m.user_code||m.id,m.mobile_number].filter(Boolean).join(' · ');
-  const profile={user_code:m.user_code,display_name:m.display_name,username:m.username,mobile_number:m.mobile_number,account_type:m.account_type,account_status:m.account_status,created_at:m.created_at};
-  content.innerHTML='<div class="fm-view-grid">'+fmMemberCard('Profile',profile)+fmMemberCard('Dashboard & Wallets',s.dashboard)+fmMemberCard('Membership Allocation',s.membership_allocation)+fmMemberCard('Income Transactions',s.income_transactions)+fmMemberCard('Investment Details',s.investment)+'</div>';
-  status.textContent='Read-only snapshot loaded · Viewed at '+new Date(result.viewed_at||Date.now()).toLocaleString('en-IN');
+  content.innerHTML=fmRenderMemberSnapshot(m,s,result);
+  status.textContent='Read-only snapshot loaded · Viewed at '+new Date(result.viewed_at||Date.now()).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
  }catch(e){status.textContent='Could not load member details: '+(e.message||e);content.innerHTML='';}
 }
 function fmCloseMemberReadOnly(){const modal=document.getElementById('fmMemberViewModal');if(modal)modal.classList.remove('show');document.body.style.overflow='';}
