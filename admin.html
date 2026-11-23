@@ -3127,6 +3127,16 @@ function fmShowNotice(message){
 #fmMemberViewModal .fm-view-actions{display:flex;gap:8px;align-items:center}
 @media(max-width:600px){#fmMemberViewModal .fm-view-grid{grid-template-columns:1fr}#fmMemberViewModal .fm-view-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#fmMemberViewModal{padding:5px}#fmMemberViewModal .fm-view-shell{margin:4px auto}#fmMemberViewModal .fm-view-body{padding:10px;max-height:80vh}}
+#fmMemberViewModal .fm-view-tabs{display:flex;gap:7px;overflow-x:auto;padding:10px 12px;background:#f5faf6;border-bottom:1px solid #e1eee5;position:sticky;top:0;z-index:2;scrollbar-width:thin}
+#fmMemberViewModal .fm-view-tab{flex:0 0 auto;border:1px solid #dce9df;background:#fff;color:#52645a;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:800;white-space:nowrap}
+#fmMemberViewModal .fm-view-tab.active{background:#168447;border-color:#168447;color:#fff}
+#fmMemberViewModal .fm-view-page{display:none}
+#fmMemberViewModal .fm-view-page.active{display:block}
+#fmMemberViewModal .fm-view-body{padding:0;max-height:calc(100vh - 190px)}
+#fmMemberViewModal #fmMemberViewStatus{padding:9px 14px;background:#fbfdfb}
+#fmMemberViewModal #fmMemberViewContent{padding:12px}
+@media(max-width:600px){#fmMemberViewModal .fm-view-body{max-height:calc(100vh - 165px)}#fmMemberViewModal .fm-view-tab{padding:8px 10px;font-size:11px}}
+
 </style>
 <div id="fmMemberViewModal" role="dialog" aria-modal="true" aria-labelledby="fmMemberViewTitle">
  <div class="fm-view-shell">
@@ -3171,39 +3181,32 @@ function fmMemberArrayCards(rows,titleKey,subKey){
  return '<div class="fm-view-grid">'+rows.map((r,i)=>`<section class="fm-view-card"><h3>${fmMemberEsc(r?.[titleKey]||('Record '+(i+1)))}</h3>${fmMemberKV(r,[titleKey])}</section>`).join('')+'</div>';
 }
 function fmRenderMemberSnapshot(m,s,result){
- const dashboard=s.dashboard||{},allocation=s.membership_allocation||{},activation=allocation.activation||null,investment=s.investment||{};
+ const dashboard=s.dashboard||{},allocation=s.membership_allocation||{},activation=allocation.activation||null,investment=s.investment||{},sections=result.sections||{};
  const profile={user_code:m.user_code,display_name:m.display_name,username:m.username,mobile_number:m.mobile_number,account_type:m.account_type,account_status:m.account_status,created_at:m.created_at};
  const walletItems=[['Income Wallet',fmMemberMoney(dashboard.income_wallet_balance)],['Shopping Wallet',fmMemberMoney(dashboard.shopping_wallet_balance)],['ROI Balance',fmMemberMoney(dashboard.roi_balance)],['Investment Wallet',fmMemberMoney(investment.wallet_balance)]];
  const planItems=[['Active Plan',dashboard.active_plan||'No Active Plan'],['Plan Amount',fmMemberMoney(dashboard.plan_amount)],['Activation Status',dashboard.activation_status||activation?.status||'Not available'],['Plan Start',dashboard.plan_start_date?new Date(dashboard.plan_start_date).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'—'],['Plan Expiry',dashboard.plan_expiry_date?new Date(dashboard.plan_expiry_date).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'—']];
- let html='<div class="fm-view-grid">';
- html+=fmMemberCard('Member Profile',fmMemberKV(profile));
- html+=fmMemberCard('Dashboard & Wallets',fmMemberStats(walletItems));
- html+=fmMemberCard('Membership Overview',fmMemberStats(planItems)+(activation?'<div style="margin-top:12px">'+fmMemberKV(activation)+'</div>':'<div class="fm-view-empty" style="margin-top:10px">No membership activation details returned for this member.</div>'));
- html+='</div>';
- html+=fmMemberCard('Income Transactions',fmMemberTable(s.income_transactions,[['created_at','Date'],['wallet_type','Wallet'],['transaction_type','Type'],['amount','Amount'],['source_type','Source'],['description','Description'],['status','Status']]));
- html+='<div class="fm-view-grid" style="margin-top:12px">';
- html+=fmMemberCard('Investment Wallet',fmMemberStats([['Wallet Balance',fmMemberMoney(investment.wallet_balance)],['Investment Plans',Array.isArray(investment.plans)?investment.plans.length:0],['Investments',Array.isArray(investment.investments)?investment.investments.length:0],['Withdrawals',Array.isArray(investment.withdrawals)?investment.withdrawals.length:0]]));
- html+=fmMemberCard('Investment Plans',fmMemberArrayCards(investment.plans,'plan_name'));
- html+='</div>';
- html+='<div class="fm-view-grid">';
- html+=fmMemberCard('Investment Records',fmMemberTableAuto(investment.investments,['created_at','plan_name','plan_id','amount','status','start_date','end_date']));
- html+=fmMemberCard('Investment Transactions',fmMemberTableAuto(investment.transactions,['created_at','transaction_type','amount','description','status','wallet_type']));
- html+=fmMemberCard('Investment Withdrawals',fmMemberTableAuto(investment.withdrawals,['created_at','amount','charge_amount','net_amount','status','admin_note']));
- html+='</div>';
- const sections=result.sections||{};
- html+='<div class="fm-view-grid" style="margin-top:12px">';
- html+=fmMemberCard('My Team / Direct Referrals',fmMemberTableAuto(sections.team,['user_code','display_name','username','mobile_number','placement_side','account_status','joined_at']));
- html+=fmMemberCard('My Grocery Orders',fmMemberTableAuto(sections.orders,['order_number','created_at','order_status','payment_status','total_amount','grand_total','delivery_status']));
- html+='</div>';
- html+='<div class="fm-view-grid">';
- html+=fmMemberCard('Daily Fresh Subscriptions',fmMemberTableAuto(sections.daily_fresh,['plan_name','category_name','duration_months','amount','status','start_date','end_date','created_at']));
- html+=fmMemberCard('Saved Delivery Addresses',fmMemberArrayCards(sections.addresses,'label'));
- html+='</div>';
- if(Array.isArray(result.warnings)&&result.warnings.length){
-   html+=fmMemberCard('Some details could not be loaded','<div class="fm-view-empty">'+result.warnings.map(fmMemberEsc).join('<br>')+'</div>');
- }
+ const pages={
+  dashboard: '<div class="fm-view-grid">'+fmMemberCard('Account Overview',fmMemberStats([['Member',m.display_name||m.username||'Member'],['Account Status',m.account_status||'—'],['Active Plan',dashboard.active_plan||'No Active Plan'],['Plan Amount',fmMemberMoney(dashboard.plan_amount)]]))+fmMemberCard('Wallet Summary',fmMemberStats(walletItems))+'</div>'+fmMemberCard('Membership Overview',fmMemberStats(planItems)+(activation?'<div style="margin-top:12px">'+fmMemberKV(activation)+'</div>':'<div class="fm-view-empty" style="margin-top:10px">No membership activation details returned for this member.</div>')),
+  profile: fmMemberCard('Member Profile',fmMemberKV(profile)),
+  wallets: '<div class="fm-view-grid">'+fmMemberCard('Wallet Balances',fmMemberStats(walletItems))+fmMemberCard('Income Transactions',fmMemberTable(s.income_transactions,[['created_at','Date'],['wallet_type','Wallet'],['transaction_type','Type'],['amount','Amount'],['source_type','Source'],['description','Description'],['status','Status']]))+'</div>',
+  team: fmMemberCard('My Team / Binary Team',fmMemberStats([['Direct Referrals',sections.team_counts?.direct??'—'],['Left Team Members',sections.team_counts?.leftRegistered??'—'],['Right Team Members',sections.team_counts?.rightRegistered??'—']]))+fmMemberCard('Team Members',fmMemberTableAuto(sections.team,['display_name','username','user_code','placement','is_direct','account_status','plan_info'])),
+  orders: fmMemberCard('My Grocery Orders',fmMemberTableAuto(sections.orders,['order_number','created_at','order_status','payment_status','delivery_status','grand_total','pincode','delivery_slot_label'])),
+  investment: '<div class="fm-view-grid">'+fmMemberCard('Investment Wallet',fmMemberStats([['Wallet Balance',fmMemberMoney(investment.wallet_balance)],['Investment Plans',Array.isArray(investment.plans)?investment.plans.length:0],['Investments',Array.isArray(investment.investments)?investment.investments.length:0],['Withdrawals',Array.isArray(investment.withdrawals)?investment.withdrawals.length:0]]))+fmMemberCard('Investment Plans',fmMemberArrayCards(investment.plans,'plan_name'))+'</div><div class="fm-view-grid">'+fmMemberCard('Investment Records',fmMemberTableAuto(investment.investments,['created_at','plan_name','plan_id','amount','status','start_date','end_date']))+fmMemberCard('Investment Transactions',fmMemberTableAuto(investment.transactions,['created_at','transaction_type','amount','description','status','wallet_type']))+fmMemberCard('Investment Withdrawals',fmMemberTableAuto(investment.withdrawals,['created_at','amount','charge_amount','net_amount','status','admin_note']))+'</div>',
+  dailyfresh: fmMemberCard('Daily Fresh Subscriptions',fmMemberTableAuto(sections.daily_fresh,['category_name','plan_name','duration_months','amount_paid','status','starts_at','ends_at','created_at'])),
+  addresses: fmMemberCard('Saved Delivery Addresses',fmMemberArrayCards(sections.addresses,'label'))
+ };
+ const tabs=[['dashboard','⌂','Dashboard'],['profile','👤','Profile'],['wallets','👛','Wallets'],['team','👥','Team'],['orders','📦','Orders'],['investment','📈','Investment'],['dailyfresh','🥗','Daily Fresh'],['addresses','📍','Addresses']];
+ let html='<nav class="fm-view-tabs" aria-label="Read-only member pages">'+tabs.map(([id,ico,label],i)=>`<button type="button" class="fm-view-tab ${i===0?'active':''}" data-fm-member-tab="${id}">${ico} ${label}</button>`).join('')+'</nav>';
+ for(const [id] of tabs) html+=`<section class="fm-view-page ${id==='dashboard'?'active':''}" data-fm-member-page="${id}">${pages[id]||''}</section>`;
+ if(Array.isArray(result.warnings)&&result.warnings.length) html+=fmMemberCard('Some details could not be loaded','<div class="fm-view-empty">'+result.warnings.map(fmMemberEsc).join('<br>')+'</div>');
  return html;
 }
+function fmMemberShowPage(id){
+ const root=document.getElementById('fmMemberViewContent');if(!root)return;
+ root.querySelectorAll('[data-fm-member-tab]').forEach(b=>b.classList.toggle('active',b.dataset.fmMemberTab===id));
+ root.querySelectorAll('[data-fm-member-page]').forEach(p=>p.classList.toggle('active',p.dataset.fmMemberPage===id));
+}
+
 async function fmOpenMemberReadOnly(memberId){
  const modal=document.getElementById('fmMemberViewModal'),status=document.getElementById('fmMemberViewStatus'),content=document.getElementById('fmMemberViewContent');
  if(!modal||!status||!content)return;
@@ -3214,6 +3217,7 @@ async function fmOpenMemberReadOnly(memberId){
   const m=result.member||{},s=result.snapshot||{};
   document.getElementById('fmMemberViewIdentity').textContent=[m.display_name||m.username||'Member',m.user_code||m.id,m.mobile_number].filter(Boolean).join(' · ');
   content.innerHTML=fmRenderMemberSnapshot(m,s,result);
+  content.querySelectorAll('[data-fm-member-tab]').forEach(btn=>btn.addEventListener('click',()=>fmMemberShowPage(btn.dataset.fmMemberTab)));
   status.textContent='Read-only member panel loaded · No member login used · Viewed at '+new Date(result.viewed_at||Date.now()).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
  }catch(e){status.textContent='Could not load member details: '+(e.message||e);content.innerHTML='';}
 }
