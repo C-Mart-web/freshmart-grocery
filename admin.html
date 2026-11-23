@@ -3190,6 +3190,18 @@ function fmRenderMemberSnapshot(m,s,result){
  html+=fmMemberCard('Investment Transactions',fmMemberTableAuto(investment.transactions,['created_at','transaction_type','amount','description','status','wallet_type']));
  html+=fmMemberCard('Investment Withdrawals',fmMemberTableAuto(investment.withdrawals,['created_at','amount','charge_amount','net_amount','status','admin_note']));
  html+='</div>';
+ const sections=result.sections||{};
+ html+='<div class="fm-view-grid" style="margin-top:12px">';
+ html+=fmMemberCard('My Team / Direct Referrals',fmMemberTableAuto(sections.team,['user_code','display_name','username','mobile_number','placement_side','account_status','joined_at']));
+ html+=fmMemberCard('My Grocery Orders',fmMemberTableAuto(sections.orders,['order_number','created_at','order_status','payment_status','total_amount','grand_total','delivery_status']));
+ html+='</div>';
+ html+='<div class="fm-view-grid">';
+ html+=fmMemberCard('Daily Fresh Subscriptions',fmMemberTableAuto(sections.daily_fresh,['plan_name','category_name','duration_months','amount','status','start_date','end_date','created_at']));
+ html+=fmMemberCard('Saved Delivery Addresses',fmMemberArrayCards(sections.addresses,'label'));
+ html+='</div>';
+ if(Array.isArray(result.warnings)&&result.warnings.length){
+   html+=fmMemberCard('Some details could not be loaded','<div class="fm-view-empty">'+result.warnings.map(fmMemberEsc).join('<br>')+'</div>');
+ }
  return html;
 }
 async function fmOpenMemberReadOnly(memberId){
@@ -3202,7 +3214,7 @@ async function fmOpenMemberReadOnly(memberId){
   const m=result.member||{},s=result.snapshot||{};
   document.getElementById('fmMemberViewIdentity').textContent=[m.display_name||m.username||'Member',m.user_code||m.id,m.mobile_number].filter(Boolean).join(' · ');
   content.innerHTML=fmRenderMemberSnapshot(m,s,result);
-  status.textContent='Read-only snapshot loaded · Viewed at '+new Date(result.viewed_at||Date.now()).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+  status.textContent='Read-only member panel loaded · No member login used · Viewed at '+new Date(result.viewed_at||Date.now()).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
  }catch(e){status.textContent='Could not load member details: '+(e.message||e);content.innerHTML='';}
 }
 function fmCloseMemberReadOnly(){const modal=document.getElementById('fmMemberViewModal');if(modal)modal.classList.remove('show');document.body.style.overflow='';}
