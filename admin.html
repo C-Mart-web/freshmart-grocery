@@ -96,6 +96,8 @@ body:not(.fm-admin-authenticated) .mobile-nav{display:none!important}
 #adminSignInModal.fm-auth-required .close{display:none}
 </style>
 
+
+
 </head>
 <body>
 <header class="topbar"><button class="mobile-menu-toggle" type="button" onclick="fmToggleMobileMenu(true)" aria-label="Open menu" aria-expanded="false">☰</button><div class="brand"><div class="logo" id="fmAdminBrandLogo">🛒</div><span>Rupee Mart</span></div><div class="topright"><div class="userlabel"><strong>Super Admin</strong><div class="small">Portal management</div></div><button type="button" id="fmAdminInstallBtn" class="btn btn-outline btn-sm" style="display:none">📲 Install Admin App</button><div class="fm-notify-wrap"><button type="button" class="fm-notify-bell" id="fmNotifyBell" onclick="fmNotifyToggle()" aria-label="Notifications">🔔<span id="fmNotifyBadge" class="fm-notify-badge" style="display:none">0</span></button><div class="fm-notify-panel" id="fmNotifyPanel"><div class="fm-notify-head"><strong>Notifications</strong><button type="button" class="btn btn-outline btn-sm" onclick="fmNotifyLoad()">Refresh</button></div><div id="fmNotifyPermissionArea" class="fm-notify-permission"><span id="fmNotifyDeviceStatus">Enable notifications on this device to receive alerts.</span><button type="button" class="btn btn-green btn-sm" id="fmEnablePushBtn" onclick="fmEnableAdminPush()">Enable</button></div><div id="fmNotifyRows" class="fm-notify-rows"><div class="empty">Sign in to view notifications.</div></div></div></div><div class="avatar">SA</div></div></header>
@@ -326,9 +328,9 @@ body:not(.fm-admin-authenticated) .mobile-nav{display:none!important}
 
 <div class="card" style="margin-bottom:16px" id="fmPageBannerManager">
  <div class="section-head"><h2>Page-wise Promotional Banners</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmBannerLoad()">Refresh</button></div>
- <p class="hint">Prathi page ki separate banner image upload cheyyandi. User Panel lo aa page open chesinappudu aa banner display avutundi.</p>
+ <p class="hint">Page select chesi banner image upload cheyyandi. Investment ROI select chesthe User Panel lo aa page open chesinappudu banner full-screen ga vastundi; migatha pages ki normal page banner ga display avutundi.</p>
  <div class="formgrid">
-  <div class="field"><label>Which Page?</label><select id="fmBannerPage"><option value="dashboard">Home / Dashboard</option><option value="groceries">Grocery Store</option><option value="plans">Plans & Payment</option><option value="rewards">My Rewards</option></select></div>
+  <div class="field"><label>Which Page?</label><select id="fmBannerPage"><option value="dashboard">Home / Dashboard</option><option value="groceries">Grocery Store</option><option value="plans">Plans & Payment</option><option value="rewards">My Rewards</option><option value="investments">Investment ROI (Full Screen)</option></select></div>
   <div class="field"><label>Banner Image (JPG / PNG / WEBP · max 3 MB)</label><input id="fmBannerFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
   <div class="field"><label>Optional Click URL</label><input id="fmBannerLink" type="url" placeholder="https://example.com/offer"></div>
   <div class="field"><label>Alternative Text</label><input id="fmBannerAlt" placeholder="Festival offer banner"></div>
@@ -562,6 +564,7 @@ document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('ma
 const FM_SUPABASE_URL = 'https://wmquhgmrvdlcxmgarxqp.supabase.co';
 const FM_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_pHDkQK4EdDZY9Zct856puQ_FQPYFWPa';
 const fmSupabase = window.supabase.createClient(FM_SUPABASE_URL, FM_SUPABASE_PUBLISHABLE_KEY);
+
 async function loadFreshMartDashboard(){
   const status=document.getElementById('dbStatus');
   const gate=document.getElementById('adminSignInModal');
@@ -3081,6 +3084,7 @@ async function fmInvDirectActivate(){const msg=document.getElementById('fmInvDir
 async function fmInvReview(id,approve){const note=prompt(approve?'Optional approval note':'Please enter rejection reason:','');if(!approve&&note===null)return;try{await fmInvAdminRpc('fm_admin_investment_withdrawal_review_v1',{p_withdrawal_id:id,p_approve:approve,p_note:note||null});await fmInvAdminLoad();}catch(e){fmShowNotice('Review failed: '+(e.message||e));}}
 document.addEventListener('click',function(ev){if(ev.target.closest('[data-page=\"investments\"]'))setTimeout(fmInvAdminLoad,250);},true);
 </script>
+
 
 <div id="fmBrandedNotice" role="dialog" aria-modal="true" aria-labelledby="fmBrandedNoticeTitle">
  <div class="fm-notice-box"><div class="fm-notice-brand"><span class="fm-notice-icon">🛒</span><span id="fmBrandedNoticeTitle">Rupee Mart</span></div><div class="fm-notice-message" id="fmBrandedNoticeMessage"></div><div class="fm-notice-actions"><button type="button" class="fm-notice-ok" id="fmBrandedNoticeOk">OK</button></div></div>
