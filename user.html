@@ -317,6 +317,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
   <button class="navbtn" data-page="wallets"><span class="ico">👛</span>My Wallets</button>
   <button class="navbtn" data-page="rewards"><span class="ico">🎁</span>My Rewards</button>
   <button class="navbtn" data-page="investments"><span>📈</span>Investment ROI</button>
+  <button class="navbtn" data-page="businessopportunity"><span class="ico">🏪</span>Open a Rupee Mart Business</button>
 <button class="navbtn" data-page="withdrawals"><span class="ico">↗</span>Withdrawals</button>
   <button class="navbtn" data-page="orders"><span class="ico">📦</span>My Orders</button>
   <button class="navbtn" data-page="myoffers"><span class="ico">🎁</span>Coupons & Offers</button>
@@ -565,6 +566,43 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
  <div class="card" style="margin-top:14px"><h2>Investment Transactions</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead><tbody id="fmInvTxRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
  <div class="card" style="margin-top:14px"><h2>Withdrawal History</h2><div class="tablewrap"><table><thead><tr><th>Requested</th><th>Charge</th><th>Net</th><th>Status</th></tr></thead><tbody id="fmInvUserWithdrawalRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div></div>
 </section>
+
+<section class="page" id="businessopportunity">
+ <div class="welcome"><div><h1>🏪 Start a Business with Rupee Mart</h1><p>Apply to open a Wholesale / Retail Shop, Distribution Point or Warehouse.</p></div><span class="status">BUSINESS OPPORTUNITY</span></div>
+ <div class="banner"><div><h2>Build Your Business with Rupee Mart</h2><p>Share your details. Our team will review your location, business type and funding preference, then update you through this panel.</p></div><div class="bannericon">🤝</div></div>
+ <div class="card" style="margin-bottom:16px">
+  <div class="section-head"><h2>Business Application Form</h2></div>
+  <form id="fmBusinessApplicationForm" onsubmit="fmBusinessSubmit(event)">
+   <div class="formgrid">
+    <div class="field"><label>Full Name *</label><input id="fmBizName" maxlength="120" required placeholder="Enter your full name"></div>
+    <div class="field"><label>Mobile Number *</label><input id="fmBizMobile" type="tel" inputmode="numeric" maxlength="15" required placeholder="Enter mobile number"></div>
+    <div class="field"><label>WhatsApp Number</label><input id="fmBizWhatsapp" type="tel" inputmode="numeric" maxlength="15" placeholder="If different from mobile"></div>
+    <div class="field"><label>Email Address</label><input id="fmBizEmail" type="email" maxlength="160" placeholder="Email (optional)"></div>
+    <div class="field"><label>Business Type *</label><select id="fmBizType" required><option value="">Select business type</option><option>Wholesale Shop</option><option>Retail Shop</option><option>Distribution Point</option><option>Warehouse</option></select></div>
+    <div class="field"><label>State *</label><input id="fmBizState" maxlength="80" required placeholder="State"></div>
+    <div class="field"><label>District *</label><input id="fmBizDistrict" maxlength="80" required placeholder="District"></div>
+    <div class="field"><label>City / Town / Village *</label><input id="fmBizCity" maxlength="100" required placeholder="City, town or village"></div>
+    <div class="field"><label>PIN Code *</label><input id="fmBizPincode" inputmode="numeric" maxlength="10" required placeholder="PIN code"></div>
+    <div class="field"><label>Expected Start Date *</label><select id="fmBizTimeline" required><option value="">When do you want to start?</option><option>Immediately</option><option>Within 30 Days</option><option>Within 3 Months</option></select></div>
+    <div class="field" style="grid-column:1/-1"><label>Full Business Location / Address *</label><textarea id="fmBizAddress" maxlength="700" required placeholder="Door / street, landmark and complete address"></textarea></div>
+    <div class="field"><label>Funding Preference *</label><select id="fmBizFunding" required><option value="">Select funding method</option><option>Loan Assistance</option><option>Own Investment</option><option>Both - Loan + Own Investment</option></select></div>
+    <div class="field"><label>Available Own Investment (₹)</label><input id="fmBizOwnAmount" type="number" min="0" step="1" inputmode="numeric" placeholder="Amount you can invest"></div>
+    <div class="field"><label>Loan Amount Required (₹)</label><input id="fmBizLoanAmount" type="number" min="0" step="1" inputmode="numeric" placeholder="If loan assistance is needed"></div>
+    <div class="field"><label>Shop / Warehouse Space Available?</label><select id="fmBizSpace"><option value="">Select</option><option>Yes - Own Space</option><option>Yes - Rented Space</option><option>No - Need Guidance</option></select></div>
+    <div class="field" style="grid-column:1/-1"><label>Previous Business Experience</label><textarea id="fmBizExperience" maxlength="700" placeholder="Tell us about your business experience (optional)"></textarea></div>
+    <div class="field" style="grid-column:1/-1"><label>Additional Message</label><textarea id="fmBizMessage" maxlength="1000" placeholder="Any other information you want to share"></textarea></div>
+   </div>
+   <p class="hint" style="margin:12px 0">Submitting this form is an enquiry only. Loan assistance is subject to verification, eligibility, and approval. Submission does not guarantee a loan or business approval.</p>
+   <button class="btn btn-green" id="fmBizSubmitBtn" type="submit">Submit Business Application</button>
+   <p id="fmBizFormMsg" class="hint" aria-live="polite"></p>
+  </form>
+ </div>
+ <div class="card">
+  <div class="section-head"><h2>My Business Applications</h2><button class="btn btn-outline btn-sm" type="button" onclick="fmBusinessLoadMine()">Refresh</button></div>
+  <div class="tablewrap"><table><thead><tr><th>Submitted</th><th>Business Type</th><th>Location</th><th>Funding</th><th>Start</th><th>Status</th><th>Admin Update</th></tr></thead><tbody id="fmBizMyRows"><tr><td colspan="7" class="empty">Your applications will appear here.</td></tr></tbody></table></div>
+ </div>
+</section>
+
 </main>
 </div>
 
@@ -611,6 +649,7 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 <button data-page="wallets" title="View your wallets" aria-label="Wallet"><span>💰</span>Wallet</button>
 <button data-page="team" title="View left and right teams" aria-label="My Team"><span>↔️</span>Team</button>
 <button data-page="withdrawals" title="Transfer money to your bank" aria-label="Withdrawals"><span>🏦</span>Withdraw</button>
+<button data-page="businessopportunity" title="Open a Rupee Mart business" aria-label="Business"><span>🏪</span>Business</button>
 <button type="button" onclick="fmToggleMobileMenu(true)" aria-label="More menu"><span>☰</span>More</button>
 </nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2301,7 +2340,9 @@ function showPage(id,fromHistory=false){
  if(id==='investments'){
    if(typeof fmInvUserLoad==='function') fmInvUserLoad();
    if(fmInvestmentBannerConfigLoaded) setTimeout(fmMaybeShowInvestmentPageBanner,80);
- }else{
+ }
+ if(id==='businessopportunity' && typeof fmBusinessLoadMine==='function') fmBusinessLoadMine();
+ if(id!=='investments'){
    document.getElementById('fmUserInvestmentBanner')?.classList.remove('show');
  }
 }
@@ -3353,6 +3394,49 @@ async function fmLoadOneRupeeOffer(){
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 <script id="rm-customer-push-register">
 (function(){const cfg={apiKey:"AIzaSyD4iTJtzLZ4egz-iCpUIF8L4lV-a-Y7GKI",authDomain:"rupee-mart.firebaseapp.com",projectId:"rupee-mart",storageBucket:"rupee-mart.firebasestorage.app",messagingSenderId:"114105173221",appId:"1:114105173221:web:e783d45180c6c262bb800c"},vapid="BGhDcsT6TRu-t5JknPI74fwKSO_ZT0XSQVBhuS85H69SaW22z4cyL_3UWUtzYQktOQQv0X8MyeI2dVTarCLyU-M";window.rmEnableCustomerPush=async function(){try{if(!('Notification'in window)||!('serviceWorker'in navigator))throw Error('This browser does not support push notifications.');const perm=await Notification.requestPermission();if(perm!=='granted')throw Error('Allow notifications in browser settings.');if(!firebase.apps.length)firebase.initializeApp(cfg);const sw=await navigator.serviceWorker.register('/firebase-messaging-sw.js');const messaging=firebase.messaging(),token=await messaging.getToken({vapidKey:vapid,serviceWorkerRegistration:sw});if(!token)throw Error('Could not create notification token.');const {data:{session}}=await fmShopClient.auth.getSession();if(!session)throw Error('Please sign in first.');const res=await fetch(SUPABASE_URL+'/rest/v1/fm_customer_push_devices?on_conflict=user_id,device_token',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,device_token:token,platform:'web',is_active:true,updated_at:new Date().toISOString()})});if(!res.ok)throw Error(await res.text());localStorage.setItem('rm_customer_push_enabled','1');const btn=document.getElementById('rmCustomerPushEnableBtn');if(btn)btn.remove();alert('Rupee Mart offer notifications enabled on this device.');}catch(e){alert('Push setup: '+e.message);}};window.addEventListener('load',()=>{if(localStorage.getItem('rm_customer_push_enabled')==='1'||('Notification'in window&&Notification.permission==='granted'))return;if(!document.getElementById('rmCustomerPushEnableBtn')){const b=document.createElement('button');b.id='rmCustomerPushEnableBtn';b.type='button';b.textContent='🔔 Enable Offer Alerts';b.style.cssText='position:fixed;right:12px;bottom:82px;z-index:9999;background:#168447;color:white;border:0;border-radius:24px;padding:11px 14px;font-weight:800;box-shadow:0 4px 14px #0003';b.onclick=window.rmEnableCustomerPush;document.body.appendChild(b);}});})();
+</script>
+
+
+<script id="fm-business-opportunity-user-js">
+function fmBizEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmBizDate(v){try{return new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});}catch(e){return '';}}
+function fmBizStatusBadge(v){const s=String(v||'New Application');const cls=s==='Approved'?'approved':s==='Rejected'?'rejected':'pending';return '<span class="badge '+cls+'">'+fmBizEsc(s)+'</span>';}
+async function fmBusinessSubmit(ev){
+ ev.preventDefault();
+ const msg=document.getElementById('fmBizFormMsg'),btn=document.getElementById('fmBizSubmitBtn');
+ if(!fmShopClient){msg.textContent='Connection unavailable. Please refresh and try again.';return;}
+ const val=id=>document.getElementById(id)?.value?.trim()||'';
+ const {data:{user},error:authError}=await fmShopClient.auth.getUser();
+ if(authError||!user){msg.textContent='Please sign in again to submit your application.';return;}
+ const payload={
+  user_id:user.id,member_name:val('fmBizName'),mobile_number:val('fmBizMobile'),whatsapp_number:val('fmBizWhatsapp')||null,email:val('fmBizEmail')||null,
+  business_type:val('fmBizType'),state:val('fmBizState'),district:val('fmBizDistrict'),city:val('fmBizCity'),pincode:val('fmBizPincode'),full_address:val('fmBizAddress'),
+  funding_preference:val('fmBizFunding'),own_investment_amount:Number(val('fmBizOwnAmount')||0),required_loan_amount:Number(val('fmBizLoanAmount')||0),
+  space_availability:val('fmBizSpace')||null,previous_experience:val('fmBizExperience')||null,start_timeline:val('fmBizTimeline'),additional_message:val('fmBizMessage')||null
+ };
+ if(!/^[0-9+\-\s]{10,15}$/.test(payload.mobile_number)){msg.textContent='Please enter a valid mobile number.';return;}
+ if(payload.own_investment_amount<0||payload.required_loan_amount<0){msg.textContent='Amounts cannot be negative.';return;}
+ btn.disabled=true;btn.textContent='Submitting…';msg.textContent='';
+ try{
+  const {error}=await fmShopClient.from('fm_business_applications').insert(payload);
+  if(error)throw error;
+  msg.textContent='Your business application has been submitted successfully. You can track updates below.';
+  document.getElementById('fmBusinessApplicationForm').reset();
+  await fmBusinessLoadMine();
+ }catch(e){msg.textContent='Submission failed: '+(e.message||'Please try again.');}
+ finally{btn.disabled=false;btn.textContent='Submit Business Application';}
+}
+async function fmBusinessLoadMine(){
+ const body=document.getElementById('fmBizMyRows');if(!body||!fmShopClient)return;
+ body.innerHTML='<tr><td colspan="7">Loading…</td></tr>';
+ try{
+  const {data:{user},error:ae}=await fmShopClient.auth.getUser();if(ae)throw ae;if(!user)throw new Error('Please sign in.');
+  const {data,error}=await fmShopClient.from('fm_business_applications').select('id,business_type,city,district,funding_preference,start_timeline,status,admin_remarks,created_at').eq('user_id',user.id).order('created_at',{ascending:false});
+  if(error)throw error;
+  if(!data?.length){body.innerHTML='<tr><td colspan="7" class="empty">No business applications submitted yet.</td></tr>';return;}
+  body.innerHTML=data.map(x=>`<tr><td>${fmBizEsc(fmBizDate(x.created_at))}</td><td>${fmBizEsc(x.business_type)}</td><td>${fmBizEsc([x.city,x.district].filter(Boolean).join(', '))}</td><td>${fmBizEsc(x.funding_preference)}</td><td>${fmBizEsc(x.start_timeline)}</td><td>${fmBizStatusBadge(x.status)}</td><td>${fmBizEsc(x.admin_remarks||'No update yet')}</td></tr>`).join('');
+ }catch(e){body.innerHTML='<tr><td colspan="7" class="empty">'+fmBizEsc(e.message||'Could not load applications.')+'</td></tr>';}
+}
 </script>
 
 </body>
