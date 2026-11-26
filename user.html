@@ -347,6 +347,10 @@ main{padding:26px;max-width:1450px;width:100%;margin:auto}.welcome{display:flex;
 </section>
 <section class="page" id="groceries">
   <div class="welcome fm-grocery-welcome"><div><h1>Grocery Store 🥬</h1><p>Fresh essentials for your home.</p></div></div>
+  <div class="fm-home-delivery-bar" id="fmHomeDeliveryBar">
+   <button type="button" class="fm-home-location" onclick="fmOpenDeliveryAddressSettings()"><span class="fm-home-location-icon">📍</span><span class="fm-home-location-copy"><small>Deliver to</small><b id="fmHomeDeliveryAddress">Choose delivery address</b></span><span class="fm-home-change">Change⌄</span></button>
+   <div class="fm-home-slot-line"><span>◷</span><span><small>Earliest Home Delivery</small><b id="fmHomeEarliestSlot">Checking available slots…</b></span></div>
+  </div>
   <div class="fm-shop-search-top"><input id="shopProductSearch" placeholder="Search groceries…" oninput="window.fmActiveHomeOfferProductIds=null;window.fmActiveHomeOfferTitle='';renderFreshMartProducts()" aria-label="Search groceries"><button id="shopVoiceSearchBtn" type="button" aria-label="Voice search" title="Speak to search">🎤</button></div>
   <select id="shopVoiceLanguage" aria-label="Voice search language" hidden><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option><option value="en-IN" selected>English</option></select>
   <select id="shopProductCategory" onchange="renderFreshMartProducts()" hidden><option value="">All categories</option></select>
@@ -870,6 +874,8 @@ function fmRenderHomeOffers(){
   let best=0,dist=Infinity;cards.forEach((c,i)=>{const d=Math.abs(c.offsetLeft+c.offsetWidth/2-center);if(d<dist){dist=d;best=i;}});
   dots.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===best));
  },{passive:true});
+ if(window.fmHomeOfferAutoTimer)clearInterval(window.fmHomeOfferAutoTimer);
+ if(offers.length>1){window.fmHomeOfferAutoTimer=setInterval(()=>{if(document.hidden||!host.offsetParent)return;const cards=[...track.querySelectorAll('.fm-home-offer')];if(cards.length<2)return;const center=track.scrollLeft+track.clientWidth/2;let best=0,dist=Infinity;cards.forEach((c,i)=>{const d=Math.abs(c.offsetLeft+c.offsetWidth/2-center);if(d<dist){dist=d;best=i;}});cards[(best+1)%cards.length]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});},5000);}
 }
 async function fmLoadGroceryHomeOffers(){
  if(!fmShopClient)return;
@@ -1911,6 +1917,7 @@ async function loadDeliveryAddresses(){
   if(!r.ok)throw new Error(data.message||data.error||'Address list could not load. Run the address table SQL first.');
   fmAddresses=Array.isArray(data)?data:[];
   renderDeliveryAddresses();
+  if(typeof fmHomeDeliveryRefresh==='function')fmHomeDeliveryRefresh();
  }catch(e){list.innerHTML='<p class="hint" style="color:#b72e2e">Could not load addresses: '+escapeTeamText(e.message||'Database error')+'</p>';document.getElementById('addressCount').textContent=fmAddresses.length+' / 3';}
 }
 function renderDeliveryAddresses(){
@@ -3069,7 +3076,7 @@ async function fmLoadFeaturedProducts(){
  }catch(e){console.warn('Featured products unavailable:',e.message||e);host.style.display='none';}
 }
 const fmFeaturedWrappedOriginalLoadProducts2026=loadFreshMartProducts;
-loadFreshMartProducts=async function(){await fmFeaturedWrappedOriginalLoadProducts2026();await Promise.allSettled([fmLoadFeaturedProducts(),fmLoadGroceryHomeOffers()]);};
+loadFreshMartProducts=async function(){await fmFeaturedWrappedOriginalLoadProducts2026();await Promise.allSettled([fmLoadFeaturedProducts(),fmLoadGroceryHomeOffers(),fmHomePopupLoad()]);};
 document.addEventListener('DOMContentLoaded',()=>{loadFreshMartProducts();});
 </script>
 
@@ -3436,6 +3443,60 @@ async function fmBusinessLoadMine(){
   if(!data?.length){body.innerHTML='<tr><td colspan="7" class="empty">No business applications submitted yet.</td></tr>';return;}
   body.innerHTML=data.map(x=>`<tr><td>${fmBizEsc(fmBizDate(x.created_at))}</td><td>${fmBizEsc(x.business_type)}</td><td>${fmBizEsc([x.city,x.district].filter(Boolean).join(', '))}</td><td>${fmBizEsc(x.funding_preference)}</td><td>${fmBizEsc(x.start_timeline)}</td><td>${fmBizStatusBadge(x.status)}</td><td>${fmBizEsc(x.admin_remarks||'No update yet')}</td></tr>`).join('');
  }catch(e){body.innerHTML='<tr><td colspan="7" class="empty">'+fmBizEsc(e.message||'Could not load applications.')+'</td></tr>';}
+}
+</script>
+
+
+<style id="fm-home-opening-popup-css">
+.fm-home-delivery-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding:10px 12px;background:#fff;border:1px solid #dcebe0;border-radius:13px;box-shadow:0 3px 12px rgba(20,90,48,.06)}
+.fm-home-location{display:flex;align-items:center;gap:8px;min-width:0;flex:1;border:0;background:transparent;text-align:left;padding:0;color:inherit}.fm-home-location-icon{font-size:22px}.fm-home-location-copy{display:flex;flex-direction:column;min-width:0}.fm-home-location-copy small,.fm-home-slot-line small{font-size:10px;color:#718078}.fm-home-location-copy b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}.fm-home-change{font-size:11px;color:#168447;font-weight:800;white-space:nowrap}.fm-home-slot-line{display:flex;align-items:center;gap:7px;border-left:1px solid #e3eee6;padding-left:10px;min-width:0}.fm-home-slot-line>span:first-child{font-size:19px;color:#168447}.fm-home-slot-line>span:last-child{display:flex;flex-direction:column;min-width:0}.fm-home-slot-line b{font-size:11px;color:#168447;line-height:1.3}.fm-home-popup{display:none;position:fixed;inset:0;z-index:99990;background:rgba(8,28,17,.62);align-items:flex-end;justify-content:center;padding:0}.fm-home-popup.show{display:flex}.fm-home-popup-card{width:min(100%,720px);background:#fff;border-radius:24px 24px 0 0;overflow:hidden;box-shadow:0 -12px 40px rgba(0,0,0,.2);padding:0 0 max(18px,env(safe-area-inset-bottom));animation:fmHomePopupIn .28s ease-out}.fm-home-popup-image{display:block;width:100%;max-height:58vh;object-fit:contain;background:#fff}.fm-home-popup-title{font-size:22px;font-weight:900;text-align:center;margin:15px 18px 5px;color:#183126}.fm-home-popup-subtitle{text-align:center;font-size:13px;color:#66756b;margin:0 18px 15px}.fm-home-popup-cta{display:block;width:calc(100% - 36px);margin:0 18px;border:0;border-radius:10px;background:#168447;color:white;font-size:16px;font-weight:850;padding:15px}@keyframes fmHomePopupIn{from{transform:translateY(35px);opacity:.6}to{transform:translateY(0);opacity:1}}@media(max-width:420px){.fm-home-delivery-bar{align-items:flex-start;flex-direction:column}.fm-home-slot-line{border-left:0;border-top:1px solid #e3eee6;padding:8px 0 0;width:100%}.fm-home-location-copy b{max-width:260px}}
+</style>
+<div class="fm-home-popup" id="fmHomeOpeningPopup" role="dialog" aria-modal="true" aria-label="Rupee Mart special offer">
+ <div class="fm-home-popup-card"><img id="fmHomeOpeningPopupImage" class="fm-home-popup-image" alt="Rupee Mart special offer"><h2 id="fmHomeOpeningPopupTitle" class="fm-home-popup-title">Lowest Prices, Maximum Savings</h2><p id="fmHomeOpeningPopupSubtitle" class="fm-home-popup-subtitle">Shop more and save more with Rupee Mart.</p><button class="fm-home-popup-cta" id="fmHomeOpeningPopupButton" type="button" onclick="fmHomePopupClose()">START SHOPPING</button></div>
+</div>
+<script id="fm-home-opening-popup-js">
+let fmHomePopupConfig=null,fmHomeDeliveryLastPin='';
+function fmHomePopupDismissKey(){return 'fm_home_opening_popup_seen_v1';}
+async function fmHomePopupLoad(){
+ if(!fmShopClient)return;
+ try{
+  const [{data:setting,error},{data:sessionData}]=await Promise.all([
+   fmShopClient.from('fm_store_settings').select('setting_value').eq('setting_key','home_opening_popup').maybeSingle(),
+   fmShopClient.auth.getSession()
+  ]);
+  if(error)throw error;fmHomePopupConfig=setting?.setting_value||{};
+  if(!sessionData?.session?.user||fmHomePopupConfig.enabled===false||!fmHomePopupConfig.image_url)return;
+  if(sessionStorage.getItem(fmHomePopupDismissKey())==='1')return;
+  const img=document.getElementById('fmHomeOpeningPopupImage');if(img)img.src=fmHomePopupConfig.image_url;
+  const title=document.getElementById('fmHomeOpeningPopupTitle');if(title)title.textContent=fmHomePopupConfig.title||'Lowest Prices, Maximum Savings';
+  const sub=document.getElementById('fmHomeOpeningPopupSubtitle');if(sub)sub.textContent=fmHomePopupConfig.subtitle||'Shop more and save more with Rupee Mart.';
+  const btn=document.getElementById('fmHomeOpeningPopupButton');if(btn)btn.textContent=fmHomePopupConfig.button_text||'START SHOPPING';
+  setTimeout(()=>document.getElementById('fmHomeOpeningPopup')?.classList.add('show'),450);
+ }catch(e){console.warn('Home opening promotion unavailable:',e.message||e);}
+}
+function fmHomePopupClose(){sessionStorage.setItem(fmHomePopupDismissKey(),'1');document.getElementById('fmHomeOpeningPopup')?.classList.remove('show');}
+function fmOpenDeliveryAddressSettings(){showPage('profile');setTimeout(()=>document.getElementById('savedAddressList')?.scrollIntoView({behavior:'smooth',block:'start'}),180);}
+function fmHomeFormatDate(dateStr){try{return new Intl.DateTimeFormat('en-IN',{weekday:'short',day:'numeric',month:'short',timeZone:'Asia/Kolkata'}).format(new Date(dateStr+'T00:00:00+05:30'));}catch(e){return dateStr;}}
+async function fmHomeDeliveryRefresh(){
+ const address=document.getElementById('fmHomeDeliveryAddress'),slot=document.getElementById('fmHomeEarliestSlot');if(!address||!slot)return;
+ try{
+  if(!Array.isArray(fmAddresses)||!fmAddresses.length){address.textContent='Add delivery address';slot.textContent='Select address to check';return;}
+  const chosen=fmAddresses.find(x=>x.is_default)||fmAddresses[0];
+  const area=[chosen.post_office,chosen.city,chosen.pincode].filter(Boolean).join(', ');address.textContent=area||'Saved address';
+  const pin=String(chosen.pincode||'');if(!/^\d{6}$/.test(pin)){slot.textContent='Valid PIN code required';return;}
+  if(fmHomeDeliveryLastPin===pin&&slot.dataset.checked==='1')return;
+  slot.textContent='Checking available slots…';
+  const {data:areaRow,error:areaError}=await fmShopClient.from('fm_delivery_areas').select('pincode,is_serviceable,slot_booking_enabled').eq('pincode',pin).maybeSingle();
+  if(areaError)throw areaError;
+  if(!areaRow||!areaRow.is_serviceable){slot.textContent='Delivery not available yet';slot.dataset.checked='1';fmHomeDeliveryLastPin=pin;return;}
+  const {data:slots,error}=await fmShopClient.rpc('fm_get_available_delivery_slots',{p_pincode:pin,p_from_date:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date())});
+  if(error)throw error;
+  const nowParts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  const nowM=Number(nowParts.find(x=>x.type==='hour')?.value||0)*60+Number(nowParts.find(x=>x.type==='minute')?.value||0);
+  const eligible=(slots||[]).filter(s=>{const st=Number(String(s.start_time||'00:00').slice(0,2))*60+Number(String(s.start_time||'00:00').slice(3,5));const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(new Date());return s.delivery_date>today||(s.delivery_date===today&&nowM<st-60);}).sort((x,y)=>(x.delivery_date+x.start_time).localeCompare(y.delivery_date+y.start_time));
+  if(eligible.length){const s=eligible[0];slot.textContent=fmHomeFormatDate(s.delivery_date)+' · '+String(s.start_time).slice(0,5)+' – '+String(s.end_time).slice(0,5);}else slot.textContent='No slots available — check later';
+  slot.dataset.checked='1';fmHomeDeliveryLastPin=pin;
+ }catch(e){slot.textContent='Delivery slot unavailable';console.warn('Home delivery slot lookup:',e.message||e);}
 }
 </script>
 
