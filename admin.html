@@ -165,6 +165,17 @@ body:not(.fm-admin-authenticated) .mobile-nav{display:none!important}
  <button class="btn btn-green" id="fmAdminShopCreditBtn" type="button" style="margin-top:10px" onclick="fmAdminAddShoppingWalletCredit()">Add to Shopping Wallet</button>
  <p id="fmAdminShopCreditMsg" class="hint" aria-live="polite"></p>
 </div>
+<div class="card" id="fmAdminShoppingWalletDebitCard" style="margin-top:16px;border:1px solid #f3caca">
+ <div class="section-head"><h2>➖ Deduct Shopping Wallet Amount</h2><span class="badge rejected">ADMIN ONLY</span></div>
+ <p class="hint">Deduct an amount from a member's existing Shopping Wallet. The balance cannot go below ₹0. Every deduction is recorded in wallet transaction history. This does not delete or change purchase history.</p>
+ <div class="formgrid">
+  <div class="field"><label>Member Username / Rupee Mart ID / Mobile / Auth UUID</label><input id="fmAdminShopDebitMember" placeholder="Enter exact username, ID or mobile"></div>
+  <div class="field"><label>Amount to Deduct (₹)</label><input id="fmAdminShopDebitAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="e.g. 500"></div>
+  <div class="field" style="grid-column:1/-1"><label>Admin Note / Reason (required)</label><input id="fmAdminShopDebitNote" maxlength="250" placeholder="Reason for Shopping Wallet deduction"></div>
+ </div>
+ <button class="btn btn-red" id="fmAdminShopDebitBtn" type="button" style="margin-top:10px" onclick="fmAdminDeductShoppingWallet()">Deduct from Shopping Wallet</button>
+ <p id="fmAdminShopDebitMsg" class="hint" aria-live="polite"></p>
+</div>
 <div class="card" style="margin-top:16px">
  <div class="section-head"><h2>Member Bank Details</h2><span class="badge approved">SUPER ADMIN ONLY</span></div>
  <p class="hint">Search by Rupee Mart ID, username, mobile number or member name. Only Super Admin can update saved bank details.</p>
@@ -2254,6 +2265,31 @@ async function fmAdminAddShoppingWalletCredit(){
   msg.textContent='Successfully added '+fmMoney(amount)+'. New Shopping Wallet balance: '+fmMoney(data.new_balance)+'. Today usable (20% rule): '+fmMoney(data.available_to_spend_today)+'.';msg.style.color='#168447';
   document.getElementById('fmAdminShopCreditAmount').value='';document.getElementById('fmAdminShopCreditNote').value='';
  }catch(e){msg.textContent='Could not add Shopping Wallet amount: '+(e.message||e);msg.style.color='#b72e2e';console.error('Admin Shopping Wallet credit:',e);}
+ finally{btn.disabled=false;}
+}
+
+async function fmAdminDeductShoppingWallet(){
+ const msg=document.getElementById('fmAdminShopDebitMsg');
+ const btn=document.getElementById('fmAdminShopDebitBtn');
+ try{
+  const lookup=document.getElementById('fmAdminShopDebitMember').value.trim();
+  const amount=Number(document.getElementById('fmAdminShopDebitAmount').value);
+  const note=document.getElementById('fmAdminShopDebitNote').value.trim();
+  if(!lookup)throw new Error('Enter the member username, Rupee Mart ID, mobile number or Auth UUID.');
+  if(!Number.isFinite(amount)||amount<=0)throw new Error('Enter a valid amount greater than ₹0.');
+  if(!note)throw new Error('Enter the reason for this deduction.');
+  if(!confirm('Confirm deduction of '+fmMoney(amount)+' from this member Shopping Wallet? This action will be recorded in wallet history.'))return;
+  const {data:{session},error:sessionError}=await fmSupabase.auth.getSession();
+  if(sessionError)throw sessionError;if(!session)throw new Error('Please sign in as administrator.');
+  btn.disabled=true;msg.textContent='Deducting amount from Shopping Wallet…';msg.style.color='#718078';
+  const {data,error}=await fmSupabase.rpc('fm_admin_deduct_shopping_wallet_v1',{p_admin_id:session.user.id,p_member_lookup:lookup,p_amount:amount,p_admin_note:note});
+  if(error)throw error;
+  if(!data||data.success!==true)throw new Error(data?.message||'Wallet deduction was not confirmed.');
+  msg.textContent='Successfully deducted '+fmMoney(amount)+'. New Shopping Wallet balance: '+fmMoney(data.new_balance)+'. Today usable (20% rule): '+fmMoney(data.available_to_spend_today)+'.';
+  msg.style.color='#168447';
+  document.getElementById('fmAdminShopDebitAmount').value='';
+  document.getElementById('fmAdminShopDebitNote').value='';
+ }catch(e){msg.textContent='Could not deduct Shopping Wallet amount: '+(e.message||e);msg.style.color='#b72e2e';console.error('Admin Shopping Wallet deduction:',e);}
  finally{btn.disabled=false;}
 }
 
